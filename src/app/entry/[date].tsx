@@ -1,12 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import {
-  useChecklist,
-  useDeleteEntry,
-  useEntry,
-  useUpdateMemory,
-} from '@/api/entries';
+import { useChecklist, useEntry, useUpdateMemory } from '@/api/entries';
 import { ApiError, errorMessage } from '@/api/errors';
 import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
@@ -16,11 +11,12 @@ import { Section } from '@/components/Section';
 import { ScheduleList } from '@/features/schedules/ScheduleList';
 import { StateView } from '@/components/StateView';
 import { PhotoCarousel } from '@/features/calendar/PhotoCarousel';
+import { DeleteEntrySection } from '@/features/entries/DeleteEntrySection';
 import { indexBadgeOf } from '@/features/today/stage';
 import { formatKoreanDate, normalizeEntryDate } from '@/lib/dates';
 import { colors, spacing } from '@/theme';
 
-// 삭제·기억에서 제외는 AI 기억을 먼저 지운다. AI가 안 되면 503
+// 기억에서 제외는 AI 기억을 먼저 지운다. AI가 안 되면 503
 const aiIndexFailMessage = (e: unknown, action: string) =>
   e instanceof ApiError && e.code === 'AI_INDEX_UNAVAILABLE'
     ? `기억 저장소에 연결할 수 없어 ${action} 못했어요. 잠시 후 다시 시도해 주세요.`
@@ -33,8 +29,6 @@ export default function EntryDetailScreen() {
   const entry = useEntry(date, { pollWhilePending: true });
   const checklist = useChecklist();
   const memory = useUpdateMemory(date);
-  const remove = useDeleteEntry(date);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const header = <Stack.Screen options={{ title: formatKoreanDate(date) }} />;
 
@@ -85,12 +79,6 @@ export default function EntryDetailScreen() {
       .filter((i) => checked.has(i.id))
       .map((i) => ({ ...i, color: c.color })),
   );
-
-  const onDelete = () =>
-    remove.mutate(undefined, {
-      onSuccess: () =>
-        router.canGoBack() ? router.back() : router.replace('/calendar'),
-    });
 
   return (
     <>
@@ -175,42 +163,12 @@ export default function EntryDetailScreen() {
           </>
         ) : null}
 
-        <View style={styles.deleteArea}>
-          {confirmingDelete ? (
-            <Section
-              title="이 일기를 지울까요?"
-              hint="사진과 과거의 나의 기억에서도 함께 지워지고, 되돌릴 수 없어요."
-            >
-              <Button
-                title="삭제"
-                variant="danger"
-                loading={remove.isPending}
-                onPress={onDelete}
-                testID="confirm-delete"
-              />
-              <Button
-                title="취소"
-                variant="ghost"
-                disabled={remove.isPending}
-                onPress={() => {
-                  setConfirmingDelete(false);
-                  remove.reset();
-                }}
-              />
-              {remove.isError ? (
-                <Text style={styles.error}>
-                  {aiIndexFailMessage(remove.error, '지우지')}
-                </Text>
-              ) : null}
-            </Section>
-          ) : (
-            <Button
-              title="일기 삭제"
-              variant="ghost"
-              onPress={() => setConfirmingDelete(true)}
-            />
-          )}
-        </View>
+        <DeleteEntrySection
+          date={date}
+          onDeleted={() =>
+            router.canGoBack() ? router.back() : router.replace('/calendar')
+          }
+        />
       </Screen>
     </>
   );
@@ -227,5 +185,4 @@ const styles = StyleSheet.create({
   },
   switchLabel: { fontSize: 15, color: colors.text },
   error: { color: colors.danger, fontSize: 14 },
-  deleteArea: { marginTop: spacing.lg },
 });
