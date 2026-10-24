@@ -4,6 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
+import { Platform } from 'react-native';
 import { api } from './client';
 import { ApiError, unwrap } from './errors';
 import type { components } from './schema';
@@ -92,14 +93,20 @@ export type LocalImage = { uri: string; caption?: string | null };
 export function useUploadPhoto(date: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (image: LocalImage) => {
+    mutationFn: async (image: LocalImage) => {
       const form = new FormData();
-      // RN의 FormData는 { uri, name, type } 객체로 파일을 받는다
-      form.append('files', {
-        uri: image.uri,
-        name: 'photo.jpg',
-        type: 'image/jpeg',
-      } as unknown as Blob);
+      if (Platform.OS === 'web') {
+        // 브라우저는 실제 Blob이 필요하다 (uri는 blob:/data: 주소)
+        const blob = await (await fetch(image.uri)).blob();
+        form.append('files', blob, 'photo.jpg');
+      } else {
+        // RN의 FormData는 { uri, name, type } 객체로 파일을 받는다
+        form.append('files', {
+          uri: image.uri,
+          name: 'photo.jpg',
+          type: 'image/jpeg',
+        } as unknown as Blob);
+      }
       if (image.caption)
         form.append('captions', JSON.stringify([image.caption]));
       return unwrap(
@@ -159,8 +166,10 @@ export function useAnalyze(date: string) {
   });
 }
 
-export function useAnswer(date: string) {
+// refresh: false — 답변 직후 바로 생성할 때, 중간 상태(READY)로 화면이 바뀌지 않게 한다
+export function useAnswer(date: string, opts: { refresh?: boolean } = {}) {
   const client = useQueryClient();
+  const refresh = opts.refresh ?? true;
   return useMutation({
     mutationFn: (answers: AnswerInput[]) =>
       unwrap(
@@ -169,7 +178,7 @@ export function useAnswer(date: string) {
           body: { answers },
         }),
       ),
-    onSuccess: () => invalidateEntry(client, date),
+    onSuccess: () => (refresh ? invalidateEntry(client, date) : undefined),
   });
 }
 
