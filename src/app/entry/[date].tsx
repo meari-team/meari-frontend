@@ -140,7 +140,12 @@ export default function EntryDetailScreen() {
             <Button
               title="이때의 나와 대화하기"
               testID="talk-to-past-self"
-              onPress={() => router.push(`/past-self?anchorDate=${date}`)}
+              onPress={() =>
+                router.push({
+                  pathname: '/past-self/confirm',
+                  params: { anchorDate: date },
+                })
+              }
             />
 
             <Section
