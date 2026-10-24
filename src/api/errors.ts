@@ -30,6 +30,13 @@ export async function unwrap<T>(
     result = await call;
   } catch (e) {
     if (__DEV__) console.warn('[api] 요청 실패', e);
+    const name = e instanceof Error ? e.name : '';
+    if (name === 'TimeoutError' || name === 'AbortError') {
+      throw new ApiError(
+        'AI_TIMEOUT',
+        '응답이 너무 오래 걸려요. 잠시 후 다시 시도해 주세요.',
+      );
+    }
     throw new ApiError(
       'NETWORK_ERROR',
       '서버에 연결할 수 없어요. 네트워크를 확인해 주세요.',

@@ -87,10 +87,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /**
-     * 카테고리+항목 목록 (C1) [STUB]
-     * @description 목 응답을 돌려준다. MEA-7에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 카테고리+항목 목록 (C1) */
     get: operations['ChecklistController_list'];
     put?: never;
     /**
@@ -135,10 +132,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /**
-     * 캘린더용 기간 목록 (E1) [STUB]
-     * @description 목 응답을 돌려준다. MEA-7에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 캘린더용 기간 목록 (E1) — 월간·연간 공용, 최대 366일 */
     get: operations['EntriesController_list'];
     put?: never;
     post?: never;
@@ -155,21 +149,15 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /**
-     * 일기 상세 (E2) [STUB]
-     * @description 목 응답을 돌려준다. MEA-7에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 일기 상세 (E2) */
     get: operations['EntriesController_get'];
     /**
-     * 일기 생성/입력 저장 (E3) — 없으면 201, 있으면 200 [STUB]
-     * @description 목 응답을 돌려준다. MEA-7에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 일기 생성/입력 저장 (E3) — 없으면 201, 있으면 200
+     * @description note: 생략하면 유지, null이면 삭제. checkedItemIds: 보내면 전체 교체.
      */
     put: operations['EntriesController_upsert'];
     post?: never;
-    /**
-     * 일기 삭제 (E4) — 사진·AI 색인 포함 [STUB]
-     * @description 목 응답을 돌려준다. MEA-7에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 일기 삭제 (E4) — AI 색인을 먼저 지우고, 실패하면 503 */
     delete: operations['EntriesController_remove'];
     options?: never;
     head?: never;
@@ -186,8 +174,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * 사진 업로드 (F1) — multipart, 최대 3장 [STUB]
-     * @description 목 응답을 돌려준다. MEA-8에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 사진 업로드 (F1) — 일기당 최대 3장, 장당 4MB
+     * @description 일기가 없으면 DRAFT로 만든다. EXIF를 지우고 JPEG(긴 변 1600px 이하)로 다시 저장한다. 사진이 바뀌면 이전 분석·질문을 지우고, 확정 전 일기는 DRAFT로 되돌린다.
      */
     post: operations['PhotosController_upload'];
     delete?: never;
@@ -206,17 +194,11 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /**
-     * 사진 삭제 (F3) [STUB]
-     * @description 목 응답을 돌려준다. MEA-8에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 사진 삭제 (F3) */
     delete: operations['PhotosController_remove'];
     options?: never;
     head?: never;
-    /**
-     * 캡션·순서 변경 (F2) [STUB]
-     * @description 목 응답을 돌려준다. MEA-8에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 캡션·순서 변경 (F2) — sortOrder를 바꾸면 나머지가 밀린다 */
     patch: operations['PhotosController_update'];
     trace?: never;
   };
@@ -230,8 +212,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * 사진 분석 + 추가 질문 (G1) [STUB]
-     * @description 목 응답을 돌려준다. MEA-10에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 사진 분석 + 추가 질문 (G1)
+     * @description 사진 분석 결과는 저장해 두고 재사용한다(사진이 바뀌면 다시 분석). 질문은 매번 새로 만든다(최대 2개). 질문이 있으면 QUESTIONING, 없으면 READY. 분석·질문을 합쳐 수십 초 걸릴 수 있다.
      */
     post: operations['GenerationController_analyze'];
     delete?: never;
@@ -249,8 +231,8 @@ export interface paths {
     };
     get?: never;
     /**
-     * 질문 답변/건너뛰기 (G2) [STUB]
-     * @description 목 응답을 돌려준다. MEA-10에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 질문 답변/건너뛰기 (G2)
+     * @description 모든 질문이 답변되거나 건너뛰어지면 READY. answer와 skipped: true는 함께 보낼 수 없다.
      */
     put: operations['GenerationController_answer'];
     post?: never;
@@ -270,8 +252,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * AI 일기 초안 생성 (G3) [STUB]
-     * @description 목 응답을 돌려준다. MEA-11에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * AI 일기 초안 생성 (G3)
+     * @description READY·GENERATED(재생성)에서 가능. QUESTIONING이면 skipRemainingQuestions: true("그냥 생성")로 남은 질문을 건너뛴다. 초안만 만들고 확정·색인하지 않는다.
      */
     post: operations['GenerationController_generate'];
     delete?: never;
@@ -290,8 +272,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * 최종본 확정 → AI 색인 (G4) [STUB]
-     * @description 목 응답을 돌려준다. MEA-11에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 최종본 확정 (G4)
+     * @description READY(직접 작성)·GENERATED·CONFIRMED(수정 후 재확정)에서 가능. 확정본만 기억이 된다: aiIndexStatus가 PENDING이 되고 서버가 AI 색인을 진행한다 (기억에서 제외된 일기는 NONE).
      */
     post: operations['GenerationController_confirm'];
     delete?: never;
@@ -328,8 +310,8 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * 시점 확인 (H1) — anchorDate 생략 시 프리셋 전체 [STUB]
-     * @description 목 응답을 돌려준다. MEA-15에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 시점 확인 (H1)
+     * @description anchorDate를 주면 그 시점까지의 기록 수·첫 기록일, 생략하면 프리셋(1W·1M·3M·6M·1Y) 전체. 기록 = 확정됐고 기억에서 제외되지 않은 일기. 7일 이상이어야 대화 가능.
      */
     get: operations['PastSelfController_availability'];
     put?: never;
@@ -347,16 +329,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /**
-     * 내 세션 목록 (H3) [STUB]
-     * @description 목 응답을 돌려준다. MEA-15에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 내 세션 목록 (H3) — 최근 대화순, 최대 50개 */
     get: operations['ChatController_list'];
     put?: never;
-    /**
-     * 과거의 나 세션 생성 (H2) [STUB]
-     * @description 목 응답을 돌려준다. MEA-15에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 과거의 나 세션 생성 (H2) — 그 시점까지 기록 7일 이상 */
     post: operations['ChatController_create'];
     delete?: never;
     options?: never;
@@ -372,14 +348,14 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * 세션 메시지 목록 (H4) [STUB]
-     * @description 목 응답을 돌려준다. MEA-15에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 세션 메시지 목록 (H4)
+     * @description cursor 없으면 가장 최근 limit개, 있으면 그 이전 limit개. 응답은 오래된 순.
      */
     get: operations['ChatController_messages'];
     put?: never;
     /**
-     * 메시지 전송 → 과거의 나 응답 (H5) [STUB]
-     * @description 목 응답을 돌려준다. MEA-15에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 메시지 전송 → 과거의 나 응답 (H5)
+     * @description AI가 고른 근거는 서버가 다시 검증한다(본인·확정·미제외·T 이전만). 근거가 없으면 flag NO_EVIDENCE. AI가 실패하면 메시지를 저장하지 않는다. 세션당 사용자 메시지 30개까지.
      */
     post: operations['ChatController_send'];
     delete?: never;
@@ -539,15 +515,6 @@ export interface components {
       /** @description 본인 체크리스트 항목 ID */
       checkedItemIds?: string[];
     };
-    UploadPhotosDto: {
-      /** @description jpeg/png/webp, 장당 4MB */
-      files: string[];
-      /**
-       * @description files와 같은 순서의 캡션 배열(JSON 문자열)
-       * @example ["카페에서", ""]
-       */
-      captions?: string;
-    };
     PhotoListDto: {
       items: components['schemas']['PhotoDto'][];
     };
@@ -657,8 +624,9 @@ export interface components {
       createdAt: string;
     };
     ChatMessagePageDto: {
-      /** @description 오래된 순 */
+      /** @description 오래된 순. cursor 없으면 가장 최근 limit개 */
       items: components['schemas']['ChatMessageDto'][];
+      /** @description 더 이전 메시지를 받으려면 이 값을 cursor로 (없으면 null) */
       nextCursor: string | null;
     };
     SendMessageDto: {
@@ -1177,6 +1145,14 @@ export interface operations {
           'application/json': components['schemas']['EntryDto'];
         };
       };
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EntryDto'];
+        };
+      };
       /** @description VALIDATION_FAILED */
       400: {
         headers: {
@@ -1263,7 +1239,15 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'multipart/form-data': components['schemas']['UploadPhotosDto'];
+        'multipart/form-data': {
+          /** @description jpeg/png/webp, 장당 4MB */
+          files: string[];
+          /**
+           * @description files와 같은 순서의 캡션 배열(JSON 문자열), 각 100자 이하
+           * @example ["카페에서", ""]
+           */
+          captions?: string;
+        };
       };
     };
     responses: {
@@ -1273,6 +1257,15 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['PhotoListDto'];
+        };
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
         };
       };
       /** @description UNAUTHORIZED */
@@ -1864,6 +1857,7 @@ export interface operations {
   ChatController_messages: {
     parameters: {
       query?: {
+        /** @description 이 메시지보다 이전 메시지를 받는다 (이전 응답의 nextCursor) */
         cursor?: string;
         limit?: number;
       };
@@ -1881,6 +1875,15 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ChatMessagePageDto'];
+        };
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
         };
       };
       /** @description UNAUTHORIZED */
@@ -1955,15 +1958,6 @@ export interface operations {
       };
       /** @description SESSION_MESSAGE_LIMIT */
       422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-      /** @description TOO_MANY_REQUESTS */
-      429: {
         headers: {
           [name: string]: unknown;
         };
