@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { mergePages, nextBeforeOf } from '@/lib/feed';
 import { api } from './client';
 import { entriesKey } from './entries';
@@ -28,4 +28,17 @@ export function useEntriesFeed() {
     ...query,
     items: query.data ? mergePages(query.data.pages) : [],
   };
+}
+
+// 홈의 최근 기록 (첫 페이지만). entriesKey 아래라 일기가 바뀌면 함께 갱신된다
+export function useRecentEntries(limit: number) {
+  return useQuery({
+    queryKey: [...entriesKey, 'recent', limit],
+    queryFn: async () =>
+      (
+        await unwrap(
+          api.GET('/api/v1/entries/feed', { params: { query: { limit } } }),
+        )
+      ).items,
+  });
 }

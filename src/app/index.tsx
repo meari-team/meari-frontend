@@ -3,5 +3,5 @@ import { useAuth } from '@/stores/auth';
 
 export default function Index() {
   const signedIn = useAuth((s) => s.status === 'signedIn');
-  return <Redirect href={signedIn ? '/today' : '/login'} />;
+  return <Redirect href={signedIn ? '/home' : '/login'} />;
 }

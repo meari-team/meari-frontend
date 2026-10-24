@@ -16,7 +16,7 @@ const icon = (name: IconName) => {
   return render;
 };
 
-// 하단 탭 4개: 오늘의 일기 / 캘린더 / 과거의 나 / 마이페이지 (기획안 UI 구성)
+// 하단 탭 5개: 홈 / 오늘의 일기 / 캘린더 / 과거의 나 / 마이페이지 (홈은 기획안 이후 추가)
 export default function TabsLayout() {
   return (
     <Tabs
@@ -26,6 +26,10 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.textMuted,
       }}
     >
+      <Tabs.Screen
+        name="home"
+        options={{ title: '홈', tabBarIcon: icon('home-outline') }}
+      />
       <Tabs.Screen
         name="today"
         options={{ title: '오늘의 일기', tabBarIcon: icon('create-outline') }}
