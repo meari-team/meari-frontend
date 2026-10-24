@@ -12,11 +12,12 @@ const authMiddleware: Middleware = {
     if (token) request.headers.set('Authorization', `Bearer ${token}`);
     return request;
   },
+  // 응답을 바꾸지 않으므로 아무것도 반환하지 않는다.
+  // 같은 Response를 반환하면 RN에서 openapi-fetch가 "must return new Response()" 에러를 던진다.
   async onResponse({ response, schemaPath }) {
     if (response.status === 401 && !PUBLIC_PATHS.includes(schemaPath)) {
       await useAuth.getState().signOut();
     }
-    return response;
   },
 };
 
