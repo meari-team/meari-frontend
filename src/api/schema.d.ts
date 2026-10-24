@@ -116,28 +116,6 @@ export interface paths {
     patch: operations['ChecklistController_update'];
     trace?: never;
   };
-  '/api/v1/schedules': {
-    parameters: { query?: never; header?: never; path?: never; cookie?: never };
-    get: operations['SchedulesController_list'];
-    put?: never;
-    post: operations['SchedulesController_create'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/schedules/{id}': {
-    parameters: { query?: never; header?: never; path?: never; cookie?: never };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete: operations['SchedulesController_remove'];
-    options?: never;
-    head?: never;
-    patch: operations['SchedulesController_update'];
-    trace?: never;
-  };
   '/api/v1/entries': {
     parameters: {
       query?: never;
@@ -315,6 +293,45 @@ export interface paths {
     patch: operations['GenerationController_updateMemory'];
     trace?: never;
   };
+  '/api/v1/schedules': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 기간 일정 목록 (S2) — 최대 366일, 날짜 → 시간(종일 먼저) → 등록순 */
+    get: operations['SchedulesController_list'];
+    put?: never;
+    /**
+     * 일정 추가 (S3) — 미래 날짜 허용, 하루 20개까지
+     * @description 그날 일기를 만들 때 일정이 AI 설명에 함께 들어간다.
+     */
+    post: operations['SchedulesController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/schedules/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** 일정 삭제 (S5) */
+    delete: operations['SchedulesController_remove'];
+    options?: never;
+    head?: never;
+    /** 일정 수정 (S4) — time: null이면 종일로 */
+    patch: operations['SchedulesController_update'];
+    trace?: never;
+  };
   '/api/v1/past-self/availability': {
     parameters: {
       query?: never;
@@ -420,16 +437,6 @@ export interface components {
       label: string;
       sortOrder: number;
     };
-    ScheduleDto: {
-      id: string;
-      date: string;
-      title: string;
-      time: string | null;
-      createdAt: string;
-    };
-    ScheduleListDto: { items: components['schemas']['ScheduleDto'][] };
-    CreateScheduleDto: { date: string; title: string; time?: string | null };
-    UpdateScheduleDto: { date?: string; title?: string; time?: string | null };
     ChecklistCategoryDto: {
       /** Format: uuid */
       id: string;
@@ -577,6 +584,51 @@ export interface components {
       /** @description true면 기억에서 제외 */
       excluded: boolean;
     };
+    ScheduleDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: date
+       * @example 2026-10-24
+       */
+      date: string;
+      title: string;
+      /**
+       * @description HH:mm, 없으면 종일
+       * @example 14:00
+       */
+      time: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ScheduleListDto: {
+      /** @description 날짜 → 시간(종일이 먼저) → 등록순 */
+      items: components['schemas']['ScheduleDto'][];
+    };
+    CreateScheduleDto: {
+      /**
+       * Format: date
+       * @description 미래 날짜 허용
+       * @example 2026-10-24
+       */
+      date: string;
+      title: string;
+      /** @example 14:00 */
+      time?: string | null;
+    };
+    UpdateScheduleDto: {
+      /**
+       * Format: date
+       * @example 2026-10-25
+       */
+      date?: string;
+      title?: string;
+      /**
+       * @description null이면 시간을 지운다(종일)
+       * @example 14:00
+       */
+      time?: string | null;
+    };
     AvailabilityDto: {
       /** Format: date */
       anchorDate: string;
@@ -670,7 +722,6 @@ export interface components {
       | 'SESSION_NOT_FOUND'
       | 'CATEGORY_NOT_FOUND'
       | 'SCHEDULE_NOT_FOUND'
-      | 'SCHEDULE_LIMIT_EXCEEDED'
       | 'EMAIL_TAKEN'
       | 'INVALID_ENTRY_STATE'
       | 'FILE_TOO_LARGE'
@@ -680,6 +731,7 @@ export interface components {
       | 'PHOTO_REQUIRED'
       | 'NOT_ENOUGH_RECORDS'
       | 'SESSION_MESSAGE_LIMIT'
+      | 'SCHEDULE_LIMIT_EXCEEDED'
       | 'TOO_MANY_REQUESTS'
       | 'AI_UPSTREAM_ERROR'
       | 'AI_INDEX_UNAVAILABLE'
@@ -703,122 +755,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  SchedulesController_list: {
-    parameters: {
-      query: { from: string; to: string };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ScheduleListDto'];
-        };
-      };
-      400: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-      401: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-    };
-  };
-  SchedulesController_create: {
-    parameters: { query?: never; header?: never; path?: never; cookie?: never };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateScheduleDto'];
-      };
-    };
-    responses: {
-      201: {
-        headers: { [name: string]: unknown };
-        content: { 'application/json': components['schemas']['ScheduleDto'] };
-      };
-      400: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-      401: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-      422: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-    };
-  };
-  SchedulesController_update: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: { id: string };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateScheduleDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: { [name: string]: unknown };
-        content: { 'application/json': components['schemas']['ScheduleDto'] };
-      };
-      400: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-      404: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-      422: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-    };
-  };
-  SchedulesController_remove: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: { id: string };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      204: { headers: { [name: string]: unknown }; content?: never };
-      404: {
-        headers: { [name: string]: unknown };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-    };
-  };
   HealthController_check: {
     parameters: {
       query?: never;
@@ -1866,6 +1802,195 @@ export interface operations {
       };
       /** @description AI_INDEX_UNAVAILABLE */
       503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  SchedulesController_list: {
+    parameters: {
+      query: {
+        from: string;
+        /** @description from부터 최대 366일 */
+        to: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScheduleListDto'];
+        };
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  SchedulesController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateScheduleDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScheduleDto'];
+        };
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description SCHEDULE_LIMIT_EXCEEDED */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  SchedulesController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description SCHEDULE_NOT_FOUND */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  SchedulesController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateScheduleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScheduleDto'];
+        };
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description SCHEDULE_NOT_FOUND */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description SCHEDULE_LIMIT_EXCEEDED */
+      422: {
         headers: {
           [name: string]: unknown;
         };

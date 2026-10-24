@@ -134,7 +134,7 @@ function ScheduleRow({
     <View style={styles.rowWrap}>
       <View style={styles.row} testID={`schedule-${schedule.id}`}>
         <Text style={[styles.time, !schedule.time && styles.timeAllDay]}>
-          {schedule.time ?? '하루'}
+          {schedule.time ?? '종일'}
         </Text>
         <Text style={styles.title} numberOfLines={2}>
           {schedule.title}
@@ -201,7 +201,7 @@ function ScheduleForm({
     if (titleError) return setLocalError(titleError);
     if (normalized === undefined)
       return setLocalError(
-        '시간은 14:30처럼 적어 주세요. 비워 두면 하루 일정이에요.',
+        '시간은 14:30처럼 적어 주세요. 비워 두면 종일 일정이에요.',
       );
     setLocalError(null);
     const body = { title: title.trim(), time: normalized };
@@ -239,7 +239,7 @@ function ScheduleForm({
         label="시간 (선택)"
         value={time}
         onChangeText={setTime}
-        placeholder="예: 14:30 — 비우면 하루 일정"
+        placeholder="예: 14:30 — 비우면 종일"
         keyboardType="numbers-and-punctuation"
         maxLength={8}
         testID={initial ? 'schedule-edit-time' : 'schedule-time'}
