@@ -213,3 +213,51 @@ export function useConfirm(date: string) {
     },
   });
 }
+
+export type EntrySummaryDto = components['schemas']['EntrySummaryDto'];
+
+// 캘린더 목록 (월간·연간 공용, 최대 366일)
+export function useEntriesRange(from: string, to: string) {
+  return useQuery({
+    queryKey: [...entriesKey, from, to],
+    queryFn: async () =>
+      (
+        await unwrap(
+          api.GET('/api/v1/entries', { params: { query: { from, to } } }),
+        )
+      ).items,
+  });
+}
+
+// 일기 삭제. 기억(AI 색인)을 먼저 지우므로 AI가 안 되면 503 AI_INDEX_UNAVAILABLE
+export function useDeleteEntry(date: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      unwrap(
+        api.DELETE('/api/v1/entries/{date}', { params: { path: { date } } }),
+      ),
+    onSuccess: async () => {
+      client.setQueryData(entryKey(date), null);
+      await client.invalidateQueries({ queryKey: entriesKey });
+    },
+  });
+}
+
+// 기억에서 제외/복원 (확정된 일기만)
+export function useUpdateMemory(date: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (excluded: boolean) =>
+      unwrap(
+        api.PATCH('/api/v1/entries/{date}/memory', {
+          params: { path: { date } },
+          body: { excluded },
+        }),
+      ),
+    onSuccess: (entry) => {
+      client.setQueryData(entryKey(date), entry);
+      void client.invalidateQueries({ queryKey: entriesKey });
+    },
+  });
+}
