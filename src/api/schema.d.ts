@@ -133,6 +133,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/entries/feed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * 전체 일기 목록 (E5) — 날짜 내림차순, before 커서
+     * @description 상태 무관(작성 중 포함). before가 있으면 그 날짜 미만만. 다음 페이지는 nextBefore로.
+     */
+    get: operations['EntriesController_feed'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/entries/{date}': {
     parameters: {
       query?: never;
@@ -490,6 +510,35 @@ export interface components {
     EntrySummaryListDto: {
       items: components['schemas']['EntrySummaryDto'][];
     };
+    /** @enum {string} */
+    AiIndexStatus: 'NONE' | 'PENDING' | 'INDEXED' | 'FAILED';
+    EntryFeedItemDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: date
+       * @example 2026-10-24
+       */
+      date: string;
+      status: components['schemas']['EntryStatus'];
+      /** @description 대표 사진, 없으면 첫 사진 (서명 URL) */
+      coverPhotoUrl: string | null;
+      photoCount: number;
+      /** @description 확정본 → AI 초안 → 한 줄 설명 중 처음 비어 있지 않은 것. 공백 정리, 120자 초과 시 120자 + … */
+      excerpt: string | null;
+      /** @description 그날 체크된 카테고리 색 */
+      categoryColors: string[];
+      aiIndexStatus: components['schemas']['AiIndexStatus'];
+    };
+    EntryFeedDto: {
+      /** @description 날짜 내림차순 */
+      items: components['schemas']['EntryFeedItemDto'][];
+      /**
+       * Format: date
+       * @description 다음 페이지는 before=이 값으로. 없으면 null
+       */
+      nextBefore: string | null;
+    };
     PhotoDto: {
       /** Format: uuid */
       id: string;
@@ -511,8 +560,6 @@ export interface components {
       answer: string | null;
       skipped: boolean;
     };
-    /** @enum {string} */
-    AiIndexStatus: 'NONE' | 'PENDING' | 'INDEXED' | 'FAILED';
     EntryDto: {
       /** Format: uuid */
       id: string;
@@ -1129,6 +1176,47 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['EntrySummaryListDto'];
+        };
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EntriesController_feed: {
+    parameters: {
+      query?: {
+        /** @description 이 날짜 미만(제외)만. 이전 응답의 nextBefore */
+        before?: string;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EntryFeedDto'];
         };
       };
       /** @description VALIDATION_FAILED */

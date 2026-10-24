@@ -8,6 +8,7 @@ import { errorMessage } from '@/api/errors';
 import { Screen } from '@/components/Screen';
 import { StateView } from '@/components/StateView';
 import { DayPanel } from '@/features/calendar/DayPanel';
+import { ListView } from '@/features/calendar/ListView';
 import { MonthView } from '@/features/calendar/MonthView';
 import { YearView } from '@/features/calendar/YearView';
 import {
@@ -22,9 +23,15 @@ import { todayKst } from '@/lib/dates';
 import { countByDate } from '@/lib/schedule';
 import { colors, radius, spacing } from '@/theme';
 
-type Mode = 'month' | 'year';
+type Mode = 'month' | 'year' | 'list';
 
-// 캘린더: 월간(일기·체크리스트 색) / 연간(대표 사진 보관함) (prd.md §7-3)
+const MODE_LABEL: Record<Mode, string> = {
+  month: '월간',
+  year: '연간',
+  list: '목록',
+};
+
+// 캘린더: 월간(일기·체크리스트 색) / 연간(대표 사진 보관함) / 목록(전체 일기 최신순) (prd.md §7-3)
 export default function CalendarScreen() {
   const today = todayKst();
   const [mode, setMode] = useState<Mode>('month');
@@ -105,25 +112,38 @@ export default function CalendarScreen() {
     );
   }
 
+  const tabs = (
+    <View style={styles.tabs} accessibilityRole="tablist">
+      {(['month', 'year', 'list'] as const).map((m) => (
+        <Pressable
+          key={m}
+          testID={`calendar-mode-${m}`}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: mode === m }}
+          aria-selected={mode === m}
+          onPress={() => setMode(m)}
+          style={[styles.tab, mode === m && styles.tabSelected]}
+        >
+          <Text style={[styles.tabText, mode === m && styles.tabTextSelected]}>
+            {MODE_LABEL[m]}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+
+  // 목록은 무한 스크롤이라 FlatList가 화면 스크롤을 맡는다 (ScrollView 안에 넣지 않는다)
+  if (mode === 'list') {
+    return (
+      <View style={styles.listScreen}>
+        <ListView header={tabs} />
+      </View>
+    );
+  }
+
   return (
     <Screen edges={[]}>
-      <View style={styles.tabs} accessibilityRole="tablist">
-        {(['month', 'year'] as const).map((m) => (
-          <Pressable
-            key={m}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: mode === m }}
-            onPress={() => setMode(m)}
-            style={[styles.tab, mode === m && styles.tabSelected]}
-          >
-            <Text
-              style={[styles.tabText, mode === m && styles.tabTextSelected]}
-            >
-              {m === 'month' ? '월간' : '연간'}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      {tabs}
 
       <View style={styles.nav}>
         <Pressable
@@ -157,6 +177,7 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
+  listScreen: { flex: 1, backgroundColor: colors.background },
   tabs: {
     flexDirection: 'row',
     padding: 3,
