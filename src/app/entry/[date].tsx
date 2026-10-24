@@ -13,6 +13,7 @@ import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
+import { ScheduleList } from '@/features/schedules/ScheduleList';
 import { StateView } from '@/components/StateView';
 import { PhotoCarousel } from '@/features/calendar/PhotoCarousel';
 import { indexBadgeOf } from '@/features/today/stage';
@@ -134,6 +135,8 @@ export default function EntryDetailScreen() {
             ))}
           </View>
         ) : null}
+
+        <ScheduleList date={date} title="이 날 일정" emptyText={null} />
 
         {confirmed ? (
           <>

@@ -14,6 +14,7 @@ import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { PhotoGrid, type PhotoTile } from '@/components/PhotoGrid';
 import { Section } from '@/components/Section';
+import { ScheduleList } from '@/features/schedules/ScheduleList';
 import { TextField } from '@/components/TextField';
 import { compressForUpload, MAX_PHOTOS } from '@/lib/image';
 import { colors, spacing } from '@/theme';
@@ -181,6 +182,13 @@ export function InputStage({ date, entry, categories }: Props) {
           disabled={removePhoto.isPending}
         />
       </Section>
+
+      <ScheduleList
+        date={date}
+        title="이 날 일정"
+        hint="AI가 일기를 쓸 때 참고해요. 캘린더에서 추가·수정할 수 있어요."
+        emptyText="등록한 일정이 없어요."
+      />
 
       <Section title="한 줄 설명" hint="선택 — 적어 두면 AI가 덜 헷갈려요">
         <TextField

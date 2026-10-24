@@ -3,10 +3,11 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEntriesRange } from '@/api/entries';
+import { useSchedules } from '@/api/schedules';
 import { errorMessage } from '@/api/errors';
-import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { StateView } from '@/components/StateView';
+import { DayPanel } from '@/features/calendar/DayPanel';
 import { MonthView } from '@/features/calendar/MonthView';
 import { YearView } from '@/features/calendar/YearView';
 import {
@@ -18,6 +19,7 @@ import {
   type YearMonth,
 } from '@/lib/calendar';
 import { todayKst } from '@/lib/dates';
+import { countByDate } from '@/lib/schedule';
 import { colors, radius, spacing } from '@/theme';
 
 type Mode = 'month' | 'year';
@@ -31,21 +33,28 @@ export default function CalendarScreen() {
 
   const range = mode === 'month' ? monthRange(month) : yearRange(year);
   const list = useEntriesRange(range.from, range.to);
+  const monthSpan = monthRange(month);
+  // 일정은 월간에서만 쓴다. 실패해도 캘린더는 그대로 보여 준다 (날짜 패널에서 다시 시도)
+  const schedules = useSchedules(monthSpan.from, monthSpan.to);
+  const [selected, setSelected] = useState<string>(today);
 
   const canNext =
     mode === 'month'
       ? canGoNextMonth(month, today)
-      : year < yearMonthOf(today).year;
+      : year < yearMonthOf(today).year; // 연간 보관함은 사진(일기)만이라 올해까지
   const title =
     mode === 'month' ? `${month.year}년 ${month.month}월` : `${year}년`;
   const move = (delta: number) =>
-    mode === 'month'
-      ? setMonth((m) => shiftMonth(m, delta))
-      : setYear((y) => y + delta);
+    mode === 'month' ? moveMonth(delta) : setYear((y) => y + delta);
 
-  const openDay = (date: string, hasEntry: boolean) => {
-    if (hasEntry) router.push(`/entry/${date}`);
-    else router.push(`/today?date=${date}`); // 기록 없는 지난 날 → 그날 일기 쓰기
+  // 날짜를 누르면 아래 패널에 그날 일정과 일기 보기/쓰기가 나온다
+  const selectDay = (date: string) => setSelected(date);
+  const moveMonth = (delta: number) => {
+    const next = shiftMonth(month, delta);
+    // 오늘이 있는 달로 오면 오늘, 아니면 그 달 1일을 고른다
+    const span = monthRange(next);
+    setMonth(next);
+    setSelected(today >= span.from && today <= span.to ? today : span.from);
   };
 
   let body;
@@ -66,18 +75,16 @@ export default function CalendarScreen() {
           month={month}
           today={today}
           entries={list.data}
-          onPressDay={openDay}
+          scheduleCounts={countByDate(schedules.data ?? [])}
+          selected={selected}
+          onPressDay={selectDay}
         />
-        {list.data.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>이 달에는 아직 기록이 없어요.</Text>
-            <Button
-              title="첫 기록을 남겨 보세요"
-              variant="ghost"
-              onPress={() => router.push('/today')}
-            />
-          </View>
-        ) : null}
+        <DayPanel
+          key={selected}
+          date={selected}
+          today={today}
+          entry={list.data.find((e) => e.date === selected)}
+        />
       </>
     );
   } else if (list.data.length === 0) {
@@ -172,6 +179,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
   },
   title: { fontSize: 18, fontWeight: '700', color: colors.text },
-  empty: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.md },
-  emptyText: { fontSize: 14, color: colors.textMuted },
 });
