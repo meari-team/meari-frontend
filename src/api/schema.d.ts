@@ -348,7 +348,7 @@ export interface paths {
     delete: operations['SchedulesController_remove'];
     options?: never;
     head?: never;
-    /** 일정 수정 (S4) — time: null이면 종일로 */
+    /** 일정 수정 (S4) — time: null이면 종일로, completed로 완료 체크 */
     patch: operations['SchedulesController_update'];
     trace?: never;
   };
@@ -645,6 +645,8 @@ export interface components {
        * @example 14:00
        */
       time: string | null;
+      /** @description 완료 체크 여부 (캘린더 체크박스) */
+      completed: boolean;
       /** Format: date-time */
       createdAt: string;
     };
@@ -675,6 +677,8 @@ export interface components {
        * @example 14:00
        */
       time?: string | null;
+      /** @description 완료 체크 토글 */
+      completed?: boolean;
     };
     AvailabilityDto: {
       /** Format: date */

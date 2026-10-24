@@ -5,7 +5,9 @@ import {
   dayStateOf,
   daysInMonth,
   groupByMonth,
+  dayTitleOf,
   monthGrid,
+  monthGridFilled,
   monthRange,
   shiftMonth,
   yearRange,
@@ -96,5 +98,25 @@ describe('calendar', () => {
       groups[1].items.map((i) => i.date),
       ['2026-09-01', '2026-09-02'],
     );
+  });
+
+  it('앞뒤 달까지 채운 격자: 2026년 10월은 9/27 시작, 10/31 끝 (5주)', () => {
+    const weeks = monthGridFilled({ year: 2026, month: 10 });
+    assert.equal(weeks.length, 5);
+    assert.deepEqual(weeks[0][0], { date: '2026-09-27', inMonth: false });
+    assert.deepEqual(weeks[0][4], { date: '2026-10-01', inMonth: true });
+    assert.deepEqual(weeks[4][6], { date: '2026-10-31', inMonth: true });
+    assert.ok(weeks.every((w) => w.length === 7));
+  });
+
+  it('앞뒤 달까지 채운 격자: 연말을 넘어가는 다음 달 날짜', () => {
+    const weeks = monthGridFilled({ year: 2026, month: 12 });
+    const last = weeks[weeks.length - 1];
+    assert.deepEqual(last[6], { date: '2027-01-02', inMonth: false });
+  });
+
+  it('날짜 패널 제목', () => {
+    assert.equal(dayTitleOf('2026-10-20'), '20. 화');
+    assert.equal(dayTitleOf('2026-10-04'), '4. 일');
   });
 });

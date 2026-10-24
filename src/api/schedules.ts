@@ -67,3 +67,32 @@ export function useDeleteSchedule() {
     onSuccess: () => invalidateSchedules(client),
   });
 }
+
+// 완료 체크 토글. 누르는 즉시 화면에 반영하고(낙관적), 실패하면 되돌린다
+export function useToggleSchedule() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
+      unwrap(
+        api.PATCH('/api/v1/schedules/{id}', {
+          params: { path: { id } },
+          body: { completed },
+        }),
+      ),
+    onMutate: async ({ id, completed }) => {
+      await client.cancelQueries({ queryKey: schedulesKey });
+      const previous = client.getQueriesData<ScheduleDto[]>({
+        queryKey: schedulesKey,
+      });
+      client.setQueriesData<ScheduleDto[]>({ queryKey: schedulesKey }, (old) =>
+        old?.map((s) => (s.id === id ? { ...s, completed } : s)),
+      );
+      return { previous };
+    },
+    onError: (_e, _v, context) => {
+      for (const [key, data] of context?.previous ?? [])
+        client.setQueryData(key, data);
+    },
+    onSettled: () => invalidateSchedules(client),
+  });
+}

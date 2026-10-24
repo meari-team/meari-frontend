@@ -50,6 +50,40 @@ export function monthGrid(ym: YearMonth): (string | null)[][] {
   return weeks;
 }
 
+// 앞뒤 달 날짜까지 채운 격자 (월간 캘린더에서 앞뒤 달은 흐리게). 주 수는 그 달에 필요한 만큼
+export type GridCell = { date: string; inMonth: boolean };
+
+export function monthGridFilled(ym: YearMonth): GridCell[][] {
+  const first = Date.UTC(ym.year, ym.month - 1, 1);
+  const lead = new Date(first).getUTCDay();
+  const total = Math.ceil((lead + daysInMonth(ym)) / 7) * 7;
+  const weeks: GridCell[][] = [];
+  for (let i = 0; i < total; i++) {
+    const d = new Date(first + (i - lead) * 86_400_000);
+    const date = toDate(
+      d.getUTCFullYear(),
+      d.getUTCMonth() + 1,
+      d.getUTCDate(),
+    );
+    if (i % 7 === 0) weeks.push([]);
+    weeks[weeks.length - 1].push({
+      date,
+      inMonth: d.getUTCMonth() + 1 === ym.month,
+    });
+  }
+  return weeks;
+}
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+// 0 = 일요일 … 6 = 토요일
+export const weekdayOf = (date: string) =>
+  new Date(`${date}T00:00:00Z`).getUTCDay();
+
+// 날짜 패널 제목 "20. 화"
+export const dayTitleOf = (date: string) =>
+  `${Number(date.slice(8))}. ${WEEKDAYS[weekdayOf(date)]}`;
+
 // 미래에는 일기가 없지만 일정은 미리 넣을 수 있다 → 오늘 기준 12개월 뒤까지 넘긴다
 export const MONTHS_AHEAD = 12;
 

@@ -136,7 +136,10 @@ function ScheduleRow({
         <Text style={[styles.time, !schedule.time && styles.timeAllDay]}>
           {schedule.time ?? '종일'}
         </Text>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text
+          style={[styles.title, schedule.completed && styles.titleDone]}
+          numberOfLines={2}
+        >
           {schedule.title}
         </Text>
         {editable ? (
@@ -178,15 +181,18 @@ function ScheduleRow({
   );
 }
 
-// 새 일정(initial 없음) 또는 수정(initial 있음)
-function ScheduleForm({
+// 새 일정(initial 없음) 또는 수정(initial 있음). 캘린더의 일정 시트에서도 쓴다
+export function ScheduleForm({
   date,
   initial,
   onDone,
+  autoFocus,
 }: {
   date: string;
   initial?: ScheduleDto;
+  // 저장·추가가 끝나거나 취소하면 부른다
   onDone?: () => void;
+  autoFocus?: boolean;
 }) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [time, setTime] = useState(initial?.time ?? '');
@@ -217,6 +223,7 @@ function ScheduleForm({
           onSuccess: () => {
             setTitle('');
             setTime('');
+            onDone?.();
           },
         },
       );
@@ -231,6 +238,7 @@ function ScheduleForm({
         onChangeText={setTitle}
         maxLength={SCHEDULE_TITLE_MAX}
         placeholder="예: 동아리 회의"
+        autoFocus={autoFocus}
         returnKeyType="done"
         onSubmitEditing={submit}
         testID={initial ? 'schedule-edit-title' : 'schedule-title'}
@@ -297,6 +305,7 @@ const styles = StyleSheet.create({
   },
   timeAllDay: { color: colors.textMuted, fontWeight: '600' },
   title: { flex: 1, fontSize: 15, color: colors.text },
+  titleDone: { color: colors.textMuted, textDecorationLine: 'line-through' },
   actions: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
   empty: { fontSize: 14, color: colors.textMuted },
   hint: { fontSize: 13, color: colors.textMuted },
