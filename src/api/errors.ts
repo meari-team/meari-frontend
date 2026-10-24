@@ -28,7 +28,8 @@ export async function unwrap<T>(
   let result: Awaited<typeof call>;
   try {
     result = await call;
-  } catch {
+  } catch (e) {
+    if (__DEV__) console.warn('[api] 요청 실패', e);
     throw new ApiError(
       'NETWORK_ERROR',
       '서버에 연결할 수 없어요. 네트워크를 확인해 주세요.',
