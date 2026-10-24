@@ -46,6 +46,11 @@ export default function RootLayout() {
         </Stack.Protected>
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" />
+          {/* 일기 상세: 캘린더와 과거의 나(근거 칩)가 함께 연다 */}
+          <Stack.Screen
+            name="entry/[date]"
+            options={{ headerShown: true, headerBackTitle: '뒤로' }}
+          />
         </Stack.Protected>
       </Stack>
     </QueryClientProvider>

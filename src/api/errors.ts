@@ -1,3 +1,4 @@
+import { rateLimitMessage } from './rate-limit';
 import type { components } from './schema';
 
 export type ErrorCode = components['schemas']['ErrorCode'];
@@ -7,6 +8,7 @@ export class ApiError extends Error {
   constructor(
     readonly code: ErrorCode | 'NETWORK_ERROR',
     message: string,
+    readonly details: unknown = null,
   ) {
     super(message);
   }
@@ -44,7 +46,12 @@ export async function unwrap<T>(
   }
   if (result.error !== undefined || !result.response.ok) {
     if (isErrorResponse(result.error)) {
-      throw new ApiError(result.error.error.code, result.error.error.message);
+      const { code, message, details } = result.error.error;
+      throw new ApiError(
+        code,
+        code === 'TOO_MANY_REQUESTS' ? rateLimitMessage(details) : message,
+        details,
+      );
     }
     throw new ApiError('INTERNAL_ERROR', '일시적인 오류가 발생했어요.');
   }

@@ -1,44 +1,51 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { colors, radius, spacing } from '@/theme';
 
+type Variant = 'primary' | 'ghost' | 'danger';
+
 type Props = {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'ghost';
+  variant?: Variant;
   disabled?: boolean;
   loading?: boolean;
+  testID?: string;
 };
 
+// danger: 되돌릴 수 없는 작업(삭제)의 최종 확인 버튼
 export function Button({
   title,
   onPress,
   variant = 'primary',
   disabled = false,
   loading = false,
+  testID,
 }: Props) {
   const inactive = disabled || loading;
+  const filled = variant !== 'ghost';
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
       onPress={onPress}
+      testID={testID}
       style={({ pressed }) => [
         styles.base,
-        variant === 'primary' ? styles.primary : styles.ghost,
-        inactive && variant === 'primary' && styles.disabled,
+        styles[variant],
+        inactive && filled && styles.disabled,
         pressed && styles.pressed,
       ]}
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? colors.primaryText : colors.primary}
+          color={filled ? colors.primaryText : colors.primary}
         />
       ) : (
         <Text
           style={[
             styles.label,
-            variant === 'primary' ? styles.primaryLabel : styles.ghostLabel,
+            filled ? styles.filledLabel : styles.ghostLabel,
           ]}
         >
           {title}
@@ -58,9 +65,10 @@ const styles = StyleSheet.create({
   },
   primary: { backgroundColor: colors.primary },
   ghost: { backgroundColor: 'transparent' },
+  danger: { backgroundColor: colors.danger },
   disabled: { backgroundColor: colors.disabled },
   pressed: { opacity: 0.8 },
   label: { fontSize: 16, fontWeight: '600' },
-  primaryLabel: { color: colors.primaryText },
+  filledLabel: { color: colors.primaryText },
   ghostLabel: { color: colors.primary },
 });
