@@ -4,6 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
+import { File as ExpoFile } from 'expo-file-system';
 import { Platform } from 'react-native';
 import { api, postForm } from './client';
 import { ApiError, unwrap } from './errors';
@@ -100,12 +101,10 @@ export function useUploadPhoto(date: string) {
         const blob = await (await fetch(image.uri)).blob();
         form.append('files', blob, 'photo.jpg');
       } else {
-        // RN의 FormData는 { uri, name, type } 객체로 파일을 받는다
-        form.append('files', {
-          uri: image.uri,
-          name: 'photo.jpg',
-          type: 'image/jpeg',
-        } as unknown as Blob);
+        // Expo SDK 58의 fetch(expo/fetch)는 RN식 { uri, name, type } 항목을 지원하지 않는다
+        // ("Unsupported FormDataPart implementation"). Blob을 구현한 expo-file-system File로 보낸다.
+        // 파일 이름(압축본 *.jpg)이 있어야 서버(multer)가 파일로 받는다.
+        form.append('files', new ExpoFile(image.uri));
       }
       if (image.caption)
         form.append('captions', JSON.stringify([image.caption]));

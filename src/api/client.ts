@@ -25,8 +25,7 @@ export const api = createClient<paths>({ baseUrl: API_URL });
 api.use(authMiddleware);
 
 // 파일 업로드(multipart)는 openapi-fetch를 거치지 않고 fetch에 FormData를 직접 넘긴다.
-// RN의 FormData 파일 항목({ uri, name, type })은 네이티브 fetch만 이해한다.
-// openapi-fetch가 만드는 Request 객체를 거치면 iOS·Android에서 업로드가 실패한다 (웹은 정상).
+// 파일 항목은 Blob(웹) 또는 expo-file-system File(네이티브)이어야 한다 — useUploadPhoto 참고.
 // 결과 모양은 openapi-fetch와 같게 맞춰 unwrap()을 그대로 쓴다.
 export async function postForm<T>(
   path: string,
