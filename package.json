@@ -12,6 +12,8 @@
     "expo-font": "~58.0.10",
     "expo-glass-effect": "~58.0.5",
     "expo-image": "~58.0.17",
+    "expo-image-manipulator": "~58.0.15",
+    "expo-image-picker": "~58.0.10",
     "expo-linking": "~58.0.14",
     "expo-router": "~58.0.26",
     "expo-secure-store": "~58.0.2",
@@ -48,7 +50,8 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "api:types": "npx -y openapi-typescript@7.13.0 ${OPENAPI_SPEC:-../meari-backend/openapi.json} -o src/api/schema.d.ts && prettier --write src/api/schema.d.ts"
+    "api:types": "npx -y openapi-typescript@7.13.0 ${OPENAPI_SPEC:-../meari-backend/openapi.json} -o src/api/schema.d.ts && prettier --write src/api/schema.d.ts",
+    "test": "node --test \"src/**/*.test.ts\""
   },
   "private": true
 }
