@@ -1,0 +1,50 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Tabs } from 'expo-router';
+import type { ComponentProps } from 'react';
+import type { ColorValue } from 'react-native';
+import { colors } from '@/theme';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
+type IconProps = { color: ColorValue; size: number };
+
+function TabIcon({ name, color, size }: IconProps & { name: IconName }) {
+  return <Ionicons name={name} color={color as string} size={size} />;
+}
+
+const icon = (name: IconName) => {
+  const render = (props: IconProps) => <TabIcon name={name} {...props} />;
+  return render;
+};
+
+// 하단 탭 4개: 오늘의 일기 / 캘린더 / 과거의 나 / 마이페이지 (기획안 UI 구성)
+export default function TabsLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+      }}
+    >
+      <Tabs.Screen
+        name="today"
+        options={{ title: '오늘의 일기', tabBarIcon: icon('create-outline') }}
+      />
+      <Tabs.Screen
+        name="calendar"
+        options={{ title: '캘린더', tabBarIcon: icon('calendar-outline') }}
+      />
+      <Tabs.Screen
+        name="past-self"
+        options={{
+          title: '과거의 나',
+          tabBarIcon: icon('chatbubbles-outline'),
+        }}
+      />
+      <Tabs.Screen
+        name="my"
+        options={{ title: '마이페이지', tabBarIcon: icon('person-outline') }}
+      />
+    </Tabs>
+  );
+}
