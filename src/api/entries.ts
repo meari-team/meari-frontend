@@ -5,7 +5,7 @@ import {
   type QueryClient,
 } from '@tanstack/react-query';
 import { Platform } from 'react-native';
-import { api } from './client';
+import { api, postForm } from './client';
 import { ApiError, unwrap } from './errors';
 import type { components } from './schema';
 
@@ -110,11 +110,10 @@ export function useUploadPhoto(date: string) {
       if (image.caption)
         form.append('captions', JSON.stringify([image.caption]));
       return unwrap(
-        api.POST('/api/v1/entries/{date}/photos', {
-          params: { path: { date } },
-          body: {} as never,
-          bodySerializer: () => form,
-        }),
+        postForm<components['schemas']['PhotoListDto']>(
+          `/api/v1/entries/${date}/photos`,
+          form,
+        ),
       );
     },
     onSuccess: () => invalidateEntry(client, date),
