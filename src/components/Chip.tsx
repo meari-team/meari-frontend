@@ -23,6 +23,8 @@ export function Chip({
     <Pressable
       accessibilityRole={onPress ? 'button' : 'text'}
       accessibilityState={{ selected, disabled }}
+      // 웹은 accessibilityState를 aria 속성으로 옮기지 않아 직접 넣는다
+      aria-selected={selected}
       disabled={disabled || !onPress}
       onPress={onPress}
       testID={testID}
