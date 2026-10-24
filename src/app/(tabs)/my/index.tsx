@@ -38,12 +38,8 @@ const ABOUT_PAST_SELF =
   '과거의 나는 고른 날짜까지 쓴 확정 일기만으로 AI가 재구성한 모습이에요. ' +
   '그 이후의 일은 모르고, 실제 그때의 나와 다를 수 있어요. ' +
   '대답 아래 근거 날짜를 누르면 그날 일기로 가요.';
-const ABOUT_PRIVACY =
-  '일기와 사진은 내 계정에서만 보여요. 사진의 위치 정보는 올릴 때 지워요. ' +
-  '확정한 일기만 AI 기억에 저장되고, 일기마다 기억에서 뺄 수 있어요. ' +
-  '탈퇴하면 AI 기억까지 모두 지워져요.';
 
-type Open = 'style' | 'pastSelf' | 'privacy' | 'logout' | null;
+type Open = 'style' | 'pastSelf' | 'logout' | null;
 
 // 마이페이지: 프로필·기록 요약 → 설정 묶음 → 로그아웃·탈퇴
 export default function MyScreen() {
@@ -259,16 +255,11 @@ export default function MyScreen() {
         <SettingsRow
           icon="shield-checkmark-outline"
           tint={colors.success}
-          title="내 기록과 개인정보"
-          expanded={open === 'privacy'}
-          onPress={() => toggle('privacy')}
-          testID="open-about-privacy"
+          title="개인정보 처리방침"
+          description="모으는 정보, 외부 AI, 보관과 삭제"
+          onPress={() => router.push('/my/privacy')}
+          testID="open-privacy"
         />
-        {open === 'privacy' ? (
-          <Text style={[styles.expand, styles.expandDivider, styles.aboutText]}>
-            {ABOUT_PRIVACY}
-          </Text>
-        ) : null}
         <SettingsRow
           icon="information-circle-outline"
           tint={colors.textMuted}
