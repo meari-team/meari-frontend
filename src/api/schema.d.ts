@@ -67,16 +67,13 @@ export interface paths {
     put?: never;
     post?: never;
     /**
-     * 회원 탈퇴 (U3) — 실제로 삭제하지 않음 [STUB]
-     * @description 목 응답을 돌려준다. MEA-19에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 회원 탈퇴 (U3)
+     * @description AI 기억을 먼저 모두 지우고, 하나라도 실패하면 503이며 아무것도 지우지 않는다. 성공하면 일기·사진·체크리스트·채팅을 모두 삭제한다. 이후 기존 토큰은 401.
      */
-    delete: operations['UsersController_deleteMe'];
+    delete: operations['UsersController_withdraw'];
     options?: never;
     head?: never;
-    /**
-     * 닉네임·문체 변경 (U2, P1) [STUB]
-     * @description 목 응답을 돌려준다. MEA-후속에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 닉네임·문체 변경 (U2) — 보낸 필드만 바꾼다 */
     patch: operations['UsersController_updateMe'];
     trace?: never;
   };
@@ -90,10 +87,7 @@ export interface paths {
     /** 카테고리+항목 목록 (C1) */
     get: operations['ChecklistController_list'];
     put?: never;
-    /**
-     * 카테고리 추가 (C2, P1) [STUB]
-     * @description 목 응답을 돌려준다. MEA-후속에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 카테고리 추가 (C2) — 맨 뒤에, 최대 20개 */
     post: operations['ChecklistController_create'];
     delete?: never;
     options?: never;
@@ -111,16 +105,13 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    /**
-     * 카테고리 삭제 (C4, P1) [STUB]
-     * @description 목 응답을 돌려준다. MEA-후속에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
-     */
+    /** 카테고리 삭제 (C4) — 항목·과거 체크 기록도 함께 */
     delete: operations['ChecklistController_remove'];
     options?: never;
     head?: never;
     /**
-     * 카테고리 수정 (C3, P1) [STUB]
-     * @description 목 응답을 돌려준다. MEA-후속에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 카테고리 수정 (C3)
+     * @description items를 보내면 전체 교체: id가 있는 항목은 유지(과거 체크 보존), 빠진 항목은 삭제, id 없는 항목은 새로 추가.
      */
     patch: operations['ChecklistController_update'];
     trace?: never;
@@ -296,8 +287,8 @@ export interface paths {
     options?: never;
     head?: never;
     /**
-     * 기억에서 제외/복원 (G5, P1) [STUB]
-     * @description 목 응답을 돌려준다. MEA-23에서 실제 구현으로 교체한다. 응답 헤더 `X-Meari-Stub: true`
+     * 기억에서 제외/복원 (G5)
+     * @description 확정된 일기만. excluded=true: AI 기억을 먼저 지우고 성공하면 제외(실패 시 503, 그대로). excluded=false: PENDING으로 바꾸고 뒤에서 다시 색인.
      */
     patch: operations['GenerationController_updateMemory'];
     trace?: never;
@@ -805,7 +796,7 @@ export interface operations {
       };
     };
   };
-  UsersController_deleteMe: {
+  UsersController_withdraw: {
     parameters: {
       query?: never;
       header?: never;
@@ -1707,6 +1698,15 @@ export interface operations {
       };
       /** @description ENTRY_NOT_FOUND */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description INVALID_ENTRY_STATE */
+      409: {
         headers: {
           [name: string]: unknown;
         };
