@@ -4,6 +4,7 @@ import { useChecklist, useEntry } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
 import { Screen } from '@/components/Screen';
 import { StateView } from '@/components/StateView';
+import { DeleteEntrySection } from '@/features/entries/DeleteEntrySection';
 import { ConfirmedView } from '@/features/today/ConfirmedView';
 import { DraftEditor } from '@/features/today/DraftEditor';
 import { InputStage } from '@/features/today/InputStage';
@@ -121,7 +122,13 @@ export default function TodayScreen() {
   return (
     <>
       {header}
-      <Screen edges={[]}>{body}</Screen>
+      <Screen edges={[]}>
+        {body}
+        {data && !mode ? (
+          // 작성 중이든 확정이든 지울 수 있다. 지우면 빈 입력 화면으로 돌아간다
+          <DeleteEntrySection key={data.id} date={date} />
+        ) : null}
+      </Screen>
     </>
   );
 }
