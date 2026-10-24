@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEntriesRange } from '@/api/entries';
@@ -25,6 +25,9 @@ import { colors, radius, spacing } from '@/theme';
 
 type Mode = 'month' | 'year' | 'list';
 
+const isMode = (v: unknown): v is Mode =>
+  v === 'month' || v === 'year' || v === 'list';
+
 const MODE_LABEL: Record<Mode, string> = {
   month: '월간',
   year: '연간',
@@ -34,7 +37,17 @@ const MODE_LABEL: Record<Mode, string> = {
 // 캘린더: 월간(일기·체크리스트 색) / 연간(대표 사진 보관함) / 목록(전체 일기 최신순) (prd.md §7-3)
 export default function CalendarScreen() {
   const today = todayKst();
-  const [mode, setMode] = useState<Mode>('month');
+  // 홈의 "전체 보기"는 ?mode=list로 연다. at은 같은 모드로 다시 열 때도 바뀌게 하는 값
+  const params = useLocalSearchParams<{ mode?: string; at?: string }>();
+  const [mode, setMode] = useState<Mode>(() =>
+    isMode(params.mode) ? params.mode : 'month',
+  );
+  // 렌더 중에 파라미터가 바뀐 것을 보고 모드를 맞춘다 (effect 대신)
+  const [seenAt, setSeenAt] = useState(params.at);
+  if (params.at !== seenAt) {
+    setSeenAt(params.at);
+    if (isMode(params.mode)) setMode(params.mode);
+  }
   const [month, setMonth] = useState<YearMonth>(() => yearMonthOf(today));
   const [year, setYear] = useState(() => yearMonthOf(today).year);
 

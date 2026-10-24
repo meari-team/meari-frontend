@@ -33,7 +33,7 @@ const open = (item: EntryFeedItemDto) =>
       : `/today?date=${item.date}`,
   );
 
-function FeedItem({ item }: { item: EntryFeedItemDto }) {
+export function FeedItem({ item }: { item: EntryFeedItemDto }) {
   const confirmed = item.status === 'CONFIRMED';
   const badge = confirmed ? indexBadgeOf(item.aiIndexStatus) : null;
   return (
