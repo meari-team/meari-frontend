@@ -1,7 +1,14 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRef } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type GestureResponderEvent,
+} from 'react-native';
 import type { EntrySummaryDto } from '@/api/entries';
-import { dayStateOf, monthGrid, type YearMonth } from '@/lib/calendar';
-import { colors, radius, spacing } from '@/theme';
+import { monthGridFilled, type YearMonth } from '@/lib/calendar';
+import { colors, spacing } from '@/theme';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -12,11 +19,14 @@ type Props = {
   // 날짜별 일정 수
   scheduleCounts?: Map<string, number>;
   selected?: string | null;
-  onPressDay: (date: string, hasEntry: boolean) => void;
+  // 앞뒤 달 날짜를 누르면 inMonth=false (그 달로 넘어간다)
+  onPressDay: (date: string, inMonth: boolean) => void;
+  // 좌우로 밀면 -1(이전 달) / 1(다음 달)
+  onSwipe?: (delta: number) => void;
 };
 
-// 월간 격자. 확정 = 채운 칸 + 카테고리 색 점, 확정 전 = 점선(작성 중), 미래 = 흐리게
-// 일정이 있는 날은 숫자 아래 작은 막대. 미래 날짜도 눌러 일정을 볼 수 있다
+// 월간 격자: 일요일 빨강·토요일 파랑, 앞뒤 달은 흐리게, 오늘 = 채운 원, 고른 날 = 연한 원.
+// 숫자 아래 점: 일기(확정 = 보라, 작성 중 = 회색) · 일정(주황)
 export function MonthView({
   month,
   today,
@@ -24,11 +34,32 @@ export function MonthView({
   scheduleCounts,
   selected,
   onPressDay,
+  onSwipe,
 }: Props) {
   const byDate = new Map(entries.map((e) => [e.date, e]));
 
+  // 좌우로 충분히(가로 50 이상, 세로의 2배 이상) 밀었다 떼면 달을 넘긴다.
+  // 터치 이벤트만 보므로 세로 스크롤·날짜 누르기는 그대로 동작한다
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: GestureResponderEvent) => {
+    start.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
+  };
+  const onTouchEnd = (e: GestureResponderEvent) => {
+    if (!start.current) return;
+    const dx = e.nativeEvent.pageX - start.current.x;
+    const dy = e.nativeEvent.pageY - start.current.y;
+    start.current = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 2)
+      onSwipe?.(dx < 0 ? 1 : -1);
+  };
+
   return (
-    <View style={styles.wrap}>
+    <View
+      style={styles.wrap}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      testID="month-grid"
+    >
       <View style={styles.row}>
         {WEEKDAYS.map((w, i) => (
           <Text
@@ -43,66 +74,65 @@ export function MonthView({
           </Text>
         ))}
       </View>
-      {monthGrid(month).map((week, wi) => (
+      {monthGridFilled(month).map((week, wi) => (
         <View key={wi} style={styles.row}>
-          {week.map((date, di) => {
-            if (!date) return <View key={di} style={styles.cell} />;
+          {week.map(({ date, inMonth }, di) => {
             const entry = byDate.get(date);
-            const state = dayStateOf(date, today, entry?.status);
             const day = Number(date.slice(8));
             const schedules = scheduleCounts?.get(date) ?? 0;
+            const isToday = date === today;
+            const isSelected = selected === date && !isToday;
+            const confirmed = entry?.status === 'CONFIRMED';
             return (
               <Pressable
                 key={date}
                 testID={`day-${date}`}
                 accessibilityRole="button"
-                accessibilityLabel={`${day}일${
-                  state === 'confirmed'
-                    ? ', 일기 있음'
-                    : state === 'writing'
-                      ? ', 작성 중'
-                      : ''
+                accessibilityLabel={`${Number(date.slice(5, 7))}월 ${day}일${
+                  entry ? (confirmed ? ', 일기 있음' : ', 작성 중') : ''
                 }${schedules > 0 ? `, 일정 ${schedules}개` : ''}`}
                 accessibilityState={{ selected: selected === date }}
-                onPress={() => onPressDay(date, !!entry)}
+                onPress={() => onPressDay(date, inMonth)}
                 style={({ pressed }) => [
                   styles.cell,
+                  !inMonth && styles.outside,
                   pressed && styles.pressed,
                 ]}
               >
                 <View
                   style={[
                     styles.day,
-                    state === 'confirmed' && styles.confirmed,
-                    state === 'writing' && styles.writing,
-                    date === today && styles.today,
-                    selected === date && styles.selected,
+                    isSelected && styles.selected,
+                    isToday && styles.today,
                   ]}
                 >
                   <Text
                     style={[
                       styles.dayText,
-                      state === 'future' && styles.futureText,
-                      state === 'confirmed' && styles.confirmedText,
+                      di === 0 && styles.sunday,
+                      di === 6 && styles.saturday,
+                      isToday && styles.todayText,
                     ]}
                   >
                     {day}
                   </Text>
                 </View>
-                <View
-                  style={[
-                    styles.scheduleBar,
-                    schedules > 0 && styles.hasSchedule,
-                  ]}
-                  testID={schedules > 0 ? `day-schedule-${date}` : undefined}
-                />
                 <View style={styles.dots}>
-                  {(entry?.categoryColors ?? []).slice(0, 3).map((c) => (
+                  {entry ? (
                     <View
-                      key={c}
-                      style={[styles.dot, { backgroundColor: c }]}
+                      testID={`day-entry-${date}`}
+                      style={[
+                        styles.dot,
+                        confirmed ? styles.entryDot : styles.writingDot,
+                      ]}
                     />
-                  ))}
+                  ) : null}
+                  {schedules > 0 ? (
+                    <View
+                      testID={`day-schedule-${date}`}
+                      style={[styles.dot, styles.scheduleDot]}
+                    />
+                  ) : null}
                 </View>
               </Pressable>
             );
@@ -110,11 +140,11 @@ export function MonthView({
         </View>
       ))}
       <View style={styles.legend}>
-        <View style={[styles.legendBox, styles.confirmed]} />
-        <Text style={styles.legendText}>확정</Text>
-        <View style={[styles.legendBox, styles.writing]} />
+        <View style={[styles.dot, styles.entryDot]} />
+        <Text style={styles.legendText}>일기</Text>
+        <View style={[styles.dot, styles.writingDot, styles.legendGap]} />
         <Text style={styles.legendText}>작성 중</Text>
-        <View style={[styles.legendBar, styles.hasSchedule]} />
+        <View style={[styles.dot, styles.scheduleDot, styles.legendGap]} />
         <Text style={styles.legendText}>일정</Text>
       </View>
     </View>
@@ -127,51 +157,38 @@ const styles = StyleSheet.create({
   weekday: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.textMuted,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
   },
   sunday: { color: colors.danger },
   saturday: { color: colors.primary },
-  cell: { flex: 1, alignItems: 'center', paddingVertical: 4, minHeight: 52 },
+  cell: { flex: 1, alignItems: 'center', paddingVertical: 6, minHeight: 60 },
+  outside: { opacity: 0.35 },
   pressed: { opacity: 0.6 },
   day: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
   },
-  confirmed: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primarySoft,
-  },
-  writing: { borderStyle: 'dashed', borderColor: colors.textMuted },
-  today: { borderColor: colors.primary, borderStyle: 'solid' },
-  selected: { borderColor: colors.text, borderWidth: 2, borderStyle: 'solid' },
-  dayText: { fontSize: 14, color: colors.text },
-  confirmedText: { color: colors.primary, fontWeight: '700' },
-  futureText: { color: colors.disabled },
-  scheduleBar: { width: 14, height: 3, borderRadius: 2, marginTop: 3 },
-  hasSchedule: { backgroundColor: colors.warning },
-  legendBar: { width: 14, height: 3, borderRadius: 2, marginLeft: spacing.sm },
-  dots: { flexDirection: 'row', gap: 2, height: 6, marginTop: 2 },
-  dot: { width: 5, height: 5, borderRadius: 3 },
+  selected: { backgroundColor: colors.surfaceMuted },
+  today: { backgroundColor: colors.text },
+  dayText: { fontSize: 16, fontWeight: '500', color: colors.text },
+  todayText: { color: colors.surface, fontWeight: '700' },
+  dots: { flexDirection: 'row', gap: 4, height: 6, marginTop: 5 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  entryDot: { backgroundColor: colors.primary },
+  writingDot: { backgroundColor: colors.disabled },
+  scheduleDot: { backgroundColor: colors.warning },
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     justifyContent: 'flex-end',
-    marginTop: spacing.xs,
   },
-  legendBox: {
-    width: 12,
-    height: 12,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    marginLeft: spacing.sm,
-  },
+  legendGap: { marginLeft: spacing.sm },
   legendText: { fontSize: 12, color: colors.textMuted },
 });
