@@ -50,10 +50,16 @@ export function monthGrid(ym: YearMonth): (string | null)[][] {
   return weeks;
 }
 
-// 오늘이 속한 달보다 뒤로는 넘기지 않는다 (미래에는 기록이 없다)
-export function canGoNextMonth(ym: YearMonth, today: string): boolean {
+// 미래에는 일기가 없지만 일정은 미리 넣을 수 있다 → 오늘 기준 12개월 뒤까지 넘긴다
+export const MONTHS_AHEAD = 12;
+
+export function canGoNextMonth(
+  ym: YearMonth,
+  today: string,
+  monthsAhead = MONTHS_AHEAD,
+): boolean {
   const t = yearMonthOf(today);
-  return ym.year * 12 + ym.month < t.year * 12 + t.month;
+  return ym.year * 12 + ym.month < t.year * 12 + t.month + monthsAhead;
 }
 
 export type DayState = 'empty' | 'writing' | 'confirmed' | 'future';

@@ -9,11 +9,22 @@ type Props = {
   month: YearMonth;
   today: string;
   entries: EntrySummaryDto[];
+  // 날짜별 일정 수
+  scheduleCounts?: Map<string, number>;
+  selected?: string | null;
   onPressDay: (date: string, hasEntry: boolean) => void;
 };
 
 // 월간 격자. 확정 = 채운 칸 + 카테고리 색 점, 확정 전 = 점선(작성 중), 미래 = 흐리게
-export function MonthView({ month, today, entries, onPressDay }: Props) {
+// 일정이 있는 날은 숫자 아래 작은 막대. 미래 날짜도 눌러 일정을 볼 수 있다
+export function MonthView({
+  month,
+  today,
+  entries,
+  scheduleCounts,
+  selected,
+  onPressDay,
+}: Props) {
   const byDate = new Map(entries.map((e) => [e.date, e]));
 
   return (
@@ -39,6 +50,7 @@ export function MonthView({ month, today, entries, onPressDay }: Props) {
             const entry = byDate.get(date);
             const state = dayStateOf(date, today, entry?.status);
             const day = Number(date.slice(8));
+            const schedules = scheduleCounts?.get(date) ?? 0;
             return (
               <Pressable
                 key={date}
@@ -50,8 +62,8 @@ export function MonthView({ month, today, entries, onPressDay }: Props) {
                     : state === 'writing'
                       ? ', 작성 중'
                       : ''
-                }`}
-                disabled={state === 'future'}
+                }${schedules > 0 ? `, 일정 ${schedules}개` : ''}`}
+                accessibilityState={{ selected: selected === date }}
                 onPress={() => onPressDay(date, !!entry)}
                 style={({ pressed }) => [
                   styles.cell,
@@ -64,6 +76,7 @@ export function MonthView({ month, today, entries, onPressDay }: Props) {
                     state === 'confirmed' && styles.confirmed,
                     state === 'writing' && styles.writing,
                     date === today && styles.today,
+                    selected === date && styles.selected,
                   ]}
                 >
                   <Text
@@ -76,6 +89,13 @@ export function MonthView({ month, today, entries, onPressDay }: Props) {
                     {day}
                   </Text>
                 </View>
+                <View
+                  style={[
+                    styles.scheduleBar,
+                    schedules > 0 && styles.hasSchedule,
+                  ]}
+                  testID={schedules > 0 ? `day-schedule-${date}` : undefined}
+                />
                 <View style={styles.dots}>
                   {(entry?.categoryColors ?? []).slice(0, 3).map((c) => (
                     <View
@@ -94,6 +114,8 @@ export function MonthView({ month, today, entries, onPressDay }: Props) {
         <Text style={styles.legendText}>확정</Text>
         <View style={[styles.legendBox, styles.writing]} />
         <Text style={styles.legendText}>작성 중</Text>
+        <View style={[styles.legendBar, styles.hasSchedule]} />
+        <Text style={styles.legendText}>일정</Text>
       </View>
     </View>
   );
@@ -128,10 +150,14 @@ const styles = StyleSheet.create({
   },
   writing: { borderStyle: 'dashed', borderColor: colors.textMuted },
   today: { borderColor: colors.primary, borderStyle: 'solid' },
+  selected: { borderColor: colors.text, borderWidth: 2, borderStyle: 'solid' },
   dayText: { fontSize: 14, color: colors.text },
   confirmedText: { color: colors.primary, fontWeight: '700' },
   futureText: { color: colors.disabled },
-  dots: { flexDirection: 'row', gap: 2, height: 6, marginTop: 3 },
+  scheduleBar: { width: 14, height: 3, borderRadius: 2, marginTop: 3 },
+  hasSchedule: { backgroundColor: colors.warning },
+  legendBar: { width: 14, height: 3, borderRadius: 2, marginLeft: spacing.sm },
+  dots: { flexDirection: 'row', gap: 2, height: 6, marginTop: 2 },
   dot: { width: 5, height: 5, borderRadius: 3 },
   legend: {
     flexDirection: 'row',

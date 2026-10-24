@@ -55,10 +55,16 @@ describe('calendar', () => {
     assert.equal(grid.flat().length % 7, 0);
   });
 
-  it('미래 달로는 넘기지 않는다', () => {
+  it('다음 달은 오늘 기준 12개월 뒤까지 넘긴다', () => {
     assert.equal(canGoNextMonth({ year: 2026, month: 9 }, '2026-10-24'), true);
+    // 일정을 미리 넣을 수 있게 12개월 뒤까지
+    assert.equal(canGoNextMonth({ year: 2027, month: 9 }, '2026-10-24'), true);
     assert.equal(
-      canGoNextMonth({ year: 2026, month: 10 }, '2026-10-24'),
+      canGoNextMonth({ year: 2027, month: 10 }, '2026-10-24'),
+      false,
+    );
+    assert.equal(
+      canGoNextMonth({ year: 2026, month: 10 }, '2026-10-24', 0),
       false,
     );
   });

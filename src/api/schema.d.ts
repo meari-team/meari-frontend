@@ -116,6 +116,28 @@ export interface paths {
     patch: operations['ChecklistController_update'];
     trace?: never;
   };
+  '/api/v1/schedules': {
+    parameters: { query?: never; header?: never; path?: never; cookie?: never };
+    get: operations['SchedulesController_list'];
+    put?: never;
+    post: operations['SchedulesController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/schedules/{id}': {
+    parameters: { query?: never; header?: never; path?: never; cookie?: never };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete: operations['SchedulesController_remove'];
+    options?: never;
+    head?: never;
+    patch: operations['SchedulesController_update'];
+    trace?: never;
+  };
   '/api/v1/entries': {
     parameters: {
       query?: never;
@@ -398,6 +420,16 @@ export interface components {
       label: string;
       sortOrder: number;
     };
+    ScheduleDto: {
+      id: string;
+      date: string;
+      title: string;
+      time: string | null;
+      createdAt: string;
+    };
+    ScheduleListDto: { items: components['schemas']['ScheduleDto'][] };
+    CreateScheduleDto: { date: string; title: string; time?: string | null };
+    UpdateScheduleDto: { date?: string; title?: string; time?: string | null };
     ChecklistCategoryDto: {
       /** Format: uuid */
       id: string;
@@ -637,6 +669,8 @@ export interface components {
       | 'PHOTO_NOT_FOUND'
       | 'SESSION_NOT_FOUND'
       | 'CATEGORY_NOT_FOUND'
+      | 'SCHEDULE_NOT_FOUND'
+      | 'SCHEDULE_LIMIT_EXCEEDED'
       | 'EMAIL_TAKEN'
       | 'INVALID_ENTRY_STATE'
       | 'FILE_TOO_LARGE'
@@ -669,6 +703,122 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  SchedulesController_list: {
+    parameters: {
+      query: { from: string; to: string };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ScheduleListDto'];
+        };
+      };
+      400: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      401: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  SchedulesController_create: {
+    parameters: { query?: never; header?: never; path?: never; cookie?: never };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateScheduleDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: { [name: string]: unknown };
+        content: { 'application/json': components['schemas']['ScheduleDto'] };
+      };
+      400: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      401: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      422: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  SchedulesController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: { id: string };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateScheduleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: { [name: string]: unknown };
+        content: { 'application/json': components['schemas']['ScheduleDto'] };
+      };
+      400: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      404: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      422: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  SchedulesController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: { id: string };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: { headers: { [name: string]: unknown }; content?: never };
+      404: {
+        headers: { [name: string]: unknown };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
   HealthController_check: {
     parameters: {
       query?: never;
