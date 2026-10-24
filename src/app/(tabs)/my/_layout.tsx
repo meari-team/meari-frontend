@@ -11,6 +11,7 @@ export default function Layout() {
       <Stack.Screen name="checklist" options={{ title: '체크리스트 관리' }} />
       <Stack.Screen name="category" options={{ title: '카테고리' }} />
       <Stack.Screen name="withdraw" options={{ title: '회원 탈퇴' }} />
+      <Stack.Screen name="privacy" options={{ title: '개인정보 처리방침' }} />
     </Stack>
   );
 }
