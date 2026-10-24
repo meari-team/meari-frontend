@@ -115,6 +115,7 @@ export default function PastSelfHome() {
           placeholder="2026-09-24"
           autoCapitalize="none"
           keyboardType="numbers-and-punctuation"
+          returnKeyType="done"
           onSubmitEditing={submitCustom}
           error={customError}
           testID="custom-anchor"

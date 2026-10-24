@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useRef, useState, type ComponentRef } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSignup } from '@/api/auth';
 import { errorMessage } from '@/api/errors';
 import { Button } from '@/components/Button';
@@ -17,6 +17,8 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const signup = useSignup();
+  const passwordRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const nicknameRef = useRef<ComponentRef<typeof TextInput>>(null);
 
   const emailError =
     email.length > 0 && !EMAIL_RE.test(email.trim())
@@ -54,9 +56,12 @@ export default function SignupScreen() {
         keyboardType="email-address"
         textContentType="emailAddress"
         error={emailError}
+        returnKeyType="next"
+        onSubmitEditing={() => passwordRef.current?.focus()}
         testID="signup-email"
       />
       <TextField
+        ref={passwordRef}
         label="비밀번호"
         value={password}
         onChangeText={setPassword}
@@ -65,14 +70,19 @@ export default function SignupScreen() {
         textContentType="newPassword"
         hint="8~64자, 영문과 숫자를 함께"
         error={passwordError}
+        returnKeyType="next"
+        onSubmitEditing={() => nicknameRef.current?.focus()}
         testID="signup-password"
       />
       <TextField
+        ref={nicknameRef}
         label="닉네임"
         value={nickname}
         onChangeText={setNickname}
         maxLength={20}
         hint="최대 20자"
+        returnKeyType="done"
+        onSubmitEditing={canSubmit ? submit : undefined}
         testID="signup-nickname"
       />
 

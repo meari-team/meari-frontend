@@ -63,6 +63,10 @@ export default function MyScreen() {
               hint={`최대 ${NICKNAME_MAX}자`}
               error={nickname.length > 0 ? nickError : null}
               autoFocus
+              returnKeyType="done"
+              onSubmitEditing={
+                nickError || update.isPending ? undefined : saveNickname
+              }
               testID="nickname-input"
             />
             <View style={styles.row}>

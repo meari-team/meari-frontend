@@ -198,6 +198,7 @@ export function InputStage({ date, entry, categories }: Props) {
           onBlur={saveNote}
           maxLength={NOTE_MAX}
           placeholder="예: 중간고사 끝나고 친구랑 파스타"
+          returnKeyType="done"
           hint={`${note.length}/${NOTE_MAX}`}
           testID="today-note"
         />

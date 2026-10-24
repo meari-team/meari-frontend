@@ -3,7 +3,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -24,6 +24,7 @@ import {
 import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
+import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 import { StateView } from '@/components/StateView';
 import {
   flattenPages,
@@ -67,6 +68,14 @@ export default function ChatScreen() {
     scroll.current?.scrollToEnd({ animated: true });
   }, [list.length, send.isPending, send.isError]);
 
+  // 키보드가 올라와 대화 영역이 줄어들면 마지막 메시지가 가려지지 않게 맨 아래로
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidShow', () =>
+      scroll.current?.scrollToEnd({ animated: true }),
+    );
+    return () => sub.remove();
+  }, []);
+
   const submit = (text = draft) => {
     const content = text.trim();
     if (!content || send.isPending) return;
@@ -101,11 +110,8 @@ export default function ChatScreen() {
     <>
       {header}
       <SafeAreaView style={styles.safe} edges={['bottom']}>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-        >
+        {/* 입력창이 키보드 바로 위에 붙는다 (헤더 높이는 KeyboardAvoider가 직접 잰다) */}
+        <KeyboardAvoider>
           {/* 상시 고지 (prd.md §7-2 ⑩, AI 기본법) */}
           <View style={styles.notice} testID="chat-notice">
             {anchorDate ? (
@@ -125,6 +131,9 @@ export default function ChatScreen() {
             style={styles.flex}
             contentContainerStyle={styles.messages}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={
+              Platform.OS === 'ios' ? 'interactive' : 'on-drag'
+            }
           >
             {messages.hasNextPage ? (
               <Button
@@ -239,7 +248,7 @@ export default function ChatScreen() {
               </Pressable>
             </View>
           )}
-        </KeyboardAvoidingView>
+        </KeyboardAvoider>
       </SafeAreaView>
     </>
   );

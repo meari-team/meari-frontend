@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useRef, useState, type ComponentRef } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLogin } from '@/api/auth';
 import { errorMessage } from '@/api/errors';
 import { Button } from '@/components/Button';
@@ -12,6 +12,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const login = useLogin();
+  const passwordRef = useRef<ComponentRef<typeof TextInput>>(null);
 
   const canSubmit = email.trim().length > 0 && password.length > 0;
   const submit = () => login.mutate({ email: email.trim(), password });
@@ -32,15 +33,19 @@ export default function LoginScreen() {
         keyboardType="email-address"
         textContentType="emailAddress"
         placeholder="me@example.com"
+        returnKeyType="next"
+        onSubmitEditing={() => passwordRef.current?.focus()}
         testID="login-email"
       />
       <TextField
+        ref={passwordRef}
         label="비밀번호"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
         autoComplete="current-password"
         textContentType="password"
+        returnKeyType="go"
         onSubmitEditing={canSubmit ? submit : undefined}
         testID="login-password"
       />

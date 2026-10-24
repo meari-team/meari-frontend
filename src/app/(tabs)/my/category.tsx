@@ -141,6 +141,7 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
           onChangeText={(name) => setDraft((d) => ({ ...d, name }))}
           maxLength={CATEGORY_NAME_MAX}
           placeholder="예: 운동"
+          returnKeyType="done"
           error={touched ? errors.name : null}
           testID="category-name"
         />
@@ -176,6 +177,7 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
                 value={item.label}
                 onChangeText={(label) => setItem(item.key, { label })}
                 placeholder="예: 걷기"
+                returnKeyType="done"
                 error={
                   touched && errors.itemKeys.includes(item.key)
                     ? `${ITEM_LABEL_MAX}자까지예요.`
