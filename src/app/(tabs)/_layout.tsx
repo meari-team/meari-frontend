@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
-import type { ColorValue } from 'react-native';
+import { Platform, type ColorValue } from 'react-native';
 import { colors } from '@/theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -24,6 +24,8 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        // 안드로이드에서 키보드가 올라올 때 탭바가 키보드 위로 따라 올라와 입력칸을 가리지 않게
+        tabBarHideOnKeyboard: Platform.OS === 'android',
       }}
     >
       <Tabs.Screen

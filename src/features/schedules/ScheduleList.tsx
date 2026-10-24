@@ -242,6 +242,8 @@ function ScheduleForm({
         placeholder="예: 14:30 — 비우면 종일"
         keyboardType="numbers-and-punctuation"
         maxLength={8}
+        returnKeyType="done"
+        onSubmitEditing={submit}
         testID={initial ? 'schedule-edit-time' : 'schedule-time'}
       />
       {localError || mutation.isError ? (
