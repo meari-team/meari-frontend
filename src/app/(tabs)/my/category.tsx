@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -186,23 +187,38 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
                 testID={`item-${index}`}
               />
             </View>
-            <View style={styles.itemDelete}>
-              <Button
-                title="삭제"
-                variant="ghost"
-                onPress={() => removeItem(item.key)}
-                testID={`item-delete-${index}`}
-              />
-            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`항목 ${index + 1} 삭제`}
+              hitSlop={6}
+              onPress={() => removeItem(item.key)}
+              style={({ pressed }) => [
+                styles.itemDelete,
+                pressed && styles.pressed,
+              ]}
+              testID={`item-delete-${index}`}
+            >
+              <Ionicons name="close" size={20} color={colors.textMuted} />
+            </Pressable>
           </View>
         ))}
-        <Button
-          title="항목 추가"
-          variant="ghost"
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: draft.items.length >= ITEMS_MAX }}
           disabled={draft.items.length >= ITEMS_MAX}
           onPress={addItem}
+          style={({ pressed }) => [
+            styles.addItem,
+            draft.items.length >= ITEMS_MAX && styles.disabled,
+            pressed && styles.pressed,
+          ]}
           testID="item-add"
-        />
+        >
+          <Ionicons name="add" size={18} color={colors.primary} />
+          <Text style={styles.addItemText}>
+            항목 추가 ({draft.items.length}/{ITEMS_MAX})
+          </Text>
+        </Pressable>
         {touched && errors.items ? (
           <Text style={styles.error}>{errors.items}</Text>
         ) : null}
@@ -270,12 +286,18 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
               ) : null}
             </Section>
           ) : (
-            <Button
-              title="카테고리 삭제"
-              variant="ghost"
+            <Pressable
+              accessibilityRole="button"
               onPress={() => setConfirmingDelete(true)}
+              style={({ pressed }) => [
+                styles.deleteLink,
+                pressed && styles.pressed,
+              ]}
               testID="delete-category"
-            />
+            >
+              <Ionicons name="trash-outline" size={16} color={colors.danger} />
+              <Text style={styles.deleteText}>이 카테고리 삭제</Text>
+            </Pressable>
           )}
         </View>
       ) : null}
@@ -295,7 +317,35 @@ const styles = StyleSheet.create({
   swatchSelected: { borderColor: colors.text },
   swatch: { width: 28, height: 28, borderRadius: 14 },
   itemRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
-  itemDelete: { width: 72 },
+  itemDelete: {
+    width: 44,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+  },
+  pressed: { opacity: 0.6 },
+  disabled: { opacity: 0.4 },
+  addItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    minHeight: 44,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.primary,
+  },
+  addItemText: { fontSize: 14, fontWeight: '600', color: colors.primary },
+  deleteLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+  },
+  deleteText: { fontSize: 15, fontWeight: '600', color: colors.danger },
   error: { color: colors.danger, fontSize: 14 },
   deleteArea: { marginTop: spacing.lg },
 });

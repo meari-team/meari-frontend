@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   ITEMS_MAX,
+  confirmedCount,
+  diaryStyleLabel,
+  initialOf,
+  joinInfo,
   isValidCategory,
   nicknameError,
   removedItems,
@@ -94,6 +98,38 @@ describe('요청 본문', () => {
         draft({ items: [{ key: 'a', id: 'i1', label: ' ' }] }),
       ),
       ['걷기', '헬스'],
+    );
+  });
+});
+
+describe('프로필 정보', () => {
+  it('가입일은 KST 날짜로, 가입한 날이 1일째', () => {
+    // 2026-10-24 15:30 UTC = KST 10월 25일 00:30
+    assert.deepEqual(joinInfo('2026-10-24T15:30:00.000Z', '2026-10-25'), {
+      label: '2026. 10. 25.',
+      days: 1,
+    });
+    assert.deepEqual(joinInfo('2026-10-01T03:00:00.000Z', '2026-10-25'), {
+      label: '2026. 10. 1.',
+      days: 25,
+    });
+  });
+
+  it('아바타 글자는 닉네임 첫 글자 (이모지도 한 글자)', () => {
+    assert.equal(initialOf(' 메아리 '), '메');
+    assert.equal(initialOf('🌙달'), '🌙');
+    assert.equal(initialOf(''), '?');
+  });
+
+  it('문체 이름과 확정 일기 수', () => {
+    assert.equal(diaryStyleLabel('EMOTIONAL'), '감성');
+    assert.equal(
+      confirmedCount([
+        { status: 'CONFIRMED' },
+        { status: 'DRAFT' },
+        { status: 'CONFIRMED' },
+      ]),
+      2,
     );
   });
 });

@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -6,14 +7,14 @@ import { useWithdraw } from '@/api/profile';
 import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
 const LOSSES = [
-  '모든 일기와 사진',
-  '과거의 나와 나눈 대화',
-  'AI가 기억하고 있는 내 기록',
-  '체크리스트와 프로필',
-];
+  { icon: 'book-outline', label: '모든 일기와 사진' },
+  { icon: 'chatbubbles-outline', label: '과거의 나와 나눈 대화' },
+  { icon: 'sparkles-outline', label: 'AI가 기억하고 있는 내 기록' },
+  { icon: 'checkbox-outline', label: '일정·체크리스트와 프로필' },
+] as const;
 
 // 서버가 AI 기억을 먼저 지우고, 하나라도 실패하면 아무것도 지우지 않는다 (503)
 const withdrawFailMessage = (e: unknown) =>
@@ -28,26 +29,37 @@ export default function WithdrawScreen() {
 
   return (
     <Screen edges={[]}>
-      <Section title="탈퇴하면 이것들이 모두 지워져요">
+      <View style={styles.hero}>
+        <View style={styles.heroIcon}>
+          <Ionicons name="warning-outline" size={28} color={colors.danger} />
+        </View>
+        <Text style={styles.heroTitle}>탈퇴하면 모든 기록이 지워져요</Text>
+        <Text style={styles.heroText}>
+          지운 기록은 되돌릴 수 없어요. 잠시 쉬고 싶다면 로그아웃만 해도 기록은
+          그대로 남아요.
+        </Text>
+      </View>
+
+      <Section title="함께 지워지는 것">
         <View style={styles.list}>
           {LOSSES.map((l) => (
-            <Text key={l} style={styles.item}>
-              · {l}
-            </Text>
+            <View key={l.label} style={styles.item}>
+              <Ionicons name={l.icon} size={18} color={colors.danger} />
+              <Text style={styles.itemText}>{l.label}</Text>
+            </View>
           ))}
         </View>
-        <Text style={styles.warn}>지운 기록은 되돌릴 수 없어요.</Text>
       </Section>
 
       {step === 'intro' ? (
         <>
+          <Button title="돌아가기" onPress={() => router.back()} />
           <Button
-            title="계속"
+            title="그래도 탈퇴할래요"
             variant="ghost"
             onPress={() => setStep('confirm')}
             testID="withdraw-continue"
           />
-          <Button title="돌아가기" onPress={() => router.back()} />
         </>
       ) : (
         <Section
@@ -82,8 +94,31 @@ export default function WithdrawScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { gap: spacing.xs },
-  item: { fontSize: 15, color: colors.text },
-  warn: { fontSize: 14, color: colors.danger, fontWeight: '600' },
+  hero: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md + 4,
+    backgroundColor: colors.dangerSoft,
+  },
+  heroIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  heroTitle: { fontSize: 19, fontWeight: '800', color: colors.text },
+  heroText: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  list: { gap: spacing.sm + 2 },
+  item: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2 },
+  itemText: { fontSize: 15, color: colors.text },
   error: { color: colors.danger, fontSize: 14 },
 });

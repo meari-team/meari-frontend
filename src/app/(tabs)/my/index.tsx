@@ -1,32 +1,64 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useMe } from '@/api/auth';
-import { useChecklist } from '@/api/entries';
+import { useChecklist, useEntriesRange } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
 import { useUpdateMe } from '@/api/profile';
 import { Button } from '@/components/Button';
-import { Chip } from '@/components/Chip';
 import { Screen } from '@/components/Screen';
-import { Section } from '@/components/Section';
 import { StateView } from '@/components/StateView';
 import { TextField } from '@/components/TextField';
+import { recordStats, shiftDate } from '@/features/home/logic';
+import {
+  SettingsGroup,
+  SettingsRow,
+  StatTile,
+  StyleOption,
+} from '@/features/my/components';
 import {
   DIARY_STYLES,
   NICKNAME_MAX,
+  confirmedCount,
+  diaryStyleLabel,
+  initialOf,
+  joinInfo,
   nicknameError,
   type DiaryStyle,
 } from '@/features/my/logic';
+import { todayKst } from '@/lib/dates';
 import { useAuth } from '@/stores/auth';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
+const VERSION = Constants.expoConfig?.version ?? '0.1.0';
+
+const ABOUT_PAST_SELF =
+  '과거의 나는 고른 날짜까지 쓴 확정 일기만으로 AI가 재구성한 모습이에요. ' +
+  '그 이후의 일은 모르고, 실제 그때의 나와 다를 수 있어요. ' +
+  '대답 아래 근거 날짜를 누르면 그날 일기로 가요.';
+const ABOUT_PRIVACY =
+  '일기와 사진은 내 계정에서만 보여요. 사진의 위치 정보는 올릴 때 지워요. ' +
+  '확정한 일기만 AI 기억에 저장되고, 일기마다 기억에서 뺄 수 있어요. ' +
+  '탈퇴하면 AI 기억까지 모두 지워져요.';
+
+type Open = 'style' | 'pastSelf' | 'privacy' | 'logout' | null;
+
+// 마이페이지: 프로필·기록 요약 → 설정 묶음 → 로그아웃·탈퇴
 export default function MyScreen() {
+  const today = todayKst();
   const me = useMe();
   const checklist = useChecklist();
+  // 기록 요약은 최근 1년 (목록 API 최대 366일)
+  const range = useEntriesRange(shiftDate(today, { days: -365 }), today);
   const update = useUpdateMe();
   const signOut = useAuth((s) => s.signOut);
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState('');
+  const [open, setOpen] = useState<Open>(null);
+  const toggle = (key: Exclude<Open, null>) =>
+    setOpen((o) => (o === key ? null : key));
 
   if (me.isPending) return <StateView status="loading" />;
   if (me.isError) {
@@ -40,7 +72,13 @@ export default function MyScreen() {
   }
 
   const user = me.data;
+  const joined = joinInfo(user.createdAt, today);
   const nickError = editing ? nicknameError(nickname) : null;
+  const startEdit = () => {
+    setNickname(user.nickname);
+    update.reset();
+    setEditing(true);
+  };
   const saveNickname = () =>
     update.mutate(
       { nickname: nickname.trim() },
@@ -50,11 +88,20 @@ export default function MyScreen() {
     if (diaryStyle !== user.diaryStyle) update.mutate({ diaryStyle });
   };
 
+  const stats = range.data
+    ? { total: confirmedCount(range.data), ...recordStats(range.data, today) }
+    : null;
+  const statValue = (n: number | undefined, unit: string) =>
+    n === undefined ? '–' : `${n}${unit}`;
+
   return (
-    <Screen edges={[]}>
-      <Section title="프로필">
+    <Screen edges={['top']}>
+      <Text style={styles.pageTitle}>마이페이지</Text>
+
+      {/* 프로필 */}
+      <View style={styles.profileCard}>
         {editing ? (
-          <>
+          <View style={styles.editBox}>
             <TextField
               label="닉네임"
               value={nickname}
@@ -91,79 +138,193 @@ export default function MyScreen() {
                 />
               </View>
             </View>
-          </>
-        ) : (
-          <View style={styles.profile}>
-            <View style={styles.flex}>
-              <Text style={styles.nickname} testID="nickname">
-                {user.nickname}
-              </Text>
-              <Text style={styles.muted}>{user.email}</Text>
-            </View>
-            <Button
-              title="수정"
-              variant="ghost"
-              onPress={() => {
-                setNickname(user.nickname);
-                update.reset();
-                setEditing(true);
-              }}
-              testID="nickname-edit"
-            />
           </View>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`닉네임 ${user.nickname}, 눌러서 수정`}
+            onPress={startEdit}
+            style={({ pressed }) => [styles.profile, pressed && styles.dim]}
+            testID="nickname-edit"
+          >
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initialOf(user.nickname)}</Text>
+            </View>
+            <View style={styles.flex}>
+              <View style={styles.nameRow}>
+                <Text style={styles.nickname} testID="nickname">
+                  {user.nickname}
+                </Text>
+                <Ionicons name="pencil" size={15} color={colors.textMuted} />
+              </View>
+              <Text style={styles.muted}>{user.email}</Text>
+              <Text style={styles.since}>
+                {joined.label} 가입 · 함께한 지 {joined.days}일째
+              </Text>
+            </View>
+          </Pressable>
         )}
-      </Section>
 
-      <Section
-        title="AI 일기 문체"
-        hint="초안을 쓸 때의 말투예요. 지금은 저장만 되고, AI 일기에는 곧 반영돼요."
-      >
-        <View style={styles.chips}>
-          {DIARY_STYLES.map((s) => (
-            <Chip
-              key={s.value}
-              label={`${s.label} · ${s.hint}`}
-              selected={user.diaryStyle === s.value}
-              disabled={update.isPending}
-              onPress={() => chooseStyle(s.value)}
-              testID={`style-${s.value}`}
-            />
-          ))}
+        <View style={styles.stats}>
+          <StatTile
+            value={statValue(stats?.total, '편')}
+            label="확정한 일기"
+            testID="my-stat-total"
+          />
+          <StatTile
+            value={statValue(stats?.monthCount, '일')}
+            label={`${Number(today.slice(5, 7))}월 기록`}
+          />
+          <StatTile value={statValue(stats?.streak, '일')} label="연속 기록" />
         </View>
-      </Section>
+      </View>
 
       {update.isError ? (
         <Text style={styles.error}>{errorMessage(update.error)}</Text>
       ) : null}
 
-      <Section
-        title="체크리스트"
-        hint={
-          checklist.data
-            ? `카테고리 ${checklist.data.length}개 · 오늘의 일기에서 고르는 항목이에요`
-            : '오늘의 일기에서 고르는 항목이에요'
-        }
-      >
-        <Button
-          title="체크리스트 편집"
-          variant="ghost"
+      {/* AI 설정 */}
+      <SettingsGroup title="AI 설정">
+        <SettingsRow
+          icon="color-wand-outline"
+          title="AI 일기 문체"
+          description="초안을 쓸 때의 말투"
+          value={diaryStyleLabel(user.diaryStyle)}
+          expanded={open === 'style'}
+          onPress={() => toggle('style')}
+          last={open !== 'style'}
+          testID="open-style"
+        />
+        {open === 'style' ? (
+          <View style={styles.expand} accessibilityRole="radiogroup">
+            {DIARY_STYLES.map((s) => (
+              <StyleOption
+                key={s.value}
+                option={s}
+                selected={user.diaryStyle === s.value}
+                disabled={update.isPending}
+                onPress={() => chooseStyle(s.value)}
+              />
+            ))}
+            <Text style={styles.note}>
+              지금은 저장만 되고, AI 일기에는 곧 반영돼요.
+            </Text>
+          </View>
+        ) : null}
+      </SettingsGroup>
+
+      {/* 기록 */}
+      <SettingsGroup title="기록">
+        <SettingsRow
+          icon="book-outline"
+          tint={colors.success}
+          title="전체 일기 보기"
+          value={stats ? `${stats.total}편` : undefined}
+          onPress={() =>
+            router.navigate({
+              pathname: '/calendar',
+              params: { mode: 'list', at: String(Date.now()) },
+            })
+          }
+          testID="open-all-entries"
+        />
+        <SettingsRow
+          icon="checkbox-outline"
+          tint={colors.warning}
+          title="체크리스트 관리"
+          description="오늘의 일기에서 고르는 항목"
+          value={
+            checklist.data ? `카테고리 ${checklist.data.length}개` : undefined
+          }
           onPress={() => router.push('/my/checklist')}
+          last
           testID="open-checklist"
         />
-      </Section>
+      </SettingsGroup>
 
-      <Section title="계정">
-        <Button title="로그아웃" variant="ghost" onPress={signOut} />
-        <Button
-          title="회원 탈퇴"
-          variant="ghost"
-          onPress={() => router.push('/my/withdraw')}
-          testID="open-withdraw"
+      {/* 안내 */}
+      <SettingsGroup title="안내">
+        <SettingsRow
+          icon="sparkles-outline"
+          title="과거의 나는 이렇게 만들어져요"
+          expanded={open === 'pastSelf'}
+          onPress={() => toggle('pastSelf')}
+          testID="open-about-past-self"
         />
-      </Section>
+        {open === 'pastSelf' ? (
+          <Text style={[styles.expand, styles.expandDivider, styles.aboutText]}>
+            {ABOUT_PAST_SELF}
+          </Text>
+        ) : null}
+        <SettingsRow
+          icon="shield-checkmark-outline"
+          tint={colors.success}
+          title="내 기록과 개인정보"
+          expanded={open === 'privacy'}
+          onPress={() => toggle('privacy')}
+          testID="open-about-privacy"
+        />
+        {open === 'privacy' ? (
+          <Text style={[styles.expand, styles.expandDivider, styles.aboutText]}>
+            {ABOUT_PRIVACY}
+          </Text>
+        ) : null}
+        <SettingsRow
+          icon="information-circle-outline"
+          tint={colors.textMuted}
+          title="버전"
+          value={VERSION}
+          last
+        />
+      </SettingsGroup>
+
+      {/* 계정 */}
+      <SettingsGroup>
+        <SettingsRow
+          icon="log-out-outline"
+          tint={colors.textMuted}
+          title="로그아웃"
+          onPress={() => toggle('logout')}
+          last={open !== 'logout'}
+          testID="open-logout"
+        />
+        {open === 'logout' ? (
+          <View style={styles.expand}>
+            <Text style={styles.aboutText}>
+              로그아웃할까요? 기록은 그대로 남아 있어요.
+            </Text>
+            <View style={styles.row}>
+              <View style={styles.flex}>
+                <Button
+                  title="취소"
+                  variant="ghost"
+                  onPress={() => setOpen(null)}
+                />
+              </View>
+              <View style={styles.flex}>
+                <Button
+                  title="로그아웃"
+                  onPress={signOut}
+                  testID="logout-confirm"
+                />
+              </View>
+            </View>
+          </View>
+        ) : null}
+      </SettingsGroup>
+
+      <Pressable
+        accessibilityRole="button"
+        hitSlop={8}
+        onPress={() => router.push('/my/withdraw')}
+        style={({ pressed }) => [styles.withdraw, pressed && styles.dim]}
+        testID="open-withdraw"
+      >
+        <Text style={styles.withdrawText}>회원 탈퇴</Text>
+      </Pressable>
 
       <Text style={styles.footer}>
-        메아리 0.1.0 · AI가 기록으로 재구성한 내용은 실제와 다를 수 있어요.
+        메아리 {VERSION} · AI가 기록으로 재구성한 내용은 실제와 다를 수 있어요.
       </Text>
     </Screen>
   );
@@ -172,15 +333,60 @@ export default function MyScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   row: { flexDirection: 'row', gap: spacing.sm },
-  profile: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  nickname: { fontSize: 20, fontWeight: '700', color: colors.text },
-  muted: { fontSize: 14, color: colors.textMuted },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  dim: { opacity: 0.7 },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.text,
+    paddingTop: spacing.sm,
+  },
+  profileCard: {
+    gap: spacing.md,
+    padding: spacing.md + 4,
+    borderRadius: radius.md + 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  editBox: { gap: spacing.sm + 4 },
+  profile: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+  },
+  avatarText: { fontSize: 26, fontWeight: '800', color: colors.primary },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  nickname: { fontSize: 21, fontWeight: '800', color: colors.text },
+  muted: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
+  since: { fontSize: 13, color: colors.primary, marginTop: 4 },
+  stats: { flexDirection: 'row', gap: spacing.sm },
+  expand: {
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  // 펼친 내용 아래에 다른 행이 이어질 때
+  expandDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  aboutText: { fontSize: 14, lineHeight: 21, color: colors.textMuted },
+  note: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
   error: { color: colors.danger, fontSize: 14 },
+  withdraw: { alignSelf: 'center', paddingVertical: spacing.xs },
+  withdrawText: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textDecorationLine: 'underline',
+  },
   footer: {
     fontSize: 12,
     color: colors.textMuted,
     textAlign: 'center',
-    marginTop: spacing.sm,
+    marginBottom: spacing.md,
   },
 });

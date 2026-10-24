@@ -22,15 +22,59 @@ export const CATEGORY_COLORS = [
 
 export type DiaryStyle = 'PLAIN' | 'EMOTIONAL' | 'SUMMARY';
 
+// example: 같은 하루를 문체마다 어떻게 쓰는지 보여 주는 예시 문장
 export const DIARY_STYLES: {
   value: DiaryStyle;
   label: string;
   hint: string;
+  example: string;
 }[] = [
-  { value: 'PLAIN', label: '담백', hint: '있었던 일을 간결하게' },
-  { value: 'EMOTIONAL', label: '감성', hint: '느낌과 분위기를 살려서' },
-  { value: 'SUMMARY', label: '요약', hint: '핵심만 짧게' },
+  {
+    value: 'PLAIN',
+    label: '담백',
+    hint: '있었던 일을 간결하게',
+    example: '친구와 한강을 걸었다. 바람이 시원했고 커피가 맛있었다.',
+  },
+  {
+    value: 'EMOTIONAL',
+    label: '감성',
+    hint: '느낌과 분위기를 살려서',
+    example:
+      '친구와 나란히 한강을 걸었다. 볼을 스치는 바람 덕분에 손에 든 커피가 유난히 맛있었다.',
+  },
+  {
+    value: 'SUMMARY',
+    label: '요약',
+    hint: '핵심만 짧게',
+    example: '친구와 한강 산책, 시원한 바람과 커피.',
+  },
 ];
+
+export const diaryStyleLabel = (value: DiaryStyle) =>
+  DIARY_STYLES.find((s) => s.value === value)?.label ?? value;
+
+// 프로필 아바타에 쓰는 닉네임 첫 글자
+export const initialOf = (nickname: string) =>
+  Array.from(nickname.trim())[0] ?? '?';
+
+// 가입 시각(ISO) → KST 기준 "2026. 10. 24."와 오늘까지 며칠째인지(가입일이 1일째)
+export function joinInfo(
+  createdAt: string,
+  today: string,
+): { label: string; days: number } {
+  const joined = new Date(new Date(createdAt).getTime() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const [y, m, d] = joined.split('-').map(Number);
+  const diff =
+    (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${joined}T00:00:00Z`)) /
+    86_400_000;
+  return { label: `${y}. ${m}. ${d}.`, days: Math.max(1, diff + 1) };
+}
+
+// 확정한 일기 수
+export const confirmedCount = (items: { status: string }[]) =>
+  items.filter((e) => e.status === 'CONFIRMED').length;
 
 export function nicknameError(raw: string): string | null {
   const v = raw.trim();
