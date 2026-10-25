@@ -9,12 +9,9 @@ describe('일기 한 쪽', () => {
   });
 
   it('기억 상태 한 줄', () => {
-    assert.deepEqual(memoryLineOf('INDEXED', false), {
-      label: '기억에 저장됨',
-      busy: false,
-      failed: false,
-    });
-    assert.equal(memoryLineOf('PENDING', false)?.busy, true);
+    // 저장됨·저장 중은 보통 상태라 표시하지 않는다
+    assert.equal(memoryLineOf('INDEXED', false), null);
+    assert.equal(memoryLineOf('PENDING', false), null);
     assert.equal(memoryLineOf('FAILED', false)?.failed, true);
     // 제외가 상태보다 먼저
     assert.equal(memoryLineOf('NONE', true)?.label, '기억에서 제외됨');
