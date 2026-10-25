@@ -4,6 +4,7 @@ import {
   canGoNextMonth,
   dayStateOf,
   daysInMonth,
+  diaryActionOf,
   groupByMonth,
   dayTitleOf,
   monthGrid,
@@ -118,5 +119,29 @@ describe('calendar', () => {
   it('날짜 패널 제목', () => {
     assert.equal(dayTitleOf('2026-10-20'), '20. 화');
     assert.equal(dayTitleOf('2026-10-04'), '4. 일');
+  });
+
+  it('+ 메뉴 일기 버튼: 상태별 문구·이동, 미래는 막기', () => {
+    const today = '2026-10-25';
+    assert.deepEqual(diaryActionOf('2026-10-20', today), {
+      kind: 'write',
+      label: '이날 일기 쓰기',
+      href: '/today?date=2026-10-20',
+    });
+    assert.equal(
+      diaryActionOf('2026-10-20', today, 'GENERATED').kind,
+      'continue',
+    );
+    assert.deepEqual(diaryActionOf('2026-10-20', today, 'CONFIRMED'), {
+      kind: 'open',
+      label: '이날 일기 보기',
+      href: '/entry/2026-10-20',
+    });
+    assert.equal(diaryActionOf(today, today).label, '오늘 일기 쓰기');
+    assert.equal(
+      diaryActionOf('2026-10-20', today, 'QUESTIONING').label,
+      '이날 일기 이어 쓰기',
+    );
+    assert.equal(diaryActionOf('2026-10-26', today).kind, 'future');
   });
 });
