@@ -11,6 +11,28 @@ export const PRESET_LABELS: Record<Preset, string> = {
   '1Y': '1년 전',
 };
 
+// 한 줄 시점 탭용 짧은 이름 (5개가 한 줄에 들어가게 "전"을 뺀다)
+export const PRESET_SHORT: Record<Preset, string> = {
+  '1W': '1주',
+  '1M': '1개월',
+  '3M': '3개월',
+  '6M': '6개월',
+  '1Y': '1년',
+};
+
+// 아래 고정 바 둘째 줄: "기록 16편 · 마지막 일기 첫 줄" / 모자라면 "기록이 모자라요 (3/7)"
+export function selfBarLine(
+  a: { available: boolean; recordCount: number; requiredCount: number },
+  lastText: string | null,
+): string {
+  if (!a.available) {
+    return `기록이 모자라요 (${a.recordCount}/${a.requiredCount})`;
+  }
+  return lastText
+    ? `기록 ${a.recordCount}편 · ${lastText}`
+    : `기록 ${a.recordCount}편`;
+}
+
 // "10월 10일" (요일 없이, 대화 제목·배지용)
 export function shortKoreanDate(date: string): string {
   return `${Number(date.slice(5, 7))}월 ${Number(date.slice(8))}일`;

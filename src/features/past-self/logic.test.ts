@@ -10,6 +10,7 @@ import {
   lastConfirmedOnOrBefore,
   pastSelfTitle,
   relativeTime,
+  selfBarLine,
   timelineMonths,
 } from './logic.ts';
 
@@ -127,5 +128,21 @@ describe('past-self logic', () => {
     assert.equal(relativeTime('2026-10-24T05:00:00Z', now), '어제');
     assert.equal(relativeTime('2026-10-21T05:00:00Z', now), '4일 전');
     assert.equal(relativeTime('2026-10-01T05:00:00Z', now), '10월 1일');
+  });
+
+  it('아래 고정 바 둘째 줄', () => {
+    const ok = { available: true, recordCount: 16, requiredCount: 7 };
+    assert.equal(
+      selfBarLine(ok, '페이온 코테 합격!'),
+      '기록 16편 · 페이온 코테 합격!',
+    );
+    assert.equal(selfBarLine(ok, null), '기록 16편');
+    assert.equal(
+      selfBarLine(
+        { available: false, recordCount: 3, requiredCount: 7 },
+        '아무거나',
+      ),
+      '기록이 모자라요 (3/7)',
+    );
   });
 });

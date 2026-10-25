@@ -50,9 +50,14 @@ export function useChecklist() {
 }
 
 // 아직 작성 안 한 날짜는 404 → null (빈 상태)
-export function useEntry(date: string, opts?: { pollWhilePending?: boolean }) {
+// enabled: false면 부르지 않는다 (날짜가 아직 없을 때)
+export function useEntry(
+  date: string,
+  opts?: { pollWhilePending?: boolean; enabled?: boolean },
+) {
   return useQuery({
     queryKey: entryKey(date),
+    enabled: opts?.enabled ?? true,
     queryFn: async (): Promise<EntryDto | null> => {
       try {
         return await unwrap(

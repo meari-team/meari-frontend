@@ -9,18 +9,16 @@ import { StateView } from '@/components/StateView';
 import { shiftDate } from '@/features/home/logic';
 import {
   DateSheet,
-  PresetChips,
+  PresetTabs,
   RecentSessions,
-  SelfCard,
+  SelfBar,
   Timeline,
 } from '@/features/past-self/components';
 import { defaultAnchor } from '@/features/past-self/logic';
 import { isDateString, todayKst } from '@/lib/dates';
 import { colors, spacing } from '@/theme';
 
-const REQUIRED = 7;
-
-// 과거의 나: 기록 흐름에서 날짜를 고르고, 그날의 나를 미리 본 뒤 대화한다 (prd.md §7-2)
+// 과거의 나: 시점 탭·기록 흐름에서 날짜를 고르고, 아래 고정 바에서 그날의 나와 대화한다 (prd.md §7-2)
 export default function PastSelfHome() {
   const params = useLocalSearchParams<{ anchorDate?: string }>();
   const today = todayKst();
@@ -64,7 +62,10 @@ export default function PastSelfHome() {
 
   return (
     <View style={styles.flex}>
-      <Screen edges={['top']}>
+      <Screen
+        edges={['top']}
+        footer={<SelfBar anchor={anchor} entries={entries.data} />}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>과거의 나</Text>
           <Text style={styles.lead}>
@@ -72,13 +73,7 @@ export default function PastSelfHome() {
           </Text>
         </View>
 
-        <PresetChips
-          presets={presets.data}
-          anchor={anchor}
-          required={REQUIRED}
-          onPick={setPicked}
-        />
-        <SelfCard anchor={anchor} entries={entries.data} />
+        <PresetTabs presets={presets.data} anchor={anchor} onPick={setPicked} />
         <Timeline
           entries={entries.data}
           today={today}
