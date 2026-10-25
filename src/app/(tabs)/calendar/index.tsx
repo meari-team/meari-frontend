@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState, type ComponentProps } from 'react';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEntriesRange } from '@/api/entries';
@@ -60,6 +60,15 @@ export default function CalendarScreen() {
     setSeenAt(params.at);
     if (isMode(params.mode)) setMode(params.mode);
   }
+  // 사진·전체 목록을 보다가 하단 캘린더 탭을 다시 누르면 월간 캘린더로 돌아온다
+  const navigation = useNavigation();
+  useEffect(() => {
+    const tabs = navigation.getParent();
+    if (!tabs) return;
+    return tabs.addListener('tabPress' as never, () => {
+      if (navigation.isFocused()) setMode('month');
+    });
+  }, [navigation]);
   const [month, setMonth] = useState<YearMonth>(() => yearMonthOf(today));
   const [year, setYear] = useState(() => yearMonthOf(today).year);
   const [selected, setSelected] = useState<string>(today);
