@@ -8,6 +8,7 @@ import { useSchedules, type ScheduleDto } from '@/api/schedules';
 import { errorMessage } from '@/api/errors';
 import { Screen } from '@/components/Screen';
 import { StateView } from '@/components/StateView';
+import { AddMenu } from '@/features/calendar/AddMenu';
 import { DayPanel } from '@/features/calendar/DayPanel';
 import { ListView } from '@/features/calendar/ListView';
 import { MonthPicker } from '@/features/calendar/MonthPicker';
@@ -264,15 +265,12 @@ export default function CalendarScreen() {
               </Pressable>
             </View>
           ) : null}
-          <Pressable
-            testID="schedule-fab"
-            accessibilityRole="button"
-            accessibilityLabel="일정 추가"
-            onPress={() => setSheet({ date: selected, editing: null })}
-            style={({ pressed }) => [styles.fab, pressed && styles.pressed]}
-          >
-            <Ionicons name="add" size={30} color={colors.primaryText} />
-          </Pressable>
+          <AddMenu
+            date={selected}
+            today={today}
+            entryStatus={list.data?.find((e) => e.date === selected)?.status}
+            onAddSchedule={() => setSheet({ date: selected, editing: null })}
+          />
         </>
       ) : null}
 
@@ -340,20 +338,4 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   todayText: { fontSize: 15, fontWeight: '600', color: colors.text },
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    bottom: spacing.md,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
 });

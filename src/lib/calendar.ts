@@ -125,3 +125,25 @@ export function groupByMonth<T extends { date: string }>(
       items: [...list].sort((a, b) => a.date.localeCompare(b.date)),
     }));
 }
+
+// + 메뉴의 일기 버튼: 그날 일기 상태에 따라 문구와 이동할 곳이 달라진다. 미래 날짜는 쓸 수 없다
+export type DiaryAction =
+  | { kind: 'write' | 'continue' | 'open'; label: string; href: string }
+  | { kind: 'future'; label: string };
+
+export function diaryActionOf(
+  date: string,
+  today: string,
+  status?: string,
+): DiaryAction {
+  if (date > today) return { kind: 'future', label: '일기는 그날이 되면 써요' };
+  const day = date === today ? '오늘' : '이날';
+  if (status === 'CONFIRMED') {
+    return { kind: 'open', label: `${day} 일기 보기`, href: `/entry/${date}` };
+  }
+  return {
+    kind: status ? 'continue' : 'write',
+    label: `${day} 일기 ${status ? '이어 쓰기' : '쓰기'}`,
+    href: `/today?date=${date}`,
+  };
+}
