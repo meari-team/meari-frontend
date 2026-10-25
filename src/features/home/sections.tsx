@@ -17,11 +17,7 @@ import { Button } from '@/components/Button';
 import { SafeImage } from '@/components/SafeImage';
 import { Section } from '@/components/Section';
 import { FeedItem } from '@/features/calendar/ListView';
-import {
-  PRESET_LABELS,
-  availabilityHint,
-  shortKoreanDate,
-} from '@/features/past-self/logic';
+import { PRESET_LABELS, availabilityHint } from '@/features/past-self/logic';
 import { indexBadgeOf } from '@/features/today/stage';
 import { formatKoreanDate } from '@/lib/dates';
 import { colors, radius, spacing } from '@/theme';
@@ -225,7 +221,7 @@ export function OnThisDay({ today }: { today: string }) {
   );
 }
 
-// 과거의 나 바로가기: 1주·1개월·3개월 전 버튼 3개를 한 줄로 (기록이 모자란 시점은 흐리게 n/7)
+// 과거의 나 바로가기: 1주·1개월·3개월 전 버튼 3개를 한 줄로 (기록이 모자란 시점은 흐리게, 누를 수 없음)
 export function PastSelfShortcuts() {
   const presets = usePresets();
   const action = {
@@ -283,11 +279,6 @@ export function PastSelfShortcuts() {
               numberOfLines={1}
             >
               {PRESET_LABELS[p.preset]}
-            </Text>
-            <Text style={styles.presetSub} numberOfLines={1}>
-              {p.available
-                ? `${shortKoreanDate(p.anchorDate)}까지`
-                : `기록 ${p.recordCount}/${PAST_SELF_REQUIRED}`}
             </Text>
           </Pressable>
         ))}
@@ -420,7 +411,6 @@ const styles = StyleSheet.create({
   presetOff: { backgroundColor: colors.surfaceMuted },
   presetTitle: { fontSize: 16, fontWeight: '700', color: colors.primary },
   offText: { color: colors.textMuted },
-  presetSub: { fontSize: 12, color: colors.textMuted },
   recent: { gap: spacing.sm },
   stats: { flexDirection: 'row', gap: spacing.sm },
   stat: {

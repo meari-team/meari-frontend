@@ -45,8 +45,8 @@ export default function HomeScreen() {
       <TodaySchedules today={today} />
       <OnThisDay today={today} />
       <PastSelfShortcuts />
-      <RecentEntries />
       <RecordStats today={today} />
+      <RecentEntries />
     </Screen>
   );
 }
