@@ -1,8 +1,21 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
-  ActivityIndicator,
+  router,
+  Stack,
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+} from 'expo-router';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentRef,
+} from 'react';
+import {
+  Animated,
+  Easing,
   Keyboard,
   Platform,
   Pressable,
@@ -21,9 +34,7 @@ import {
   useSendMessage,
   type ChatMessageDto,
 } from '@/api/past-self';
-import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
-import { Chip } from '@/components/Chip';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 import { StateView } from '@/components/StateView';
 import {
@@ -38,6 +49,13 @@ import { colors, radius, spacing } from '@/theme';
 
 const MAX_LENGTH = 500;
 
+// 빈 대화에서 눌러 바로 보내는 추천 질문
+const SUGGESTIONS = [
+  '요즘 제일 신경 쓰이는 게 뭐야?',
+  '요즘 기분은 어때?',
+  '그때 무슨 고민 있었어?',
+];
+
 // 과거의 나와 대화 (prd.md §7-2 ⑥⑧⑩, 기획안 그림 3)
 export default function ChatScreen() {
   const params = useLocalSearchParams<{
@@ -49,6 +67,17 @@ export default function ChatScreen() {
   const anchorDate = isDateString(params.anchorDate)
     ? params.anchorDate
     : sessions.data?.find((s) => s.id === sessionId)?.anchorDate;
+
+  // 대화 중에는 하단 탭바를 숨긴다 (채팅 앱처럼 입력창이 화면 맨 아래에 붙게).
+  // 탭 안 화면이라 탭바가 이미 아래 안전 영역을 차지해서, 그대로 두면 입력창 아래가 한 번 더 뜬다
+  const navigation = useNavigation();
+  useFocusEffect(
+    useCallback(() => {
+      const tabs = navigation.getParent();
+      tabs?.setOptions({ tabBarStyle: { display: 'none' } });
+      return () => tabs?.setOptions({ tabBarStyle: undefined });
+    }, [navigation]),
+  );
 
   const messages = useChatMessages(sessionId);
   const send = useSendMessage(sessionId);
@@ -117,19 +146,13 @@ export default function ChatScreen() {
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         {/* 입력창이 키보드 바로 위에 붙는다 (헤더 높이는 KeyboardAvoider가 직접 잰다) */}
         <KeyboardAvoider>
-          {/* 상시 고지 (prd.md §7-2 ⑩, AI 기본법) */}
-          <View style={styles.notice} testID="chat-notice">
-            {anchorDate ? (
-              <Badge
-                label={`${shortKoreanDate(anchorDate)}까지의 기록으로 대화 중`}
-                tone="info"
-                icon="time-outline"
-              />
-            ) : null}
-            <Text style={styles.noticeText}>
-              AI가 기록으로 재구성한 모습이며 실제와 다를 수 있어요.
-            </Text>
-          </View>
+          {/* 상시 고지 (prd.md §7-2 ⑩, AI 기본법) — 헤더 아래 얇은 한 줄, 스크롤해도 남는다 */}
+          <Text style={styles.notice} testID="chat-notice">
+            {anchorDate
+              ? `${shortKoreanDate(anchorDate)}까지의 기록으로 대화 중 · `
+              : ''}
+            AI가 기록으로 재구성한 모습이에요
+          </Text>
 
           <ScrollView
             ref={scroll}
@@ -157,11 +180,29 @@ export default function ChatScreen() {
             ) : null}
 
             {list.length === 0 && !send.isPending ? (
-              <Text style={styles.empty}>
-                {anchorDate
-                  ? `${pastSelfTitle(anchorDate)}에게 요즘 어떻게 지내는지 물어보세요.`
-                  : '그때의 나에게 말을 걸어 보세요.'}
-              </Text>
+              <View style={styles.emptyWrap}>
+                <Text style={styles.empty}>
+                  {anchorDate
+                    ? `${pastSelfTitle(anchorDate)}에게 말을 걸어 보세요.`
+                    : '그때의 나에게 말을 걸어 보세요.'}
+                </Text>
+                <View style={styles.suggestions}>
+                  {SUGGESTIONS.map((q) => (
+                    <Pressable
+                      key={q}
+                      accessibilityRole="button"
+                      testID="chat-suggestion"
+                      onPress={() => submit(q)}
+                      style={({ pressed }) => [
+                        styles.suggestion,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={styles.suggestionText}>{q}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
             ) : null}
 
             {list.map((m, i) => (
@@ -185,10 +226,7 @@ export default function ChatScreen() {
                     createdAt: '',
                   }}
                 />
-                <View style={[styles.bubble, styles.assistant, styles.typing]}>
-                  <ActivityIndicator size="small" color={colors.textMuted} />
-                  <Text style={styles.typingText}>기억을 떠올리는 중…</Text>
-                </View>
+                <TypingDots />
               </>
             ) : null}
 
@@ -234,6 +272,8 @@ export default function ChatScreen() {
                 placeholderTextColor={colors.textMuted}
                 maxLength={MAX_LENGTH}
                 multiline
+                // 웹 textarea는 기본 2줄이라 한 줄에서 시작하게
+                numberOfLines={Platform.OS === 'web' ? 1 : undefined}
                 style={styles.input}
                 editable={!send.isPending}
                 testID="chat-input"
@@ -252,7 +292,7 @@ export default function ChatScreen() {
               >
                 <Ionicons
                   name="arrow-up"
-                  size={20}
+                  size={19}
                   color={colors.primaryText}
                 />
               </Pressable>
@@ -261,6 +301,47 @@ export default function ChatScreen() {
         </KeyboardAvoider>
       </SafeAreaView>
     </>
+  );
+}
+
+// 답장을 기다리는 동안: 말풍선 자리에서 점 세 개가 차례로 깜빡인다
+function TypingDots() {
+  const [progress] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [progress]);
+
+  return (
+    <View
+      style={[styles.bubble, styles.assistant, styles.dots]}
+      accessibilityLabel="답장을 쓰는 중"
+      testID="chat-typing"
+    >
+      {[0, 1, 2].map((i) => (
+        <Animated.View
+          key={i}
+          style={[
+            styles.dot,
+            {
+              opacity: progress.interpolate({
+                inputRange: [0, 0.2 + i * 0.2, 0.4 + i * 0.2, 1],
+                outputRange: [0.25, 1, 0.25, 0.25],
+                extrapolate: 'clamp',
+              }),
+            },
+          ]}
+        />
+      ))}
+    </View>
   );
 }
 
@@ -297,17 +378,26 @@ function Bubble({
         <View style={styles.citations}>
           <Text style={styles.citationLabel}>참고한 기록</Text>
           {message.citations.map((c) => (
-            <Chip
+            <Pressable
               key={c.entryId}
-              label={shortKoreanDate(c.date)}
+              accessibilityRole="link"
+              accessibilityLabel={`${shortKoreanDate(c.date)} 일기 보기`}
               testID={`citation-${c.date}`}
+              hitSlop={6}
               onPress={() =>
                 router.push({
                   pathname: '/entry/[date]',
                   params: { date: c.date },
                 })
               }
-            />
+            >
+              <Text style={styles.citationLabel}>
+                ·{' '}
+                <Text style={styles.citationDate}>
+                  {shortKoreanDate(c.date)}
+                </Text>
+              </Text>
+            </Pressable>
           ))}
         </View>
       ) : null}
@@ -320,56 +410,76 @@ function Bubble({
   );
 }
 
+const BUBBLE_RADIUS = 20;
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   notice: {
-    gap: spacing.xs,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  noticeText: { fontSize: 12, color: colors.textMuted },
-  messages: { padding: spacing.md, gap: spacing.md },
-  empty: {
-    textAlign: 'center',
-    fontSize: 14,
+    paddingVertical: spacing.xs + 2,
+    fontSize: 12,
     color: colors.textMuted,
-    marginTop: spacing.xl,
+    textAlign: 'center',
   },
-  bubbleWrap: { gap: spacing.xs, maxWidth: '85%' },
-  left: { alignSelf: 'flex-start' },
-  right: { alignSelf: 'flex-end', alignItems: 'flex-end' },
-  bubble: {
-    paddingHorizontal: spacing.md - 2,
+  messages: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
+  },
+  emptyWrap: { alignItems: 'center', gap: spacing.md, marginTop: spacing.xl },
+  empty: { textAlign: 'center', fontSize: 15, color: colors.textMuted },
+  suggestions: { alignItems: 'center', gap: spacing.sm },
+  suggestion: {
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 2,
-    borderRadius: radius.md,
-  },
-  mine: { backgroundColor: colors.primary },
-  assistant: {
+    borderRadius: radius.pill,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  bubbleText: { fontSize: 15, lineHeight: 22, color: colors.text },
+  suggestionText: { fontSize: 14, color: colors.text },
+  bubbleWrap: { gap: 6, maxWidth: '82%' },
+  left: { alignSelf: 'flex-start' },
+  right: { alignSelf: 'flex-end', alignItems: 'flex-end' },
+  bubble: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 3,
+    borderRadius: BUBBLE_RADIUS,
+  },
+  // 말한 쪽 아래 모서리만 작게 (꼬리 느낌)
+  mine: { backgroundColor: colors.primary, borderBottomRightRadius: 6 },
+  assistant: { backgroundColor: colors.surface, borderBottomLeftRadius: 6 },
+  bubbleText: { fontSize: 15, lineHeight: 23, color: colors.text },
   mineText: { color: colors.primaryText },
   citations: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    gap: spacing.xs,
+    columnGap: 4,
+    paddingHorizontal: 4,
   },
   citationLabel: { fontSize: 12, color: colors.textMuted },
-  noEvidence: { fontSize: 12, color: colors.warning },
-  typing: {
+  citationDate: {
+    fontSize: 12,
+    color: colors.primary,
+    textDecorationLine: 'underline',
+  },
+  noEvidence: { fontSize: 12, color: colors.textMuted, paddingHorizontal: 4 },
+  dots: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
     alignSelf: 'flex-start',
+    gap: 5,
+    paddingVertical: spacing.md,
   },
-  typingText: { fontSize: 14, color: colors.textMuted },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.textMuted,
+  },
   failed: { alignItems: 'flex-end', gap: spacing.xs },
   failedText: { fontSize: 13, color: colors.danger },
   limit: {
@@ -384,22 +494,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: spacing.sm,
-    padding: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md - 4,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.background,
   },
   input: {
     flex: 1,
     minHeight: 44,
-    maxHeight: 120,
-    paddingHorizontal: spacing.md - 4,
+    // 다섯 줄까지 늘어나고 그 뒤로는 입력창 안에서 스크롤
+    maxHeight: 23 * 5 + 22,
+    paddingHorizontal: spacing.md,
     paddingTop: 11,
     paddingBottom: 11,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceMuted,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     fontSize: 15,
+    lineHeight: 21,
     color: colors.text,
+    // 웹에서 포커스 때 생기는 파란 테두리 제거
+    outlineWidth: 0,
   },
   send: {
     width: 44,
@@ -410,5 +526,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   sendDisabled: { backgroundColor: colors.disabled },
-  pressed: { opacity: 0.8 },
+  pressed: { opacity: 0.75 },
 });
