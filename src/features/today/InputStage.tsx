@@ -349,7 +349,8 @@ function ScheduleLine({ date, dayWord }: { date: string; dayWord: string }) {
     <View style={styles.schedule} testID="today-schedule-line">
       <Text style={styles.scheduleText} numberOfLines={1}>
         <Text style={styles.scheduleLabel}>{dayWord} 일정 · </Text>
-        {first.time ?? '종일'} {first.title}
+        {first.time ? `${first.time} ` : ''}
+        {first.title}
         {rest.length > 0 ? ` 외 ${rest.length}개` : ''}
       </Text>
       <Text style={styles.scheduleHint}>AI가 일기를 쓸 때 참고해요</Text>

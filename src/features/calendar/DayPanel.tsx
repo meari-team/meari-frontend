@@ -103,7 +103,7 @@ function Todos({
           >
             {s.title}
           </Text>
-          <Text style={styles.todoTime}>{s.time ?? '종일'}</Text>
+          {s.time ? <Text style={styles.todoTime}>{s.time}</Text> : null}
         </Pressable>
       </View>
     ));
