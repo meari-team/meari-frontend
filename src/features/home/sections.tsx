@@ -32,7 +32,7 @@ import {
 } from './logic';
 
 const SCHEDULE_PREVIEW = 3;
-const RECENT_LIMIT = 5;
+const RECENT_LIMIT = 3;
 const PAST_SELF_REQUIRED = 7;
 
 const confirmHref = (anchorDate: string) =>
@@ -279,7 +279,7 @@ export function PastSelfShortcuts() {
   );
 }
 
-// 최근 기록 5개 (화면 스크롤 안이라 FlatList 대신 map)
+// 최근 기록 3개 (화면 스크롤 안이라 FlatList 대신 map). 더 보려면 "전체 보기" → 캘린더 전체 목록
 export function RecentEntries() {
   const recent = useRecentEntries(RECENT_LIMIT);
   const action = {
