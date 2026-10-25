@@ -2,9 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   ITEMS_MAX,
-  confirmedCount,
   diaryStyleLabel,
-  initialOf,
   joinInfo,
   isValidCategory,
   nicknameError,
@@ -115,21 +113,7 @@ describe('프로필 정보', () => {
     });
   });
 
-  it('아바타 글자는 닉네임 첫 글자 (이모지도 한 글자)', () => {
-    assert.equal(initialOf(' 메아리 '), '메');
-    assert.equal(initialOf('🌙달'), '🌙');
-    assert.equal(initialOf(''), '?');
-  });
-
-  it('문체 이름과 확정 일기 수', () => {
+  it('문체 이름', () => {
     assert.equal(diaryStyleLabel('EMOTIONAL'), '감성');
-    assert.equal(
-      confirmedCount([
-        { status: 'CONFIRMED' },
-        { status: 'DRAFT' },
-        { status: 'CONFIRMED' },
-      ]),
-      2,
-    );
   });
 });

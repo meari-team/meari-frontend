@@ -1,10 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import type { ComponentProps, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '@/theme';
 import type { DIARY_STYLES } from './logic';
-
-type IconName = ComponentProps<typeof Ionicons>['name'];
 
 // 설정 묶음: 작은 제목 + 행들이 붙어 있는 카드
 export function SettingsGroup({
@@ -22,10 +20,8 @@ export function SettingsGroup({
   );
 }
 
-// 설정 한 줄: 아이콘 · 제목(설명) · 현재값 · ›. onPress가 없으면 정보만 보여 준다
+// 설정 한 줄: 제목(설명) · 현재값 · ›. onPress가 없으면 정보만 보여 준다
 export function SettingsRow({
-  icon,
-  tint = colors.primary,
   title,
   description,
   value,
@@ -35,8 +31,6 @@ export function SettingsRow({
   expanded,
   testID,
 }: {
-  icon: IconName;
-  tint?: string;
   title: string;
   description?: string;
   value?: string;
@@ -55,14 +49,6 @@ export function SettingsRow({
         : 'chevron-down';
   const body = (
     <>
-      <View
-        style={[
-          styles.rowIcon,
-          { backgroundColor: danger ? colors.dangerSoft : `${tint}1F` },
-        ]}
-      >
-        <Ionicons name={icon} size={18} color={danger ? colors.danger : tint} />
-      </View>
       <View style={styles.rowText}>
         <Text style={[styles.rowTitle, danger && styles.dangerText]}>
           {title}
@@ -188,13 +174,6 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   pressed: { backgroundColor: colors.surfaceMuted },
-  rowIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   rowText: { flex: 1, gap: 2 },
   rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   rowDescription: { fontSize: 13, lineHeight: 18, color: colors.textMuted },

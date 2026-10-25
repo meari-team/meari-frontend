@@ -53,10 +53,6 @@ export const DIARY_STYLES: {
 export const diaryStyleLabel = (value: DiaryStyle) =>
   DIARY_STYLES.find((s) => s.value === value)?.label ?? value;
 
-// 프로필 아바타에 쓰는 닉네임 첫 글자
-export const initialOf = (nickname: string) =>
-  Array.from(nickname.trim())[0] ?? '?';
-
 // 가입 시각(ISO) → KST 기준 "2026. 10. 24."와 오늘까지 며칠째인지(가입일이 1일째)
 export function joinInfo(
   createdAt: string,
@@ -71,10 +67,6 @@ export function joinInfo(
     86_400_000;
   return { label: `${y}. ${m}. ${d}.`, days: Math.max(1, diff + 1) };
 }
-
-// 확정한 일기 수
-export const confirmedCount = (items: { status: string }[]) =>
-  items.filter((e) => e.status === 'CONFIRMED').length;
 
 export function nicknameError(raw: string): string | null {
   const v = raw.trim();
