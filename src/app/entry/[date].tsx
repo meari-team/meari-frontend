@@ -3,18 +3,13 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { useChecklist, useEntry, useUpdateMemory } from '@/api/entries';
 import { ApiError, errorMessage } from '@/api/errors';
-import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
-import { Chip } from '@/components/Chip';
 import { Screen } from '@/components/Screen';
-import { Section } from '@/components/Section';
-import { ScheduleList } from '@/features/schedules/ScheduleList';
 import { StateView } from '@/components/StateView';
-import { PhotoCarousel } from '@/features/calendar/PhotoCarousel';
 import { DeleteEntrySection } from '@/features/entries/DeleteEntrySection';
-import { indexBadgeOf } from '@/features/today/stage';
+import { DaySchedulesQuiet, DiaryPage } from '@/features/entries/DiaryPage';
 import { formatKoreanDate, normalizeEntryDate } from '@/lib/dates';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
 // 기억에서 제외는 AI 기억을 먼저 지운다. AI가 안 되면 503
 const aiIndexFailMessage = (e: unknown, action: string) =>
@@ -72,94 +67,76 @@ export default function EntryDetailScreen() {
   }
 
   const confirmed = data.status === 'CONFIRMED';
-  const badge = confirmed ? indexBadgeOf(data.aiIndexStatus) : null;
-  const checked = new Set(data.checkedItemIds);
-  const items = checklist.data.flatMap((c) =>
-    c.items
-      .filter((i) => checked.has(i.id))
-      .map((i) => ({ ...i, color: c.color })),
-  );
 
   return (
     <>
       {header}
       <Screen edges={['bottom']}>
-        <View style={styles.badges}>
-          {!confirmed ? (
-            <Badge label="작성 중" tone="warning" icon="create-outline" />
-          ) : null}
-          {badge ? (
-            <Badge
-              label={badge.label}
-              tone={badge.tone}
-              spinning={badge.spinning}
-            />
-          ) : null}
-          {data.excludedFromMemory ? <Badge label="기억에서 제외됨" /> : null}
-        </View>
-
-        {data.photos.length > 0 ? <PhotoCarousel photos={data.photos} /> : null}
-
         {confirmed ? (
-          <Text style={styles.content} selectable testID="entry-content">
-            {data.finalContent}
-          </Text>
+          <DiaryPage date={date} entry={data} categories={checklist.data} />
         ) : (
-          <Section
-            title="아직 확정하지 않은 일기예요"
-            hint="확정한 일기만 과거의 나의 기억이 돼요."
-          >
+          <View style={styles.draft}>
+            <Text style={styles.draftTitle}>아직 확정하지 않은 일기예요</Text>
+            <Text style={styles.draftHint}>
+              확정한 일기만 과거의 나의 기억이 돼요.
+            </Text>
             <Button
               title="이어 쓰기"
               onPress={() => router.push(`/today?date=${date}`)}
             />
-          </Section>
+          </View>
         )}
 
-        {items.length > 0 ? (
-          <View style={styles.chips}>
-            {items.map((i) => (
-              <Chip key={i.id} label={i.label} color={i.color} />
-            ))}
-          </View>
-        ) : null}
-
-        <ScheduleList date={date} title="이 날 일정" emptyText={null} />
+        <DaySchedulesQuiet date={date} />
 
         {confirmed ? (
           <>
-            <Button
-              title="이때의 나와 대화하기"
-              testID="talk-to-past-self"
-              onPress={() =>
-                router.push({
-                  pathname: '/past-self/confirm',
-                  params: { anchorDate: date },
-                })
-              }
-            />
+            <View style={styles.actions}>
+              <Button
+                title="이때의 나와 대화하기"
+                testID="talk-to-past-self"
+                onPress={() =>
+                  router.push({
+                    pathname: '/past-self/confirm',
+                    params: { anchorDate: date },
+                  })
+                }
+              />
+              <Button
+                title="수정하기"
+                variant="secondary"
+                testID="edit-entry"
+                onPress={() =>
+                  router.push({
+                    pathname: '/today',
+                    params: { date, edit: String(Date.now()) },
+                  })
+                }
+              />
+            </View>
 
-            <Section
-              title="기억에서 제외"
-              hint="켜면 과거의 나와 대화할 때 이 일기를 쓰지 않아요."
-            >
-              <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>
-                  {data.excludedFromMemory ? '제외됨' : '기억에 포함'}
+            {/* 기억 포함 여부: 조용한 설정 한 줄 */}
+            <View style={styles.setting}>
+              <View style={styles.flex}>
+                <Text style={styles.settingTitle}>과거의 나 기억에 포함</Text>
+                <Text style={styles.settingHint}>
+                  끄면 과거의 나와 대화할 때 이 일기를 쓰지 않아요.
                 </Text>
-                <Switch
-                  accessibilityLabel="기억에서 제외"
-                  value={data.excludedFromMemory}
-                  disabled={memory.isPending}
-                  onValueChange={(v) => memory.mutate(v)}
-                />
               </View>
-              {memory.isError ? (
-                <Text style={styles.error}>
-                  {aiIndexFailMessage(memory.error, '바꾸지')}
-                </Text>
-              ) : null}
-            </Section>
+              <Switch
+                accessibilityLabel="과거의 나 기억에 포함"
+                value={!data.excludedFromMemory}
+                trackColor={{ true: colors.primary, false: colors.border }}
+                thumbColor={colors.surface}
+                disabled={memory.isPending}
+                onValueChange={(include) => memory.mutate(!include)}
+              />
+            </View>
+            {memory.isError ? (
+              <Text style={styles.error}>
+                {aiIndexFailMessage(memory.error, '바꾸지')}
+              </Text>
+            ) : null}
           </>
         ) : null}
 
@@ -175,14 +152,30 @@ export default function EntryDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  content: { fontSize: 16, lineHeight: 26, color: colors.text },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  switchRow: {
+  flex: { flex: 1 },
+  draft: {
+    gap: spacing.sm,
+    padding: spacing.lg - 2,
+    borderRadius: radius.md + 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  draftTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
+  draftHint: {
+    fontSize: 14,
+    color: colors.textMuted,
+    marginBottom: spacing.sm,
+  },
+  actions: { gap: spacing.sm, marginTop: spacing.sm },
+  setting: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
-  switchLabel: { fontSize: 15, color: colors.text },
+  settingTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+  settingHint: { fontSize: 13, lineHeight: 18, color: colors.textMuted },
   error: { color: colors.danger, fontSize: 14 },
 });

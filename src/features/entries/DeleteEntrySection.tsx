@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useDeleteEntry } from '@/api/entries';
 import { ApiError, errorMessage } from '@/api/errors';
 import { Button } from '@/components/Button';
@@ -58,12 +58,15 @@ export function DeleteEntrySection({
           ) : null}
         </Section>
       ) : (
-        <Button
-          title="일기 삭제"
-          variant="ghost"
+        <Pressable
+          accessibilityRole="button"
           onPress={() => setConfirming(true)}
+          hitSlop={8}
+          style={({ pressed }) => [styles.link, pressed && styles.pressed]}
           testID="delete-entry"
-        />
+        >
+          <Text style={styles.linkText}>이 일기 지우기</Text>
+        </Pressable>
       )}
     </View>
   );
@@ -71,5 +74,13 @@ export function DeleteEntrySection({
 
 const styles = StyleSheet.create({
   area: { marginTop: spacing.lg },
+  // 평소엔 눈에 덜 띄게: 맨 아래 작은 회색 링크
+  link: { alignSelf: 'center', paddingVertical: spacing.sm },
+  linkText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textDecorationLine: 'underline',
+  },
+  pressed: { opacity: 0.6 },
   error: { color: colors.danger, fontSize: 14 },
 });

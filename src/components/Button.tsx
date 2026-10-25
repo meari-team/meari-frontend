@@ -1,7 +1,7 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { colors, radius, spacing } from '@/theme';
 
-type Variant = 'primary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 type Props = {
   title: string;
@@ -12,7 +12,7 @@ type Props = {
   testID?: string;
 };
 
-// danger: 되돌릴 수 없는 작업(삭제)의 최종 확인 버튼
+// secondary: 테두리만 있는 보조 버튼 · danger: 되돌릴 수 없는 작업(삭제)의 최종 확인 버튼
 export function Button({
   title,
   onPress,
@@ -22,7 +22,7 @@ export function Button({
   testID,
 }: Props) {
   const inactive = disabled || loading;
-  const filled = variant !== 'ghost';
+  const filled = variant === 'primary' || variant === 'danger';
   return (
     <Pressable
       accessibilityRole="button"
@@ -34,6 +34,7 @@ export function Button({
         styles.base,
         styles[variant],
         inactive && filled && styles.disabled,
+        inactive && variant === 'secondary' && styles.dim,
         pressed && styles.pressed,
       ]}
     >
@@ -45,7 +46,11 @@ export function Button({
         <Text
           style={[
             styles.label,
-            filled ? styles.filledLabel : styles.ghostLabel,
+            filled
+              ? styles.filledLabel
+              : variant === 'secondary'
+                ? styles.secondaryLabel
+                : styles.ghostLabel,
           ]}
         >
           {title}
@@ -64,11 +69,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   primary: { backgroundColor: colors.primary },
+  secondary: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   ghost: { backgroundColor: 'transparent' },
   danger: { backgroundColor: colors.danger },
   disabled: { backgroundColor: colors.disabled },
+  dim: { opacity: 0.5 },
   pressed: { opacity: 0.8 },
   label: { fontSize: 16, fontWeight: '600' },
   filledLabel: { color: colors.primaryText },
+  secondaryLabel: { color: colors.text },
   ghostLabel: { color: colors.primary },
 });

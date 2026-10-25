@@ -16,8 +16,9 @@ import { normalizeEntryDate } from '@/lib/dates';
 
 // 오늘의 일기. 서버의 일기 상태에 따라 단계를 그린다 (prd.md §7-1)
 // ?date=YYYY-MM-DD로 지난 날짜도 쓸 수 있다 (미래·잘못된 값은 오늘)
+// ?edit=<아무 값>이면 확정본 수정으로 바로 연다 (일기 상세의 [수정하기])
 export default function TodayScreen() {
-  const params = useLocalSearchParams<{ date?: string }>();
+  const params = useLocalSearchParams<{ date?: string; edit?: string }>();
   const date = normalizeEntryDate(params.date);
 
   // 서버 상태만으로 정할 수 없는 화면: 직접 쓰기(READY), 확정본 수정(CONFIRMED)
@@ -25,6 +26,12 @@ export default function TodayScreen() {
     date: string;
     mode: 'write' | 'edit';
   } | null>(null);
+  // 렌더 중에 edit 파라미터가 새로 온 것을 보고 수정 모드로 (effect 대신)
+  const [seenEdit, setSeenEdit] = useState<string | undefined>(undefined);
+  if (params.edit && params.edit !== seenEdit) {
+    setSeenEdit(params.edit);
+    setManual({ date, mode: 'edit' });
+  }
   const mode = manual?.date === date ? manual.mode : null;
 
   const entry = useEntry(date, { pollWhilePending: true });
@@ -103,6 +110,7 @@ export default function TodayScreen() {
   } else if (stage === 'confirmed' && data) {
     body = (
       <ConfirmedView
+        date={date}
         entry={data}
         categories={checklist.data}
         onEdit={() => setManual({ date, mode: 'edit' })}
