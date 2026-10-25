@@ -225,7 +225,7 @@ export function OnThisDay({ today }: { today: string }) {
   );
 }
 
-// 과거의 나 바로가기: 1주·1개월·3개월 전 큰 버튼 3개 (기록이 모자란 시점은 흐리게 n/7)
+// 과거의 나 바로가기: 1주·1개월·3개월 전 버튼 3개를 한 줄로 (기록이 모자란 시점은 흐리게 n/7)
 export function PastSelfShortcuts() {
   const presets = usePresets();
   const action = {
@@ -278,25 +278,17 @@ export function PastSelfShortcuts() {
               pressed && styles.pressed,
             ]}
           >
-            <View style={styles.flex}>
-              <Text
-                style={[styles.presetTitle, !p.available && styles.offText]}
-              >
-                {PRESET_LABELS[p.preset]}의 나
-              </Text>
-              <Text style={styles.presetSub}>
-                {p.available
-                  ? `${shortKoreanDate(p.anchorDate)}까지 · 기록 ${p.recordCount}편`
-                  : `기록이 모자라요 (${p.recordCount}/${PAST_SELF_REQUIRED})`}
-              </Text>
-            </View>
-            {p.available ? (
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={colors.primary}
-              />
-            ) : null}
+            <Text
+              style={[styles.presetTitle, !p.available && styles.offText]}
+              numberOfLines={1}
+            >
+              {PRESET_LABELS[p.preset]}
+            </Text>
+            <Text style={styles.presetSub} numberOfLines={1}>
+              {p.available
+                ? `${shortKoreanDate(p.anchorDate)}까지`
+                : `기록 ${p.recordCount}/${PAST_SELF_REQUIRED}`}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -415,20 +407,20 @@ const styles = StyleSheet.create({
   },
   memory: { gap: spacing.xs },
   memoryLabel: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
-  presets: { gap: spacing.sm },
+  presets: { flexDirection: 'row', gap: spacing.sm },
   preset: {
-    flexDirection: 'row',
+    flex: 1,
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md + 2,
+    gap: 2,
+    paddingHorizontal: spacing.xs,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
     backgroundColor: colors.primarySoft,
   },
   presetOff: { backgroundColor: colors.surfaceMuted },
-  presetTitle: { fontSize: 17, fontWeight: '700', color: colors.primary },
+  presetTitle: { fontSize: 16, fontWeight: '700', color: colors.primary },
   offText: { color: colors.textMuted },
-  presetSub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  presetSub: { fontSize: 12, color: colors.textMuted },
   recent: { gap: spacing.sm },
   stats: { flexDirection: 'row', gap: spacing.sm },
   stat: {
