@@ -76,20 +76,13 @@ export type IndexBadge = {
   spinning?: boolean;
 };
 
-// 확정 후 기억 저장 상태 배지
+// 확정 후 기억 저장 상태 배지. 알아야 할 때(실패)만 — 저장 중·저장됨은 보통 상태라 숨긴다
 export function indexBadgeOf(
   status: EntryDto['aiIndexStatus'],
 ): IndexBadge | null {
-  switch (status) {
-    case 'PENDING':
-      return { label: '기억에 저장 중…', tone: 'info', spinning: true };
-    case 'INDEXED':
-      return { label: '기억에 저장됨', tone: 'success' };
-    case 'FAILED':
-      return { label: '기억 저장 실패 — 자동 재시도', tone: 'danger' };
-    default:
-      return null; // NONE: 확정 전이거나 기억에서 제외
-  }
+  return status === 'FAILED'
+    ? { label: '기억 저장 실패 — 자동 재시도', tone: 'danger' }
+    : null;
 }
 
 // 질문 답변 → PUT answers 본문. 빈 답은 보내지 않는다 (남은 질문은 "그냥 생성"으로 건너뜀)
