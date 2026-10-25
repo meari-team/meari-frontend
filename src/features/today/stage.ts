@@ -29,6 +29,42 @@ export function canAnalyze(p: {
   return p.uploaded >= 1 && p.uploading === 0;
 }
 
+// 입력은 두 단계: 1 사진 + 한 줄 → 2 오늘 한 일 체크(선택) → 분석
+export type InputStep = 1 | 2;
+
+export type InputFooter = {
+  primary: string;
+  enabled: boolean;
+  // 2단계에서 아무것도 안 골랐을 때만 [건너뛰기]를 같이 보여 준다
+  skip: boolean;
+  hint: string | null;
+};
+
+// 입력 단계 아래 고정 버튼. 1단계 [다음]도 분석 조건과 같다 (사진 1장 이상, 올리는 중 없음)
+export function inputFooterOf(
+  step: InputStep,
+  p: { uploaded: number; uploading: number; checked: number },
+): InputFooter {
+  const enabled = canAnalyze(p);
+  if (step === 1) {
+    return {
+      primary: p.uploading > 0 ? '사진을 올리는 중…' : '다음',
+      enabled,
+      skip: false,
+      hint:
+        p.uploaded === 0 && p.uploading === 0
+          ? '사진을 1장 이상 올려 주세요.'
+          : null,
+    };
+  }
+  return {
+    primary: 'AI로 일기 만들기',
+    enabled,
+    skip: p.checked === 0,
+    hint: null,
+  };
+}
+
 // 이번에 더 고를 수 있는 사진 수
 export function remainingSlots(current: number, max: number): number {
   return Math.max(0, max - current);
