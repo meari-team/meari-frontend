@@ -77,6 +77,26 @@ export interface paths {
     patch: operations['UsersController_updateMe'];
     trace?: never;
   };
+  '/api/v1/me/password': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * 비밀번호 변경 (U4)
+     * @description 지금 비밀번호가 틀리면 400 WRONG_PASSWORD(401 아님 — 앱이 로그아웃하지 않게), 새 비밀번호가 지금과 같으면 400 SAME_PASSWORD. 이미 발급된 토큰은 만료까지 유효하다.
+     */
+    patch: operations['UsersController_changePassword'];
+    trace?: never;
+  };
   '/api/v1/checklist/categories': {
     parameters: {
       query?: never;
@@ -451,6 +471,11 @@ export interface components {
       nickname?: string;
       diaryStyle?: components['schemas']['DiaryStyle'];
     };
+    ChangePasswordDto: {
+      currentPassword: string;
+      /** @description 회원가입과 같은 규칙: 영문과 숫자를 각각 1자 이상 */
+      newPassword: string;
+    };
     ChecklistItemDto: {
       /** Format: uuid */
       id: string;
@@ -774,6 +799,8 @@ export interface components {
       | 'CATEGORY_NOT_FOUND'
       | 'SCHEDULE_NOT_FOUND'
       | 'EMAIL_TAKEN'
+      | 'WRONG_PASSWORD'
+      | 'SAME_PASSWORD'
       | 'INVALID_ENTRY_STATE'
       | 'FILE_TOO_LARGE'
       | 'UNSUPPORTED_MEDIA_TYPE'
@@ -994,6 +1021,48 @@ export interface operations {
       };
       /** @description UNAUTHORIZED */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  UsersController_changePassword: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChangePasswordDto'];
+      };
+    };
+    responses: {
+      /** @description VALIDATION_FAILED | WRONG_PASSWORD | SAME_PASSWORD */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description TOO_MANY_REQUESTS */
+      429: {
         headers: {
           [name: string]: unknown;
         };

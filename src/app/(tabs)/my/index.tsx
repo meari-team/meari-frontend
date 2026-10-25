@@ -174,6 +174,15 @@ export default function MyScreen() {
         <Text style={styles.error}>{errorMessage(update.error)}</Text>
       ) : null}
 
+      <SettingsGroup title="계정">
+        <SettingsRow
+          title="비밀번호 변경"
+          testID="my-password"
+          onPress={() => router.push('/my/password')}
+          last
+        />
+      </SettingsGroup>
+
       {/* AI 설정 */}
       <SettingsGroup title="AI 설정">
         <SettingsRow
