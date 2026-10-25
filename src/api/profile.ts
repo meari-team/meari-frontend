@@ -6,6 +6,7 @@ import { unwrap } from './errors';
 import type { components } from './schema';
 
 type UpdateMeBody = components['schemas']['UpdateMeDto'];
+type ChangePasswordBody = components['schemas']['ChangePasswordDto'];
 
 // U2: 보낸 필드만 바꾼다
 export function useUpdateMe() {
@@ -14,6 +15,14 @@ export function useUpdateMe() {
     mutationFn: (body: UpdateMeBody) =>
       unwrap(api.PATCH('/api/v1/me', { body })),
     onSuccess: (me) => client.setQueryData(meQueryKey, me),
+  });
+}
+
+// U4: 비밀번호 변경. 지금 비밀번호가 틀리면 400 WRONG_PASSWORD (로그아웃되지 않는다)
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (body: ChangePasswordBody) =>
+      unwrap(api.PATCH('/api/v1/me/password', { body })),
   });
 }
 

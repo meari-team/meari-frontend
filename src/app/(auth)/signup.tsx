@@ -6,10 +6,9 @@ import { errorMessage } from '@/api/errors';
 import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
+import { PASSWORD_RE } from '@/lib/password';
 import { colors, spacing } from '@/theme';
 
-// 서버 규칙과 같다 (SignupDto): 8~64자, 영문과 숫자 각각 1자 이상
-const PASSWORD_RE = /^(?=.*[A-Za-z])(?=.*\d).{8,64}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function SignupScreen() {
