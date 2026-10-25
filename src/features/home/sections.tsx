@@ -17,13 +17,18 @@ import { Button } from '@/components/Button';
 import { SafeImage } from '@/components/SafeImage';
 import { Section } from '@/components/Section';
 import { FeedItem } from '@/features/calendar/ListView';
-import { PRESET_LABELS, availabilityHint } from '@/features/past-self/logic';
+import {
+  PRESET_LABELS,
+  availabilityHint,
+  shortKoreanDate,
+} from '@/features/past-self/logic';
 import { indexBadgeOf } from '@/features/today/stage';
 import { formatKoreanDate } from '@/lib/dates';
 import { colors, radius, spacing } from '@/theme';
 import {
   TODAY_ACTION_LABEL,
   entryPreviewText,
+  homePresets,
   memoryDates,
   pastSelfProgress,
   recordStats,
@@ -220,7 +225,7 @@ export function OnThisDay({ today }: { today: string }) {
   );
 }
 
-// 과거의 나 바로가기: 대화할 수 있는 프리셋만 칩으로
+// 과거의 나 바로가기: 1주·1개월·3개월 전 큰 버튼 3개 (기록이 모자란 시점은 흐리게 n/7)
 export function PastSelfShortcuts() {
   const presets = usePresets();
   const action = {
@@ -258,22 +263,42 @@ export function PastSelfShortcuts() {
   }
   return (
     <Section title="과거의 나와 대화하기" action={action}>
-      <View style={styles.chips}>
-        {presets.data
-          .filter((p) => p.available)
-          .map((p) => (
-            <Pressable
-              key={p.preset}
-              testID={`home-preset-${p.preset}`}
-              accessibilityRole="button"
-              onPress={() => router.push(confirmHref(p.anchorDate))}
-              style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
-            >
-              <Text style={styles.chipText}>
+      <View style={styles.presets}>
+        {homePresets(presets.data).map((p) => (
+          <Pressable
+            key={p.preset}
+            testID={`home-preset-${p.preset}`}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !p.available }}
+            disabled={!p.available}
+            onPress={() => router.push(confirmHref(p.anchorDate))}
+            style={({ pressed }) => [
+              styles.preset,
+              !p.available && styles.presetOff,
+              pressed && styles.pressed,
+            ]}
+          >
+            <View style={styles.flex}>
+              <Text
+                style={[styles.presetTitle, !p.available && styles.offText]}
+              >
                 {PRESET_LABELS[p.preset]}의 나
               </Text>
-            </Pressable>
-          ))}
+              <Text style={styles.presetSub}>
+                {p.available
+                  ? `${shortKoreanDate(p.anchorDate)}까지 · 기록 ${p.recordCount}편`
+                  : `기록이 모자라요 (${p.recordCount}/${PAST_SELF_REQUIRED})`}
+              </Text>
+            </View>
+            {p.available ? (
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.primary}
+              />
+            ) : null}
+          </Pressable>
+        ))}
       </View>
     </Section>
   );
@@ -390,14 +415,20 @@ const styles = StyleSheet.create({
   },
   memory: { gap: spacing.xs },
   memoryLabel: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
+  presets: { gap: spacing.sm },
+  preset: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
     backgroundColor: colors.primarySoft,
   },
-  chipText: { fontSize: 14, fontWeight: '600', color: colors.primary },
+  presetOff: { backgroundColor: colors.surfaceMuted },
+  presetTitle: { fontSize: 17, fontWeight: '700', color: colors.primary },
+  offText: { color: colors.textMuted },
+  presetSub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   recent: { gap: spacing.sm },
   stats: { flexDirection: 'row', gap: spacing.sm },
   stat: {
