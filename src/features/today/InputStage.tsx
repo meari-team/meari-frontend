@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   useAnalyze,
@@ -30,8 +30,6 @@ type Props = {
   date: string;
   entry: EntryDto | null;
   categories: ChecklistCategoryDto[];
-  // 스크롤 맨 아래에 붙일 것 (예: 일기 삭제)
-  footerExtra?: ReactNode;
 };
 
 const NOTE_MAX = 200;
@@ -40,7 +38,7 @@ const NOTE_MAX = 200;
 //   1/2 사진(1~3장) + 한 줄 + 그날 일정 한 줄 → [다음]
 //   2/2 오늘 한 일 체크(선택) → [AI로 일기 만들기] → 분석
 // 단계를 오가도 입력은 이 컴포넌트 상태에 남는다
-export function InputStage({ date, entry, categories, footerExtra }: Props) {
+export function InputStage({ date, entry, categories }: Props) {
   const [step, setStep] = useState<InputStep>(1);
   const [note, setNote] = useState(entry?.note ?? '');
   const [checked, setChecked] = useState<Set<string>>(
@@ -337,8 +335,6 @@ export function InputStage({ date, entry, categories, footerExtra }: Props) {
           {errorMessage(actionError)}
         </Text>
       ) : null}
-
-      {step === 1 ? footerExtra : null}
     </Screen>
   );
 }
