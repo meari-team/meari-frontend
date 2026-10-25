@@ -31,6 +31,8 @@ import {
   pastSelfTitle,
   shortKoreanDate,
 } from '@/features/past-self/logic';
+import { useTypewriter } from '@/features/past-self/typewriter';
+import { shouldType } from '@/features/past-self/typewriter-logic';
 import { isDateString } from '@/lib/dates';
 import { colors, radius, spacing } from '@/theme';
 
@@ -53,6 +55,8 @@ export default function ChatScreen() {
   const [draft, setDraft] = useState('');
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const prependingRef = useRef(false);
+  // 보내기 직전의 메시지 id들. 이후 새로 온 AI 답장만 타자로 보여 준다 (들어올 때 있던 대화는 바로 전체)
+  const [typeAfter, setTypeAfter] = useState<ReadonlySet<string> | null>(null);
 
   const list = messages.data ? flattenPages(messages.data.pages) : [];
   const limitReached =
@@ -79,6 +83,7 @@ export default function ChatScreen() {
   const submit = (text = draft) => {
     const content = text.trim();
     if (!content || send.isPending) return;
+    setTypeAfter(new Set(list.map((m) => m.id)));
     send.mutate(content, { onSuccess: () => setDraft('') });
   };
 
@@ -159,8 +164,13 @@ export default function ChatScreen() {
               </Text>
             ) : null}
 
-            {list.map((m) => (
-              <Bubble key={m.id} message={m} />
+            {list.map((m, i) => (
+              <Bubble
+                key={m.id}
+                message={m}
+                typing={shouldType(m, i === list.length - 1, typeAfter)}
+                onTick={() => scroll.current?.scrollToEnd({ animated: false })}
+              />
             ))}
 
             {send.isPending && send.variables ? (
@@ -254,19 +264,36 @@ export default function ChatScreen() {
   );
 }
 
-function Bubble({ message }: { message: ChatMessageDto }) {
+function Bubble({
+  message,
+  typing = false,
+  onTick,
+}: {
+  message: ChatMessageDto;
+  typing?: boolean;
+  onTick?: () => void;
+}) {
   const mine = message.role === 'USER';
+  const typed = useTypewriter(message.content, typing, onTick);
   return (
     <View style={[styles.bubbleWrap, mine ? styles.right : styles.left]}>
-      <View
+      <Pressable
+        // 치는 중에 누르면 남은 글자를 한 번에
+        disabled={typed.done}
+        onPress={typed.finish}
+        accessibilityLabel={typed.done ? undefined : message.content}
         style={[styles.bubble, mine ? styles.mine : styles.assistant]}
         testID={mine ? undefined : 'assistant-bubble'}
       >
-        <Text style={[styles.bubbleText, mine && styles.mineText]} selectable>
-          {message.content}
+        <Text
+          style={[styles.bubbleText, mine && styles.mineText]}
+          selectable={typed.done}
+        >
+          {typed.text}
         </Text>
-      </View>
-      {!mine && message.citations.length > 0 ? (
+      </Pressable>
+      {/* 근거·안내는 다 친 뒤에 */}
+      {!typed.done ? null : !mine && message.citations.length > 0 ? (
         <View style={styles.citations}>
           <Text style={styles.citationLabel}>참고한 기록</Text>
           {message.citations.map((c) => (
@@ -284,7 +311,7 @@ function Bubble({ message }: { message: ChatMessageDto }) {
           ))}
         </View>
       ) : null}
-      {!mine && message.flag === 'NO_EVIDENCE' ? (
+      {typed.done && !mine && message.flag === 'NO_EVIDENCE' ? (
         <Text style={styles.noEvidence}>
           기록에서 근거를 찾지 못한 답이에요.
         </Text>
