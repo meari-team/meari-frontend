@@ -136,16 +136,8 @@ function EntryCard({
       </Text>
     );
   }
-  if (!entry) {
-    return (
-      <Button
-        title="이 날 일기 쓰기"
-        variant="ghost"
-        testID="write-entry"
-        onPress={() => router.push(`/today?date=${date}`)}
-      />
-    );
-  }
+  // 일기 쓰기는 + 메뉴(AddMenu)에서 한다
+  if (!entry) return null;
   const confirmed = entry.status === 'CONFIRMED';
   return (
     <Pressable
