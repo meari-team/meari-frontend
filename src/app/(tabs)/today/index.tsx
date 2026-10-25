@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useChecklist, useEntry } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
@@ -11,14 +11,14 @@ import { InputStage } from '@/features/today/InputStage';
 import { QuestionsStage } from '@/features/today/QuestionsStage';
 import { ReadyStage } from '@/features/today/ReadyStage';
 import { stageOf } from '@/features/today/stage';
-import { formatKoreanDate, normalizeEntryDate, todayKst } from '@/lib/dates';
+import { TodayTitle } from '@/features/today/TodayTitle';
+import { normalizeEntryDate } from '@/lib/dates';
 
 // 오늘의 일기. 서버의 일기 상태에 따라 단계를 그린다 (prd.md §7-1)
 // ?date=YYYY-MM-DD로 지난 날짜도 쓸 수 있다 (미래·잘못된 값은 오늘)
 export default function TodayScreen() {
   const params = useLocalSearchParams<{ date?: string }>();
   const date = normalizeEntryDate(params.date);
-  const title = date === todayKst() ? '오늘의 일기' : formatKoreanDate(date);
 
   // 서버 상태만으로 정할 수 없는 화면: 직접 쓰기(READY), 확정본 수정(CONFIRMED)
   const [manual, setManual] = useState<{
@@ -29,20 +29,21 @@ export default function TodayScreen() {
 
   const entry = useEntry(date, { pollWhilePending: true });
   const checklist = useChecklist();
-  const header = <Stack.Screen options={{ title }} />;
+  // 다른 탭처럼 기본 헤더 대신 큰 제목 (지난 날짜면 날짜가 제목)
+  const title = <TodayTitle date={date} />;
 
   if (entry.isPending || checklist.isPending) {
     return (
-      <>
-        {header}
+      <Screen edges={['top']}>
+        {title}
         <StateView status="loading" />
-      </>
+      </Screen>
     );
   }
   if (entry.isError || checklist.isError) {
     return (
-      <>
-        {header}
+      <Screen edges={['top']}>
+        {title}
         <StateView
           status="error"
           message={errorMessage(entry.error ?? checklist.error)}
@@ -51,7 +52,7 @@ export default function TodayScreen() {
             void checklist.refetch();
           }}
         />
-      </>
+      </Screen>
     );
   }
 
@@ -107,28 +108,31 @@ export default function TodayScreen() {
         onEdit={() => setManual({ date, mode: 'edit' })}
       />
     );
-  } else {
+  }
+
+  // 작성 중이든 확정이든 지울 수 있다. 지우면 빈 입력 화면으로 돌아간다
+  const remove =
+    data && !mode ? <DeleteEntrySection key={data.id} date={date} /> : null;
+
+  if (!body) {
+    // 입력 단계는 아래 고정 버튼이 있어 화면 전체를 직접 그린다.
     // 날짜가 바뀌면 입력 상태를 새로 시작한다
-    body = (
+    return (
       <InputStage
         key={date}
         date={date}
         entry={data}
         categories={checklist.data}
+        footerExtra={remove}
       />
     );
   }
 
   return (
-    <>
-      {header}
-      <Screen edges={[]}>
-        {body}
-        {data && !mode ? (
-          // 작성 중이든 확정이든 지울 수 있다. 지우면 빈 입력 화면으로 돌아간다
-          <DeleteEntrySection key={data.id} date={date} />
-        ) : null}
-      </Screen>
-    </>
+    <Screen edges={['top']}>
+      {title}
+      {body}
+      {remove}
+    </Screen>
   );
 }
