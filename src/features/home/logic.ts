@@ -93,3 +93,9 @@ export function pastSelfProgress(
     recordCount: Math.max(0, ...presets.map((p) => p.recordCount)),
   };
 }
+
+// 홈의 과거의 나 큰 버튼 3개: 1주·1개월·3개월 전 (이 순서, 없는 프리셋은 뺀다)
+export const HOME_PRESETS = ['1W', '1M', '3M'] as const;
+export function homePresets<T extends { preset: string }>(presets: T[]): T[] {
+  return HOME_PRESETS.flatMap((key) => presets.filter((p) => p.preset === key));
+}

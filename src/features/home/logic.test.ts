@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   entryPreviewText,
+  homePresets,
   memoryDates,
   monthStartOf,
   pastSelfProgress,
@@ -101,5 +102,16 @@ describe('pastSelfProgress', () => {
       { available: false, recordCount: 3 },
     );
     assert.equal(pastSelfProgress([]).recordCount, 0);
+  });
+
+  it('홈 과거의 나 버튼은 1주·1개월·3개월 순서', () => {
+    const presets = ['1Y', '3M', '1W', '6M', '1M'].map((preset) => ({
+      preset,
+    }));
+    assert.deepEqual(
+      homePresets(presets).map((p) => p.preset),
+      ['1W', '1M', '3M'],
+    );
+    assert.deepEqual(homePresets([{ preset: '1Y' }]), []);
   });
 });
