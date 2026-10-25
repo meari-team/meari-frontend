@@ -37,11 +37,11 @@ describe('remainingSlots', () => {
 });
 
 describe('indexBadgeOf', () => {
-  it('확정 후 기억 저장 상태', () => {
+  it('확정 후 기억 저장 상태는 실패일 때만', () => {
     assert.equal(indexBadgeOf('NONE'), null);
-    assert.equal(indexBadgeOf('PENDING')?.label, '기억에 저장 중…');
+    assert.equal(indexBadgeOf('PENDING'), null);
+    assert.equal(indexBadgeOf('INDEXED'), null);
     assert.equal(indexBadgeOf('FAILED')?.label, '기억 저장 실패 — 자동 재시도');
-    assert.equal(indexBadgeOf('INDEXED')?.tone, 'success');
   });
 });
 
