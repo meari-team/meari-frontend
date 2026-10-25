@@ -21,9 +21,7 @@ import {
 import {
   DIARY_STYLES,
   NICKNAME_MAX,
-  confirmedCount,
   diaryStyleLabel,
-  initialOf,
   joinInfo,
   nicknameError,
   type DiaryStyle,
@@ -85,7 +83,7 @@ export default function MyScreen() {
   };
 
   const stats = range.data
-    ? { total: confirmedCount(range.data), ...recordStats(range.data, today) }
+    ? { total: range.data.length, ...recordStats(range.data, today) }
     : null;
   const statValue = (n: number | undefined, unit: string) =>
     n === undefined ? '–' : `${n}${unit}`;
@@ -143,9 +141,6 @@ export default function MyScreen() {
             style={({ pressed }) => [styles.profile, pressed && styles.dim]}
             testID="nickname-edit"
           >
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{initialOf(user.nickname)}</Text>
-            </View>
             <View style={styles.flex}>
               <View style={styles.nameRow}>
                 <Text style={styles.nickname} testID="nickname">
@@ -164,7 +159,7 @@ export default function MyScreen() {
         <View style={styles.stats}>
           <StatTile
             value={statValue(stats?.total, '편')}
-            label="확정한 일기"
+            label="총 일기"
             testID="my-stat-total"
           />
           <StatTile
@@ -182,7 +177,6 @@ export default function MyScreen() {
       {/* AI 설정 */}
       <SettingsGroup title="AI 설정">
         <SettingsRow
-          icon="color-wand-outline"
           title="AI 일기 문체"
           description="초안을 쓸 때의 말투"
           value={diaryStyleLabel(user.diaryStyle)}
@@ -212,8 +206,6 @@ export default function MyScreen() {
       {/* 기록 */}
       <SettingsGroup title="기록">
         <SettingsRow
-          icon="book-outline"
-          tint={colors.success}
           title="전체 일기 보기"
           value={stats ? `${stats.total}편` : undefined}
           onPress={() =>
@@ -225,8 +217,6 @@ export default function MyScreen() {
           testID="open-all-entries"
         />
         <SettingsRow
-          icon="checkbox-outline"
-          tint={colors.warning}
           title="체크리스트 관리"
           description="오늘의 일기에서 고르는 항목"
           value={
@@ -241,7 +231,6 @@ export default function MyScreen() {
       {/* 안내 */}
       <SettingsGroup title="안내">
         <SettingsRow
-          icon="sparkles-outline"
           title="과거의 나는 이렇게 만들어져요"
           expanded={open === 'pastSelf'}
           onPress={() => toggle('pastSelf')}
@@ -253,27 +242,17 @@ export default function MyScreen() {
           </Text>
         ) : null}
         <SettingsRow
-          icon="shield-checkmark-outline"
-          tint={colors.success}
           title="개인정보 처리방침"
           description="모으는 정보, 외부 AI, 보관과 삭제"
           onPress={() => router.push('/my/privacy')}
           testID="open-privacy"
         />
-        <SettingsRow
-          icon="information-circle-outline"
-          tint={colors.textMuted}
-          title="버전"
-          value={VERSION}
-          last
-        />
+        <SettingsRow title="버전" value={VERSION} last />
       </SettingsGroup>
 
       {/* 계정 */}
       <SettingsGroup>
         <SettingsRow
-          icon="log-out-outline"
-          tint={colors.textMuted}
           title="로그아웃"
           onPress={() => toggle('logout')}
           last={open !== 'logout'}
@@ -341,15 +320,6 @@ const styles = StyleSheet.create({
   },
   editBox: { gap: spacing.sm + 4 },
   profile: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
-  },
-  avatarText: { fontSize: 26, fontWeight: '800', color: colors.primary },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   nickname: { fontSize: 21, fontWeight: '800', color: colors.text },
   muted: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
