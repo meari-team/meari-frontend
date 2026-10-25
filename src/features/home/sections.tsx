@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import {
   ActivityIndicator,
@@ -351,28 +350,15 @@ export function RecordStats({ today }: { today: string }) {
   const { monthCount, streak } = recordStats(range.data, today);
   return (
     <View style={styles.stats} testID="home-stats">
-      <Stat
-        icon="calendar-outline"
-        value={`${monthCount}일`}
-        label={`${Number(today.slice(5, 7))}월에 기록한 날`}
-      />
-      <Stat icon="flame-outline" value={`${streak}일`} label="연속 기록" />
+      <Stat value={`${monthCount}일`} label="이번 달 기록" />
+      <Stat value={`${streak}일`} label="연속 기록" />
     </View>
   );
 }
 
-function Stat({
-  icon,
-  value,
-  label,
-}: {
-  icon: 'calendar-outline' | 'flame-outline';
-  value: string;
-  label: string;
-}) {
+function Stat({ value, label }: { value: string; label: string }) {
   return (
     <View style={styles.stat}>
-      <Ionicons name={icon} size={18} color={colors.primary} />
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
