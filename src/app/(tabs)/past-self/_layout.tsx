@@ -9,6 +9,7 @@ export default function Layout() {
         options={{ title: '과거의 나', headerShown: false }}
       />
       <Stack.Screen name="confirm" options={{ title: '시점 확인' }} />
+      <Stack.Screen name="sessions" options={{ title: '지난 대화' }} />
       <Stack.Screen name="[sessionId]" options={{ title: '과거의 나' }} />
     </Stack>
   );
