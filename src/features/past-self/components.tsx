@@ -30,6 +30,7 @@ import {
   dotState,
   lastConfirmedOnOrBefore,
   pastSelfTitle,
+  recentSessionsView,
   relativeTime,
   selfBarLine,
   shortKoreanDate,
@@ -333,6 +334,7 @@ export function DateSheet({
 }
 
 // 최근 대화: 기준일 제목 · 마지막 메시지 · 시간
+// 최근 대화: 3개까지만, 더 있으면 "전체 보기" → 지난 대화 화면
 export function RecentSessions({
   sessions,
   pending,
@@ -344,44 +346,65 @@ export function RecentSessions({
   error: unknown;
   onRetry: () => void;
 }) {
+  const view = sessions ? recentSessionsView(sessions) : null;
   let body;
   if (pending) {
     body = <ActivityIndicator color={colors.primary} />;
-  } else if (error || !sessions) {
+  } else if (error || !view) {
     body = (
       <View style={styles.failed}>
         <Text style={styles.error}>{errorMessage(error)}</Text>
         <Button title="다시 시도" variant="ghost" onPress={onRetry} />
       </View>
     );
-  } else if (sessions.length === 0) {
+  } else if (view.shown.length === 0) {
     body = <Text style={styles.muted}>아직 나눈 대화가 없어요.</Text>;
   } else {
-    body = sessions.map((s, i) => (
-      <Pressable
-        key={s.id}
-        testID={`session-${s.id}`}
-        accessibilityRole="button"
-        onPress={() => router.push(chatHref(s))}
-        style={({ pressed }) => [
-          styles.session,
-          i < sessions.length - 1 && styles.sessionDivider,
-          pressed && styles.pressed,
-        ]}
-      >
-        <View style={styles.sessionTop}>
-          <Text style={styles.sessionTitle}>{pastSelfTitle(s.anchorDate)}</Text>
-          <Text style={styles.sessionTime}>
-            {relativeTime(s.lastMessageAt ?? s.createdAt)}
-          </Text>
-        </View>
-        <Text style={styles.sessionPreview} numberOfLines={1}>
-          {s.lastMessagePreview ?? '아직 메시지가 없어요'}
-        </Text>
-      </Pressable>
-    ));
+    body = <SessionRows sessions={view.shown} />;
   }
-  return <Section title="최근 대화">{body}</Section>;
+  return (
+    <Section
+      title="최근 대화"
+      action={
+        view?.hasMore
+          ? {
+              label: '전체 보기',
+              testID: 'sessions-all',
+              onPress: () => router.push('/past-self/sessions'),
+            }
+          : undefined
+      }
+    >
+      {body}
+    </Section>
+  );
+}
+
+// 대화 목록 줄들: "M월 D일까지의 나 · 언제" + 마지막 메시지 한 줄 (최근 대화·지난 대화 공용)
+export function SessionRows({ sessions }: { sessions: ChatSessionDto[] }) {
+  return sessions.map((s, i) => (
+    <Pressable
+      key={s.id}
+      testID={`session-${s.id}`}
+      accessibilityRole="button"
+      onPress={() => router.push(chatHref(s))}
+      style={({ pressed }) => [
+        styles.session,
+        i < sessions.length - 1 && styles.sessionDivider,
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={styles.sessionTop}>
+        <Text style={styles.sessionTitle}>{pastSelfTitle(s.anchorDate)}</Text>
+        <Text style={styles.sessionTime}>
+          {relativeTime(s.lastMessageAt ?? s.createdAt)}
+        </Text>
+      </View>
+      <Text style={styles.sessionPreview} numberOfLines={1}>
+        {s.lastMessagePreview ?? '아직 메시지가 없어요'}
+      </Text>
+    </Pressable>
+  ));
 }
 
 const DOT_STYLE: Record<DotState, object> = {

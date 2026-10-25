@@ -9,6 +9,7 @@ import {
   flattenPages,
   lastConfirmedOnOrBefore,
   pastSelfTitle,
+  recentSessionsView,
   relativeTime,
   selfBarLine,
   timelineMonths,
@@ -144,5 +145,17 @@ describe('past-self logic', () => {
       ),
       '기록이 모자라요 (3/7)',
     );
+  });
+
+  it('최근 대화는 3개까지, 더 있으면 전체 보기', () => {
+    assert.deepEqual(recentSessionsView([1, 2, 3]), {
+      shown: [1, 2, 3],
+      hasMore: false,
+    });
+    assert.deepEqual(recentSessionsView([1, 2, 3, 4, 5]), {
+      shown: [1, 2, 3],
+      hasMore: true,
+    });
+    assert.deepEqual(recentSessionsView([]), { shown: [], hasMore: false });
   });
 });

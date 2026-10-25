@@ -177,3 +177,15 @@ export function relativeTime(iso: string, now = Date.now()): string {
   if (days < 7) return `${days}일 전`;
   return shortKoreanDate(kst(t));
 }
+
+// 과거의 나 첫 화면의 최근 대화: 3개까지만, 더 있으면 전체 보기
+export const RECENT_SESSIONS = 3;
+export function recentSessionsView<T>(sessions: T[]): {
+  shown: T[];
+  hasMore: boolean;
+} {
+  return {
+    shown: sessions.slice(0, RECENT_SESSIONS),
+    hasMore: sessions.length > RECENT_SESSIONS,
+  };
+}
