@@ -1,18 +1,12 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ChecklistCategoryDto, EntryDto, PhotoDto } from '@/api/entries';
 import { useDaySchedules } from '@/api/schedules';
 import { SafeImage } from '@/components/SafeImage';
 import { colors, radius, spacing } from '@/theme';
 import { checkedLabels, longKoreanDate, memoryLineOf } from './diary-page';
 
-// 확정한 일기 한 쪽: 날짜 · 한 줄(제목) · 사진 · 본문 · 체크한 항목 · 기억 상태.
+// 확정한 일기 한 쪽: 날짜 · 한 줄(제목) · 사진 · 본문 · 체크한 항목 · 기억 상태(제외·실패일 때만).
 // 오늘의 일기(확정 후)와 일기 상세가 함께 쓴다. 종이 일기장처럼 조용하게
 export function DiaryPage({
   date,
@@ -44,9 +38,6 @@ export function DiaryPage({
 
       {memory ? (
         <View style={styles.footer} testID="memory-line">
-          {memory.busy ? (
-            <ActivityIndicator size="small" color={colors.textMuted} />
-          ) : null}
           <Text style={[styles.footerText, memory.failed && styles.failed]}>
             {memory.label}
           </Text>
