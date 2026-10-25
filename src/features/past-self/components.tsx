@@ -18,7 +18,6 @@ import {
   type ChatSessionDto,
 } from '@/api/past-self';
 import { Button } from '@/components/Button';
-import { SafeImage } from '@/components/SafeImage';
 import { Section } from '@/components/Section';
 import { MonthView } from '@/features/calendar/MonthView';
 import { entryPreviewText } from '@/features/home/logic';
@@ -26,11 +25,13 @@ import { shiftMonth, yearMonthOf, type YearMonth } from '@/lib/calendar';
 import { colors, radius, spacing } from '@/theme';
 import {
   PRESET_LABELS,
+  PRESET_SHORT,
   dayPosition,
   dotState,
   lastConfirmedOnOrBefore,
   pastSelfTitle,
   relativeTime,
+  selfBarLine,
   shortKoreanDate,
   timelineMonths,
   type DotState,
@@ -42,45 +43,43 @@ const chatHref = (s: ChatSessionDto) =>
     params: { sessionId: s.id, anchorDate: s.anchorDate },
   }) as const;
 
-// 1주·1개월·3개월·6개월·1년 전. 기록이 모자란 시점은 흐리게 + n/7
-export function PresetChips({
+// 1주·1개월·3개월·6개월·1년 전을 한 줄 탭으로. 고른 것만 밑줄, 기록이 모자란 시점은 흐리게(누를 수 없음)
+export function PresetTabs({
   presets,
   anchor,
-  required,
   onPick,
 }: {
   presets: AvailabilityPresetDto[];
   anchor: string;
-  required: number;
   onPick: (date: string) => void;
 }) {
   return (
-    <View style={styles.chips}>
+    <View style={styles.tabs} accessibilityRole="tablist">
       {presets.map((p) => {
         const on = p.available && p.anchorDate === anchor;
         return (
           <Pressable
             key={p.preset}
             testID={`preset-${p.preset}`}
-            accessibilityRole="button"
+            accessibilityRole="tab"
+            accessibilityLabel={`${PRESET_LABELS[p.preset]}의 나`}
             accessibilityState={{ disabled: !p.available, selected: on }}
+            aria-selected={on}
             disabled={!p.available}
             onPress={() => onPick(p.anchorDate)}
             style={({ pressed }) => [
-              styles.chip,
-              on && styles.chipOn,
-              !p.available && styles.chipOff,
+              styles.tab,
+              !p.available && styles.tabOff,
               pressed && styles.pressed,
             ]}
           >
-            <Text style={[styles.chipText, on && styles.chipTextOn]}>
-              {PRESET_LABELS[p.preset]}
+            <Text
+              style={[styles.tabText, on && styles.tabTextOn]}
+              numberOfLines={1}
+            >
+              {PRESET_SHORT[p.preset]}
             </Text>
-            {!p.available ? (
-              <Text style={styles.chipCount}>
-                {p.recordCount}/{required}
-              </Text>
-            ) : null}
+            <View style={[styles.tabLine, on && styles.tabLineOn]} />
           </Pressable>
         );
       })}
@@ -88,8 +87,8 @@ export function PresetChips({
   );
 }
 
-// 고른 기준일의 나: 기억이 되는 기록 수 · 첫 기록 · 그때의 마지막 일기 → 바로 대화 시작
-export function SelfCard({
+// 화면 아래 고정 바: 고른 기준일의 나 · 기록 수 · 그때의 마지막 일기 한 줄 → [대화하기]
+export function SelfBar({
   anchor,
   entries,
 }: {
@@ -99,90 +98,76 @@ export function SelfCard({
   const availability = useAvailability(anchor);
   const create = useCreateSession();
   const last = lastConfirmedOnOrBefore(entries, anchor);
+  const lastText = useLastText(last);
+  const a = availability.data;
 
   const start = () =>
     create.mutate(anchor, {
       onSuccess: (s) => router.push(chatHref(s)),
     });
 
-  let summary;
-  if (availability.isPending) {
-    summary = <ActivityIndicator color={colors.primary} />;
-  } else if (availability.isError) {
-    summary = (
-      <Text style={styles.error}>{errorMessage(availability.error)}</Text>
-    );
-  } else {
-    const a = availability.data;
-    summary = (
-      <Text style={styles.count} testID="self-count">
-        {a.firstRecordDate
-          ? `기록 ${a.recordCount}편 · ${shortKoreanDate(a.firstRecordDate)}부터`
-          : '이 날까지 확정한 일기가 없어요'}
-      </Text>
-    );
-  }
-
-  const a = availability.data;
-  const lacking =
-    a && !a.available
-      ? `그날까지 확정한 일기가 ${a.requiredCount}편 이상이어야 대화할 수 있어요 (${a.recordCount}/${a.requiredCount})`
-      : null;
+  let line;
+  if (availability.isPending) line = '기록을 세는 중…';
+  else if (availability.isError) line = errorMessage(availability.error);
+  else line = selfBarLine(a!, lastText);
 
   return (
-    <View style={styles.selfCard} testID="self-card">
-      <Text style={styles.selfTitle}>{pastSelfTitle(anchor)}</Text>
-      {summary}
-
-      {last ? <LastEntry entry={last} /> : null}
-
-      <Text style={styles.notice}>
-        {shortKoreanDate(anchor)} 이후의 일은 몰라요. AI가 그때까지의 기록으로
-        재구성한 모습이라 실제와 다를 수 있어요.
-      </Text>
-
-      {lacking ? <Text style={styles.lacking}>{lacking}</Text> : null}
+    <View testID="self-bar">
+      <View style={styles.bar}>
+        <Pressable
+          style={({ pressed }) => [styles.barText, pressed && styles.pressed]}
+          disabled={!last}
+          accessibilityRole={last ? 'button' : undefined}
+          accessibilityLabel={
+            last ? `${shortKoreanDate(last.date)} 일기 보기` : undefined
+          }
+          onPress={() => last && router.push(`/entry/${last.date}`)}
+        >
+          <Text style={styles.barTitle} numberOfLines={1}>
+            {pastSelfTitle(anchor)}
+          </Text>
+          <Text
+            style={[styles.barLine, a && !a.available && styles.barLineOff]}
+            numberOfLines={1}
+            testID="self-count"
+          >
+            {line}
+          </Text>
+        </Pressable>
+        <Pressable
+          testID="start-chat"
+          accessibilityRole="button"
+          accessibilityLabel={`${pastSelfTitle(anchor)}와 대화하기`}
+          accessibilityState={{ disabled: !a?.available || create.isPending }}
+          disabled={!a?.available || create.isPending}
+          onPress={start}
+          style={({ pressed }) => [
+            styles.talk,
+            (!a?.available || create.isPending) && styles.talkOff,
+            pressed && styles.pressed,
+          ]}
+        >
+          {create.isPending ? (
+            <ActivityIndicator color={colors.primaryText} />
+          ) : (
+            <Text style={styles.talkText}>대화하기</Text>
+          )}
+        </Pressable>
+      </View>
       {create.isError ? (
         <Text style={styles.error}>{errorMessage(create.error)}</Text>
       ) : null}
-      <Button
-        title="이때의 나와 대화하기"
-        testID="start-chat"
-        disabled={!a?.available}
-        loading={create.isPending}
-        onPress={start}
-      />
     </View>
   );
 }
 
-// 그때의 마지막 일기 한 줄 (누르면 원문)
-function LastEntry({ entry }: { entry: EntrySummaryDto }) {
-  const detail = useEntry(entry.date);
-  const text =
-    entry.summary ??
-    (detail.data ? entryPreviewText(detail.data) : null) ??
-    (detail.isPending ? '' : '내용 없음');
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${shortKoreanDate(entry.date)} 일기 보기`}
-      onPress={() => router.push(`/entry/${entry.date}`)}
-      style={({ pressed }) => [styles.last, pressed && styles.pressed]}
-    >
-      {entry.coverPhotoUrl ? (
-        <SafeImage uri={entry.coverPhotoUrl} style={styles.thumb} />
-      ) : null}
-      <View style={styles.lastBody}>
-        <Text style={styles.lastLabel}>
-          그때의 마지막 일기 · {shortKoreanDate(entry.date)}
-        </Text>
-        <Text style={styles.lastText} numberOfLines={2}>
-          {text}
-        </Text>
-      </View>
-    </Pressable>
-  );
+// 그때의 마지막 일기 첫 줄 (요약이 없으면 상세를 읽어 본문 앞부분)
+function useLastText(entry: EntrySummaryDto | null): string | null {
+  const detail = useEntry(entry?.date ?? '', {
+    enabled: !!entry && !entry.summary,
+  });
+  if (!entry) return null;
+  return entry.summary ?? (detail.data ? entryPreviewText(detail.data) : null);
 }
 
 const DOT = 10;
@@ -411,46 +396,41 @@ const styles = StyleSheet.create({
   error: { fontSize: 14, color: colors.danger },
   failed: { gap: spacing.xs },
 
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: {
+  tabs: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
-  chipOn: { backgroundColor: colors.text, borderColor: colors.text },
-  chipOff: { opacity: 0.45 },
-  chipText: { fontSize: 14, fontWeight: '600', color: colors.text },
-  chipTextOn: { color: colors.surface },
-  chipCount: { fontSize: 12, color: colors.textMuted },
+  tab: { flex: 1, alignItems: 'center', paddingTop: spacing.sm },
+  tabOff: { opacity: 0.35 },
+  tabText: { fontSize: 15, fontWeight: '500', color: colors.textMuted },
+  tabTextOn: { fontWeight: '700', color: colors.text },
+  tabLine: {
+    alignSelf: 'stretch',
+    height: 2,
+    marginTop: spacing.sm,
+    marginHorizontal: spacing.sm,
+    borderRadius: 1,
+    backgroundColor: 'transparent',
+  },
+  tabLineOn: { backgroundColor: colors.text },
 
-  selfCard: {
-    gap: spacing.sm + 2,
-    padding: spacing.lg,
-    borderRadius: radius.md + 4,
-    backgroundColor: colors.primarySoft,
-  },
-  selfTitle: { fontSize: 24, fontWeight: '800', color: colors.text },
-  count: { fontSize: 15, color: colors.textMuted },
-  last: {
-    flexDirection: 'row',
-    gap: spacing.sm + 4,
-    alignItems: 'center',
-    padding: spacing.sm + 4,
+  bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  barText: { flex: 1, gap: 2 },
+  barTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  barLine: { fontSize: 13, color: colors.textMuted },
+  barLineOff: { color: colors.danger },
+  talk: {
+    minWidth: 96,
+    height: 46,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.md,
-    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
   },
-  thumb: { width: 52, height: 52, borderRadius: radius.sm },
-  lastBody: { flex: 1, gap: 2 },
-  lastLabel: { fontSize: 12, color: colors.textMuted },
-  lastText: { fontSize: 15, lineHeight: 21, color: colors.text },
-  notice: { fontSize: 13, lineHeight: 19, color: colors.textMuted },
-  lacking: { fontSize: 13, lineHeight: 19, color: colors.danger },
+  talkOff: { backgroundColor: colors.disabled },
+  talkText: { fontSize: 15, fontWeight: '700', color: colors.primaryText },
 
   rows: { gap: spacing.sm + 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
