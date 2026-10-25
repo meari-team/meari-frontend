@@ -144,8 +144,13 @@ export function MonthView({
         <Text style={styles.legendText}>일기</Text>
         <View style={[styles.dot, styles.writingDot, styles.legendGap]} />
         <Text style={styles.legendText}>작성 중</Text>
-        <View style={[styles.dot, styles.scheduleDot, styles.legendGap]} />
-        <Text style={styles.legendText}>일정</Text>
+        {/* 일정을 함께 보여 줄 때만 (과거의 나 날짜 고르기에선 숨김) */}
+        {scheduleCounts ? (
+          <>
+            <View style={[styles.dot, styles.scheduleDot, styles.legendGap]} />
+            <Text style={styles.legendText}>일정</Text>
+          </>
+        ) : null}
       </View>
     </View>
   );
