@@ -133,9 +133,9 @@ function ScheduleRow({
   return (
     <View style={styles.rowWrap}>
       <View style={styles.row} testID={`schedule-${schedule.id}`}>
-        <Text style={[styles.time, !schedule.time && styles.timeAllDay]}>
-          {schedule.time ?? '종일'}
-        </Text>
+        {schedule.time ? (
+          <Text style={styles.time}>{schedule.time}</Text>
+        ) : null}
         <Text
           style={[styles.title, schedule.completed && styles.titleDone]}
           numberOfLines={2}
@@ -207,7 +207,7 @@ export function ScheduleForm({
     if (titleError) return setLocalError(titleError);
     if (normalized === undefined)
       return setLocalError(
-        '시간은 14:30처럼 적어 주세요. 비워 두면 종일 일정이에요.',
+        '시간은 14:30처럼 적어 주세요. 비워 두면 시간 없는 할 일이 돼요.',
       );
     setLocalError(null);
     const body = { title: title.trim(), time: normalized };
@@ -247,7 +247,7 @@ export function ScheduleForm({
         label="시간 (선택)"
         value={time}
         onChangeText={setTime}
-        placeholder="예: 14:30 — 비우면 종일"
+        placeholder="예: 14:30 — 비우면 할 일로"
         keyboardType="numbers-and-punctuation"
         maxLength={8}
         returnKeyType="done"
@@ -303,7 +303,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontVariant: ['tabular-nums'],
   },
-  timeAllDay: { color: colors.textMuted, fontWeight: '600' },
   title: { flex: 1, fontSize: 15, color: colors.text },
   titleDone: { color: colors.textMuted, textDecorationLine: 'line-through' },
   actions: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },

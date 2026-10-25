@@ -159,9 +159,8 @@ export function TodaySchedules({ today }: { today: string }) {
     <Section title="오늘 일정" action={action}>
       {items.slice(0, SCHEDULE_PREVIEW).map((s) => (
         <View key={s.id} style={styles.scheduleRow}>
-          <Text style={[styles.time, !s.time && styles.muted]}>
-            {s.time ?? '종일'}
-          </Text>
+          {/* 시간 없는 일정은 체크리스트 같은 할 일이라 시간 칸을 비운다 */}
+          {s.time ? <Text style={styles.time}>{s.time}</Text> : null}
           <Text style={[styles.body, styles.flex]} numberOfLines={1}>
             {s.title}
           </Text>
