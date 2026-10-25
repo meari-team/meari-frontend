@@ -164,7 +164,7 @@ export default function MyScreen() {
           />
           <StatTile
             value={statValue(stats?.monthCount, '일')}
-            label={`${Number(today.slice(5, 7))}월 기록`}
+            label="이번 달 기록"
           />
           <StatTile value={statValue(stats?.streak, '일')} label="연속 기록" />
         </View>
