@@ -110,9 +110,12 @@ export default function TodayScreen() {
     );
   }
 
-  // 작성 중이든 확정이든 지울 수 있다. 지우면 빈 입력 화면으로 돌아간다
+  // AI 단계부터는 작성 중이든 확정이든 지울 수 있다. 지우면 빈 입력 화면으로 돌아간다.
+  // 입력 단계(DRAFT)는 사진만 올려도 서버에 생기는 초안이라 사용자에겐 아직 일기가 아니다 → 숨김
   const remove =
-    data && !mode ? <DeleteEntrySection key={data.id} date={date} /> : null;
+    data && !mode && stage !== 'input' ? (
+      <DeleteEntrySection key={data.id} date={date} />
+    ) : null;
 
   if (!body) {
     // 입력 단계는 아래 고정 버튼이 있어 화면 전체를 직접 그린다.
@@ -123,7 +126,6 @@ export default function TodayScreen() {
         date={date}
         entry={data}
         categories={checklist.data}
-        footerExtra={remove}
       />
     );
   }
