@@ -154,7 +154,7 @@ export default function ChatScreen() {
             {list.length === 0 && !send.isPending ? (
               <Text style={styles.empty}>
                 {anchorDate
-                  ? `${shortKoreanDate(anchorDate)}의 나에게 요즘 어떻게 지내는지 물어보세요.`
+                  ? `${pastSelfTitle(anchorDate)}에게 요즘 어떻게 지내는지 물어보세요.`
                   : '그때의 나에게 말을 걸어 보세요.'}
               </Text>
             ) : null}
