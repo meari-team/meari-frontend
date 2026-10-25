@@ -16,8 +16,9 @@ export function shortKoreanDate(date: string): string {
   return `${Number(date.slice(5, 7))}월 ${Number(date.slice(8))}일`;
 }
 
+// "그날까지의 기록만 아는 나" — 그날 하루가 아니라 그날까지 이어진 나라는 걸 드러낸다
 export const pastSelfTitle = (anchorDate: string) =>
-  `${shortKoreanDate(anchorDate)}의 나`;
+  `${shortKoreanDate(anchorDate)}까지의 나`;
 
 // 7일 미만이면 비활성 안내 문구 (없으면 null)
 export function availabilityHint(

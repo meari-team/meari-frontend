@@ -15,7 +15,7 @@ import {
 
 describe('past-self logic', () => {
   it('대화 제목', () => {
-    assert.equal(pastSelfTitle('2026-09-04'), '9월 4일의 나');
+    assert.equal(pastSelfTitle('2026-09-04'), '9월 4일까지의 나');
   });
 
   it('7일 미만 안내', () => {
