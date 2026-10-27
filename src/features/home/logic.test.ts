@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import {
   entryPreviewText,
   homePresets,
-  memoryDates,
+  shortDate,
   monthStartOf,
   pastSelfProgress,
   recordStats,
@@ -24,12 +24,10 @@ describe('shiftDate', () => {
   });
 });
 
-describe('memoryDates', () => {
-  it('한 달 전·1년 전 오늘', () => {
-    assert.deepEqual(
-      memoryDates('2026-10-24').map((m) => m.date),
-      ['2026-09-24', '2025-10-24'],
-    );
+describe('shortDate', () => {
+  it('MM/DD (요일)', () => {
+    assert.equal(shortDate('2026-10-28'), '10/28 (수)');
+    assert.equal(shortDate('2026-03-01'), '03/01 (일)');
   });
 });
 

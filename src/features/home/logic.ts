@@ -27,12 +27,12 @@ export function shiftDate(
 
 export const monthStartOf = (date: string) => `${date.slice(0, 8)}01`;
 
-// "그날의 기억": 한 달 전·1년 전 오늘
-export function memoryDates(today: string) {
-  return [
-    { label: '한 달 전 오늘', date: shiftDate(today, { months: -1 }) },
-    { label: '1년 전 오늘', date: shiftDate(today, { years: -1 }) },
-  ];
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+// 홈 머리말·최근 기록의 짧은 날짜: "10/28 (수)"
+export function shortDate(date: string): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  return `${pad(d.getUTCMonth() + 1)}/${pad(d.getUTCDate())} (${WEEKDAYS[d.getUTCDay()]})`;
 }
 
 export type TodayAction = 'write' | 'continue' | 'view';
@@ -40,7 +40,7 @@ export type TodayAction = 'write' | 'continue' | 'view';
 export const TODAY_ACTION_LABEL: Record<TodayAction, string> = {
   write: '오늘의 일기 쓰기',
   continue: '이어 쓰기',
-  view: '오늘 일기 보기',
+  view: '전체 보기',
 };
 
 export function todayActionOf(
