@@ -3,14 +3,16 @@ import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSignup } from '@/api/auth';
 import { errorMessage } from '@/api/errors';
-import { Button } from '@/components/Button';
-import { Screen } from '@/components/Screen';
-import { TextField } from '@/components/TextField';
+import { AuthButton } from '@/features/auth/AuthButton';
+import { AuthField } from '@/features/auth/AuthField';
+import { AuthScreen } from '@/features/auth/AuthScreen';
+import { AuthSwitch } from '@/features/auth/AuthSwitch';
 import { PASSWORD_RE } from '@/lib/password';
-import { colors, spacing } from '@/theme';
+import { colors, fonts, warm } from '@/theme';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// 시안 "회원가입" (Figma 2:9). 간격은 시안 프레임 기준 px
 export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,53 +39,51 @@ export default function SignupScreen() {
     signup.mutate({ email: email.trim(), password, nickname: nickname.trim() });
 
   return (
-    <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>회원가입</Text>
-        <Text style={styles.subtitle}>
-          메아리는 AI가 일기를 써 주고, 기록으로 재구성한 과거의 나와 대화하는
-          서비스예요. AI가 만든 내용에는 항상 표시가 붙어요.
-        </Text>
-      </View>
+    <AuthScreen topRatio={239 / 874}>
+      <Text style={styles.title} accessibilityRole="header">
+        회원가입
+      </Text>
 
-      <TextField
-        label="이메일"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        autoComplete="email"
-        keyboardType="email-address"
-        textContentType="emailAddress"
-        error={emailError}
-        returnKeyType="next"
-        onSubmitEditing={() => passwordRef.current?.focus()}
-        testID="signup-email"
-      />
-      <TextField
-        ref={passwordRef}
-        label="비밀번호"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoComplete="new-password"
-        textContentType="newPassword"
-        hint="8~64자, 영문과 숫자를 함께"
-        error={passwordError}
-        returnKeyType="next"
-        onSubmitEditing={() => nicknameRef.current?.focus()}
-        testID="signup-password"
-      />
-      <TextField
-        ref={nicknameRef}
-        label="닉네임"
-        value={nickname}
-        onChangeText={setNickname}
-        maxLength={20}
-        hint="최대 20자"
-        returnKeyType="done"
-        onSubmitEditing={canSubmit ? submit : undefined}
-        testID="signup-nickname"
-      />
+      <View style={styles.fields}>
+        <AuthField
+          placeholder="이메일"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          autoComplete="email"
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          error={emailError}
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          testID="signup-email"
+        />
+        <AuthField
+          ref={passwordRef}
+          placeholder="비밀번호"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoComplete="new-password"
+          textContentType="newPassword"
+          hint="8자 이상, 영문과 숫자 조합"
+          error={passwordError}
+          returnKeyType="next"
+          onSubmitEditing={() => nicknameRef.current?.focus()}
+          testID="signup-password"
+        />
+        <AuthField
+          ref={nicknameRef}
+          placeholder="닉네임"
+          value={nickname}
+          onChangeText={setNickname}
+          maxLength={20}
+          hint="최대 20자"
+          returnKeyType="done"
+          onSubmitEditing={canSubmit ? submit : undefined}
+          testID="signup-nickname"
+        />
+      </View>
 
       {signup.isError ? (
         <Text style={styles.error} testID="signup-error">
@@ -91,24 +91,51 @@ export default function SignupScreen() {
         </Text>
       ) : null}
 
-      <Button
-        title="가입하기"
-        onPress={submit}
-        disabled={!canSubmit}
-        loading={signup.isPending}
-      />
-      <Button
-        title="이미 계정이 있어요"
-        variant="ghost"
-        onPress={() => router.back()}
-      />
-    </Screen>
+      <View style={styles.actions}>
+        <AuthButton
+          title="회원가입"
+          onPress={submit}
+          disabled={!canSubmit}
+          loading={signup.isPending}
+          testID="signup-submit"
+        />
+        <AuthSwitch
+          question="이미 회원 이신가요?"
+          action="로그인"
+          onPress={() => router.back()}
+          testID="go-login"
+        />
+      </View>
+
+      {/* AI 기본법: 가입 전에 AI 서비스임을 알린다 (시안에는 없음 — 디자이너와 위치 정하기) */}
+      <Text style={styles.notice}>
+        메아리는 AI가 사진으로 일기를 정리해 주는 서비스예요.
+      </Text>
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { marginTop: spacing.lg, marginBottom: spacing.md, gap: spacing.sm },
-  title: { fontSize: 28, fontWeight: '700', color: colors.text },
-  subtitle: { fontSize: 14, lineHeight: 20, color: colors.textMuted },
-  error: { color: colors.danger, fontSize: 14 },
+  title: {
+    fontFamily: fonts.bold,
+    fontSize: 27,
+    color: warm.black,
+    textAlign: 'center',
+  },
+  fields: { marginTop: 40, gap: 21 },
+  error: {
+    marginTop: 12,
+    marginLeft: 20,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: colors.danger,
+  },
+  actions: { marginTop: 19, gap: 13 },
+  notice: {
+    marginTop: 28,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: warm.tan,
+    textAlign: 'center',
+  },
 });
