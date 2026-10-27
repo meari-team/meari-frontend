@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AdSlot } from '@/components/AdSlot';
-import { splashState } from '@/lib/splash';
-import { colors, radius, spacing } from '@/theme';
+import { StyleSheet, Text, View } from 'react-native';
+import { AuthDecor } from '@/features/auth/AuthDecor';
+import { splashDone } from '@/lib/splash';
+import { fonts, warm } from '@/theme';
 
-// 앱을 처음 켤 때만 잠깐 보이는 시작 화면: 메아리 이름 + 광고 자리.
-// 토큰 확인(authReady)이 끝나고 3초가 지나거나 건너뛰면 onDone
+// 시안 "로딩 화면" (Figma 1:2): 동심원 배경 + 로고 + 한 줄.
+// 앱을 처음 켤 때만 보이고, 토큰 확인(authReady)이 끝나고 1.5초가 지나면 onDone
 export function StartScreen({
   authReady,
   onDone,
@@ -14,11 +13,9 @@ export function StartScreen({
   authReady: boolean;
   onDone: () => void;
 }) {
-  const insets = useSafeAreaInsets();
   const [startedAt] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0);
-  const [skipped, setSkipped] = useState(false);
-  const state = splashState(elapsed, { authReady, skipped });
+  const done = splashDone(elapsed, authReady);
 
   useEffect(() => {
     const timer = setInterval(() => setElapsed(Date.now() - startedAt), 100);
@@ -26,69 +23,32 @@ export function StartScreen({
   }, [startedAt]);
 
   useEffect(() => {
-    if (state.done) onDone();
-  }, [state.done, onDone]);
+    if (done) onDone();
+  }, [done, onDone]);
 
   return (
-    <View
-      style={[
-        styles.wrap,
-        {
-          paddingTop: insets.top + spacing.sm,
-          paddingBottom: insets.bottom + spacing.lg,
-        },
-      ]}
-      testID="start-screen"
-    >
-      <View style={styles.top}>
-        <Pressable
-          testID="splash-skip"
-          accessibilityRole="button"
-          accessibilityLabel={
-            state.canSkip ? '건너뛰기' : `${state.remaining}초 뒤 넘어가요`
-          }
-          accessibilityState={{ disabled: !state.canSkip }}
-          disabled={!state.canSkip}
-          onPress={() => setSkipped(true)}
-          style={({ pressed }) => [
-            styles.skip,
-            !state.canSkip && styles.skipWaiting,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.skipText}>건너뛰기 {state.remaining}</Text>
-        </Pressable>
-      </View>
-
+    <View style={styles.wrap} testID="start-screen">
+      <AuthDecor variant="start" />
       <View style={styles.brand}>
-        <Text style={styles.title}>메아리</Text>
-        <Text style={styles.subtitle}>사진 몇 장으로 남기는 오늘</Text>
+        {/* 로고 자리: 로고가 나오면 이미지로 바꾼다 */}
+        <Text style={styles.logo} accessibilityRole="header">
+          메아리
+        </Text>
+        <Text style={styles.tagline}>사진 몇 장으로 남기는 오늘</Text>
       </View>
-
-      <AdSlot />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingHorizontal: spacing.lg,
+  wrap: { flex: 1, backgroundColor: warm.background, justifyContent: 'center' },
+  // 시안: 로고·한 줄 묶음의 가운데가 화면 가운데보다 13 위
+  brand: { alignItems: 'center', transform: [{ translateY: -13 }] },
+  logo: { fontFamily: fonts.bold, fontSize: 40, color: warm.black },
+  tagline: {
+    marginTop: 18,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    color: warm.black,
   },
-  top: { alignItems: 'flex-end' },
-  skip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  skipWaiting: { opacity: 0.6 },
-  skipText: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
-  pressed: { opacity: 0.7 },
-  brand: { flex: 1, justifyContent: 'center', gap: spacing.sm },
-  title: { fontSize: 40, fontWeight: '800', color: colors.text },
-  subtitle: { fontSize: 16, color: colors.textMuted },
 });
