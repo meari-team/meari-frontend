@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
 import {
@@ -32,28 +31,32 @@ const open = (item: EntryFeedItemDto) =>
       : `/today?date=${item.date}`,
   );
 
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+// 일기장 한 줄: 왼쪽 날짜(큰 숫자 + 요일) · 가운데 본문 · 오른쪽 대표 사진. 카드 대신 얇은 줄로 나눈다
 export function FeedItem({ item }: { item: EntryFeedItemDto }) {
   const confirmed = item.status === 'CONFIRMED';
   const badge = confirmed ? indexBadgeOf(item.aiIndexStatus) : null;
+  const weekday = WEEKDAYS[new Date(`${item.date}T00:00:00Z`).getUTCDay()];
   return (
     <Pressable
       testID={`feed-${item.date}`}
       accessibilityRole="button"
       accessibilityLabel={`${formatKoreanDate(item.date)} 일기${confirmed ? '' : ', 작성 중'}`}
       onPress={() => open(item)}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <SafeImage uri={item.coverPhotoUrl} style={styles.thumb} />
+      <View style={styles.day}>
+        <Text style={styles.dayNumber}>{Number(item.date.slice(8))}</Text>
+        <Text style={styles.weekday}>{weekday}</Text>
+      </View>
       <View style={styles.body}>
-        <View style={styles.titleRow}>
-          <Text style={styles.date}>{formatKoreanDate(item.date)}</Text>
-          {/* 상태는 꾸밈 없이 글자로만 (작성 중 / 기억 정리 상태) */}
-          {!confirmed ? (
-            <Text style={[styles.state, styles.writing]}>작성 중</Text>
-          ) : badge && badge.tone !== 'success' ? (
-            <Text style={styles.state}>{badge.label}</Text>
-          ) : null}
-        </View>
+        {/* 상태는 꾸밈 없이 글자로만 (작성 중 / 기억 정리 상태) */}
+        {!confirmed ? (
+          <Text style={[styles.state, styles.writing]}>작성 중</Text>
+        ) : badge && badge.tone !== 'success' ? (
+          <Text style={styles.state}>{badge.label}</Text>
+        ) : null}
         <Text
           style={[styles.excerpt, !item.excerpt && styles.excerptEmpty]}
           numberOfLines={3}
@@ -61,20 +64,10 @@ export function FeedItem({ item }: { item: EntryFeedItemDto }) {
           {item.excerpt ??
             (confirmed ? '내용 없음' : '아직 일기를 완성하지 않았어요')}
         </Text>
-        <View style={styles.meta}>
-          <View style={styles.dots}>
-            {item.categoryColors.map((c) => (
-              <View key={c} style={[styles.dot, { backgroundColor: c }]} />
-            ))}
-          </View>
-          {item.photoCount > 0 ? (
-            <View style={styles.photoCount}>
-              <Ionicons name="image-outline" size={13} color={warm.tan} />
-              <Text style={styles.metaText}>{item.photoCount}</Text>
-            </View>
-          ) : null}
-        </View>
       </View>
+      {item.coverPhotoUrl ? (
+        <SafeImage uri={item.coverPhotoUrl} style={styles.thumb} />
+      ) : null}
     </Pressable>
   );
 }
@@ -163,48 +156,45 @@ export function ListView({ header }: Props) {
 
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: warm.background },
-  content: { padding: spacing.lg, gap: spacing.sm, flexGrow: 1 },
+  content: { padding: spacing.lg, flexGrow: 1 },
   header: { gap: spacing.md, marginBottom: spacing.sm },
   month: {
     fontFamily: fonts.bold,
-    fontSize: 15,
-    color: warm.tan,
-    marginTop: spacing.md,
+    fontSize: 17,
+    color: warm.ink,
+    marginTop: spacing.lg,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: warm.sand,
   },
-  // 홈 "최근 기록"과 같은 테두리 카드
-  card: {
+  row: {
     flexDirection: 'row',
-    gap: spacing.md,
-    padding: 12,
-    borderRadius: 17,
-    backgroundColor: warm.field,
-    borderWidth: 1.5,
-    borderColor: warm.sand,
+    alignItems: 'flex-start',
+    gap: 14,
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: warm.sand,
   },
-  pressed: { opacity: 0.8 },
-  thumb: { width: 82, height: 82, borderRadius: 7 },
-  body: { flex: 1, gap: spacing.xs },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+  pressed: { opacity: 0.6 },
+  day: { width: 34, alignItems: 'center' },
+  dayNumber: {
+    fontFamily: fonts.bold,
+    fontSize: 24,
+    lineHeight: 28,
+    color: warm.ink,
   },
-  date: { fontFamily: fonts.semibold, fontSize: 14, color: warm.brown },
+  weekday: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
+  body: { flex: 1, gap: 4, paddingTop: 3 },
   state: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
   writing: { color: warm.clay },
   excerpt: {
     fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 21,
     color: warm.black,
   },
   excerptEmpty: { color: warm.tan },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  dots: { flexDirection: 'row', gap: 4, flex: 1 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  photoCount: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  metaText: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
+  thumb: { width: 64, height: 64, borderRadius: 7 },
   footer: {
     paddingVertical: spacing.lg,
     alignItems: 'center',
