@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { diaryActionOf } from '@/lib/calendar';
-import { colors, radius, spacing } from '@/theme';
+import { fonts, radius, spacing, warm } from '@/theme';
 
 // 캘린더 + 버튼. 누르면 위로 두 가지가 펼쳐진다: 일정 추가 / 이날 일기 쓰기(상태에 따라 이어 쓰기·보기)
 // 배경을 누르거나 다시 누르면(×) 닫힌다
@@ -135,7 +135,7 @@ export function AddMenu({
               ],
             }}
           >
-            <Ionicons name="add" size={30} color={colors.primaryText} />
+            <Ionicons name="add" size={30} color={warm.field} />
           </Animated.View>
         </Pressable>
       </View>
@@ -175,7 +175,7 @@ function MenuItem({
         <Ionicons
           name={icon}
           size={21}
-          color={disabled ? colors.disabled : colors.primary}
+          color={disabled ? warm.sand : warm.brown}
         />
       </View>
     </Pressable>
@@ -186,8 +186,8 @@ const FAB = 58;
 const MINI = 46;
 
 const shadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.12,
+  shadowColor: warm.brown,
+  shadowOpacity: 0.25,
   shadowRadius: 8,
   shadowOffset: { width: 0, height: 2 },
   elevation: 4,
@@ -196,7 +196,7 @@ const shadow = {
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(31, 29, 26, 0.32)',
+    backgroundColor: 'rgba(74, 52, 42, 0.3)',
   },
   anchor: {
     position: 'absolute',
@@ -213,33 +213,33 @@ const styles = StyleSheet.create({
   },
   item: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2 },
   label: {
-    backgroundColor: colors.surface,
+    backgroundColor: warm.field,
     borderRadius: radius.pill,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     ...shadow,
   },
-  labelText: { fontSize: 15, fontWeight: '600', color: colors.text },
-  disabledText: { color: colors.textMuted, fontWeight: '500' },
+  labelText: { fontFamily: fonts.semibold, fontSize: 15, color: warm.ink },
+  disabledText: { fontFamily: fonts.medium, color: warm.tan },
   mini: {
     width: MINI,
     height: MINI,
     borderRadius: MINI / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: warm.field,
     ...shadow,
   },
-  miniDisabled: { backgroundColor: colors.surfaceMuted },
+  miniDisabled: { backgroundColor: warm.background },
   fab: {
     width: FAB,
     height: FAB,
     borderRadius: FAB / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
+    backgroundColor: warm.tan,
+    shadowColor: warm.brown,
+    shadowOpacity: 0.3,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,

@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { canGoNextMonth, type YearMonth } from '@/lib/calendar';
-import { colors, radius, spacing } from '@/theme';
+import { fonts, radius, spacing, warm } from '@/theme';
 
 type Props = {
   visible: boolean;
@@ -51,7 +51,7 @@ export function MonthPicker({
               hitSlop={12}
               onPress={() => setYear((y) => y - 1)}
             >
-              <Ionicons name="chevron-back" size={22} color={colors.text} />
+              <Ionicons name="chevron-back" size={22} color={warm.ink} />
             </Pressable>
             <Text style={styles.year}>{year}</Text>
             <Pressable
@@ -65,7 +65,7 @@ export function MonthPicker({
               <Ionicons
                 name="chevron-forward"
                 size={22}
-                color={canNextYear ? colors.text : colors.disabled}
+                color={canNextYear ? warm.ink : warm.sand}
               />
             </Pressable>
           </View>
@@ -108,20 +108,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: spacing.lg,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(74,52,42,0.3)',
   },
   card: {
     gap: spacing.md,
     padding: spacing.lg,
     borderRadius: radius.md * 2,
-    backgroundColor: colors.surface,
+    backgroundColor: warm.field,
   },
   yearRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  year: { fontSize: 20, fontWeight: '700', color: colors.text },
+  year: { fontFamily: fonts.bold, fontSize: 20, color: warm.black },
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: spacing.sm },
   month: {
     width: '25%',
@@ -129,8 +129,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 4,
     borderRadius: radius.pill,
   },
-  monthCurrent: { backgroundColor: colors.text },
-  monthText: { fontSize: 16, color: colors.text },
-  monthTextCurrent: { color: colors.surface, fontWeight: '700' },
-  monthTextDisabled: { color: colors.disabled },
+  monthCurrent: { backgroundColor: warm.ink },
+  monthText: { fontFamily: fonts.medium, fontSize: 16, color: warm.black },
+  monthTextCurrent: { fontFamily: fonts.bold, color: warm.field },
+  monthTextDisabled: { color: warm.sand },
 });

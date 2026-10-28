@@ -1,5 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ApiError, errorMessage } from '@/api/errors';
 import {
@@ -7,11 +14,10 @@ import {
   useDeleteSchedule,
   type ScheduleDto,
 } from '@/api/schedules';
-import { Button } from '@/components/Button';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 import { ScheduleForm } from '@/features/schedules/ScheduleList';
 import { formatKoreanDate } from '@/lib/dates';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing, warm } from '@/theme';
 
 type Props = {
   // 열려 있으면 그 날짜. editing이 있으면 수정, 없으면 추가
@@ -46,7 +52,9 @@ export function ScheduleSheet({ date, editing, onClose }: Props) {
             testID="schedule-sheet"
           >
             <View style={styles.handle} />
-            <Text style={styles.title}>{formatKoreanDate(date)}</Text>
+            <Text style={styles.title}>
+              {formatKoreanDate(date)} · {editing ? '일정 수정' : '일정 추가'}
+            </Text>
             <ScheduleForm
               key={editing?.id ?? 'new'}
               date={date}
@@ -75,11 +83,11 @@ function DeleteButton({
   const remove = useDeleteSchedule();
   return (
     <View style={styles.delete}>
-      <Button
-        title="일정 삭제"
-        variant="ghost"
+      <Pressable
+        accessibilityRole="button"
         testID="schedule-sheet-delete"
-        loading={remove.isPending}
+        disabled={remove.isPending}
+        style={({ pressed }) => [styles.deleteButton, pressed && styles.dim]}
         onPress={() =>
           remove.mutate(schedule.id, {
             onSuccess: onDeleted,
@@ -92,7 +100,13 @@ function DeleteButton({
             },
           })
         }
-      />
+      >
+        {remove.isPending ? (
+          <ActivityIndicator color={warm.sunday} />
+        ) : (
+          <Text style={styles.deleteText}>일정 삭제</Text>
+        )}
+      </Pressable>
       {remove.isError ? (
         <Text style={styles.error}>{errorMessage(remove.error)}</Text>
       ) : null}
@@ -101,23 +115,26 @@ function DeleteButton({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(74,52,42,0.3)' },
   sheet: {
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     borderTopLeftRadius: radius.md * 2,
     borderTopRightRadius: radius.md * 2,
-    backgroundColor: colors.surface,
+    backgroundColor: warm.background,
   },
   handle: {
     alignSelf: 'center',
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.border,
+    backgroundColor: warm.sand,
   },
-  title: { fontSize: 17, fontWeight: '700', color: colors.text },
+  title: { fontFamily: fonts.bold, fontSize: 17, color: warm.black },
   delete: { gap: spacing.xs },
+  deleteButton: { alignSelf: 'center', padding: 6 },
+  deleteText: { fontFamily: fonts.semibold, fontSize: 14, color: warm.sunday },
+  dim: { opacity: 0.6 },
   error: { fontSize: 13, color: colors.danger, textAlign: 'center' },
 });

@@ -26,7 +26,7 @@ import {
 } from '@/lib/calendar';
 import { todayKst } from '@/lib/dates';
 import { countByDate } from '@/lib/schedule';
-import { colors, radius, spacing } from '@/theme';
+import { fonts, radius, spacing, warm } from '@/theme';
 
 type Mode = 'month' | 'year' | 'list';
 
@@ -120,7 +120,7 @@ export default function CalendarScreen() {
           <Text style={styles.title}>
             {month.year}. {month.month}
           </Text>
-          <Ionicons name="chevron-down" size={20} color={colors.text} />
+          <Ionicons name="chevron-down" size={20} color={warm.ink} />
         </Pressable>
       ) : mode === 'year' ? (
         <View style={styles.titleButton}>
@@ -130,7 +130,7 @@ export default function CalendarScreen() {
             hitSlop={12}
             onPress={() => setYear((y) => y - 1)}
           >
-            <Ionicons name="chevron-back" size={22} color={colors.text} />
+            <Ionicons name="chevron-back" size={22} color={warm.ink} />
           </Pressable>
           <Text style={styles.title}>{year}</Text>
           <Pressable
@@ -145,9 +145,7 @@ export default function CalendarScreen() {
             <Ionicons
               name="chevron-forward"
               size={22}
-              color={
-                year >= yearMonthOf(today).year ? colors.disabled : colors.text
-              }
+              color={year >= yearMonthOf(today).year ? warm.sand : warm.ink}
             />
           </Pressable>
         </View>
@@ -171,7 +169,7 @@ export default function CalendarScreen() {
             <Ionicons
               name={m.icon}
               size={22}
-              color={mode === m.mode ? colors.text : colors.textMuted}
+              color={mode === m.mode ? warm.ink : warm.tan}
             />
           </Pressable>
         ))}
@@ -246,7 +244,7 @@ export default function CalendarScreen() {
 
   return (
     <View style={styles.flex}>
-      <Screen edges={['top']}>
+      <Screen edges={['top']} backgroundColor={warm.background}>
         {header}
         {body}
       </Screen>
@@ -266,11 +264,7 @@ export default function CalendarScreen() {
                 ]}
               >
                 <Text style={styles.todayText}>오늘</Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={colors.textMuted}
-                />
+                <Ionicons name="chevron-forward" size={16} color={warm.tan} />
               </Pressable>
             </View>
           ) : null}
@@ -303,7 +297,7 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1, backgroundColor: warm.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -311,7 +305,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   titleButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  title: { fontSize: 28, fontWeight: '800', color: colors.text },
+  title: { fontFamily: fonts.bold, fontSize: 28, color: warm.black },
   modes: { flexDirection: 'row', gap: spacing.xs },
   modeButton: {
     width: 38,
@@ -320,7 +314,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  modeOn: { backgroundColor: colors.surfaceMuted },
+  modeOn: { backgroundColor: warm.soft },
   pressed: { opacity: 0.7 },
   todayWrap: {
     position: 'absolute',
@@ -337,14 +331,12 @@ const styles = StyleSheet.create({
     paddingLeft: spacing.md + 2,
     paddingRight: spacing.sm + 4,
     borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: warm.field,
+    shadowColor: warm.brown,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    shadowOffset: { width: 3, height: 3 },
     elevation: 3,
   },
-  todayText: { fontSize: 15, fontWeight: '600', color: colors.text },
+  todayText: { fontFamily: fonts.semibold, fontSize: 15, color: warm.ink },
 });

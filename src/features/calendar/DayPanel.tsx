@@ -18,7 +18,7 @@ import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { SafeImage } from '@/components/SafeImage';
 import { dayTitleOf } from '@/lib/calendar';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, spacing, warm } from '@/theme';
 
 type Props = {
   date: string;
@@ -35,7 +35,7 @@ export function DayPanel({ date, today, entry, onEditSchedule }: Props) {
       <View style={styles.handle} />
       <View style={styles.header}>
         <Text style={styles.date}>{dayTitleOf(date)}</Text>
-        {date === today ? <Badge label="오늘" tone="info" /> : null}
+        {date === today ? <Badge label="오늘" tone="warm" /> : null}
       </View>
 
       <Todos date={date} onEdit={onEditSchedule} />
@@ -56,7 +56,7 @@ function Todos({
 
   let body;
   if (list.isPending) {
-    body = <ActivityIndicator color={colors.primary} />;
+    body = <ActivityIndicator color={warm.tan} />;
   } else if (list.isError) {
     body = (
       <>
@@ -88,7 +88,7 @@ function Todos({
           style={[styles.check, s.completed && styles.checkOn]}
         >
           {s.completed ? (
-            <Ionicons name="checkmark" size={16} color={colors.surface} />
+            <Ionicons name="checkmark" size={15} color={warm.field} />
           ) : null}
         </Pressable>
         <Pressable
@@ -158,7 +158,7 @@ function EntryCard({
         <View style={styles.entryHead}>
           <Text style={styles.cardLabel}>일기</Text>
           {!confirmed ? (
-            <Badge label="작성 중" tone="warning" icon="create-outline" />
+            <Badge label="작성 중" tone="clay" icon="create-outline" />
           ) : null}
         </View>
         <Text style={styles.summary} numberOfLines={2}>
@@ -166,7 +166,7 @@ function EntryCard({
             (confirmed ? '일기 보기' : '아직 일기를 완성하지 않았어요')}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      <Ionicons name="chevron-forward" size={18} color={warm.tan} />
     </Pressable>
   );
 }
@@ -179,57 +179,72 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: warm.sand,
   },
   handle: {
     alignSelf: 'center',
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.border,
+    backgroundColor: warm.sand,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  date: { fontSize: 26, fontWeight: '700', color: colors.text },
+  date: { fontFamily: fonts.bold, fontSize: 26, color: warm.black },
+  // 홈 카드와 같은 모양 (바탕 + 갈색 그림자)
   card: {
     gap: spacing.sm + 4,
-    padding: spacing.md,
-    borderRadius: radius.md + 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: warm.field,
+    shadowColor: warm.brown,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 3,
   },
-  cardLabel: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
+  cardLabel: { fontFamily: fonts.semibold, fontSize: 13, color: warm.tan },
   todo: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 4 },
   check: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.primary,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: warm.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkOn: { backgroundColor: colors.primary },
+  checkOn: { backgroundColor: warm.ink },
   todoBody: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  todoTitle: { flex: 1, fontSize: 16, color: colors.text },
-  todoDone: { color: colors.textMuted, textDecorationLine: 'line-through' },
+  todoTitle: {
+    flex: 1,
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    color: warm.black,
+  },
+  todoDone: { color: warm.tan, textDecorationLine: 'line-through' },
   todoTime: {
+    fontFamily: fonts.semibold,
     fontSize: 13,
-    color: colors.textMuted,
+    color: warm.ink,
     fontVariant: ['tabular-nums'],
   },
   pressed: { opacity: 0.6 },
-  empty: { fontSize: 14, color: colors.textMuted },
+  empty: { fontFamily: fonts.regular, fontSize: 14, color: warm.tan },
   error: { fontSize: 13, color: colors.danger },
-  note: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
+  note: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: warm.tan,
+    textAlign: 'center',
+  },
   entry: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 4 },
-  thumb: { width: 56, height: 56, borderRadius: radius.sm },
+  thumb: { width: 56, height: 56, borderRadius: 7 },
   entryBody: { flex: 1, gap: 4 },
   entryHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  summary: { fontSize: 15, color: colors.text },
+  summary: { fontFamily: fonts.regular, fontSize: 15, color: warm.black },
 });

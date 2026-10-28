@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import type { EntrySummaryDto } from '@/api/entries';
 import { monthGridFilled, type YearMonth } from '@/lib/calendar';
-import { colors, spacing } from '@/theme';
+import { fonts, spacing, warm } from '@/theme';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -25,8 +25,8 @@ type Props = {
   onSwipe?: (delta: number) => void;
 };
 
-// 월간 격자: 일요일 빨강·토요일 파랑, 앞뒤 달은 흐리게, 오늘 = 채운 원, 고른 날 = 연한 원.
-// 숫자 아래 점: 일기(확정 = 보라, 작성 중 = 회색) · 일정(주황)
+// 월간 격자: 일요일 빨강·토요일 파랑(웜톤으로 누름), 앞뒤 달은 흐리게, 오늘 = 채운 원, 고른 날 = 연한 원.
+// 숫자 아래 점: 일기(확정 = 갈색, 작성 중 = 모래색) · 일정(흙색)
 export function MonthView({
   month,
   today,
@@ -162,13 +162,13 @@ const styles = StyleSheet.create({
   weekday: {
     flex: 1,
     textAlign: 'center',
+    fontFamily: fonts.semibold,
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMuted,
+    color: warm.tan,
     paddingVertical: spacing.sm,
   },
-  sunday: { color: colors.danger },
-  saturday: { color: colors.primary },
+  sunday: { color: warm.sunday },
+  saturday: { color: warm.saturday },
   cell: { flex: 1, alignItems: 'center', paddingVertical: 6, minHeight: 60 },
   outside: { opacity: 0.35 },
   pressed: { opacity: 0.6 },
@@ -179,15 +179,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selected: { backgroundColor: colors.surfaceMuted },
-  today: { backgroundColor: colors.text },
-  dayText: { fontSize: 16, fontWeight: '500', color: colors.text },
-  todayText: { color: colors.surface, fontWeight: '700' },
+  selected: { backgroundColor: warm.soft },
+  today: { backgroundColor: warm.ink },
+  dayText: { fontFamily: fonts.medium, fontSize: 16, color: warm.black },
+  todayText: { fontFamily: fonts.bold, color: warm.field },
   dots: { flexDirection: 'row', gap: 4, height: 6, marginTop: 5 },
   dot: { width: 6, height: 6, borderRadius: 3 },
-  entryDot: { backgroundColor: colors.primary },
-  writingDot: { backgroundColor: colors.disabled },
-  scheduleDot: { backgroundColor: colors.warning },
+  entryDot: { backgroundColor: warm.brown },
+  writingDot: { backgroundColor: warm.sand },
+  scheduleDot: { backgroundColor: warm.clay },
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -195,5 +195,5 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   legendGap: { marginLeft: spacing.sm },
-  legendText: { fontSize: 12, color: colors.textMuted },
+  legendText: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
 });

@@ -30,15 +30,21 @@ export function Screen({
   refreshing = false,
   onRefresh,
   footer,
+  backgroundColor,
 }: {
   children: ReactNode;
   edges?: Edge[];
   refreshing?: boolean;
   onRefresh?: () => void;
   footer?: ReactNode;
+  // 웜톤 시안을 적용한 화면은 바탕색을 넘긴다
+  backgroundColor?: string;
 }) {
   return (
-    <SafeAreaView style={styles.safe} edges={edges}>
+    <SafeAreaView
+      style={[styles.safe, backgroundColor ? { backgroundColor } : null]}
+      edges={edges}
+    >
       <KeyboardAvoider enabled={!IOS || !!footer}>
         <ScrollView
           contentContainerStyle={styles.content}
