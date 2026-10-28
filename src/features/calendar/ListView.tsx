@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { useEntriesFeed, type EntryFeedItemDto } from '@/api/feed';
 import { errorMessage } from '@/api/errors';
-import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { SafeImage } from '@/components/SafeImage';
 import { StateView } from '@/components/StateView';
@@ -48,14 +47,11 @@ export function FeedItem({ item }: { item: EntryFeedItemDto }) {
       <View style={styles.body}>
         <View style={styles.titleRow}>
           <Text style={styles.date}>{formatKoreanDate(item.date)}</Text>
+          {/* 상태는 꾸밈 없이 글자로만 (작성 중 / 기억 정리 상태) */}
           {!confirmed ? (
-            <Badge label="작성 중" tone="clay" icon="create-outline" />
+            <Text style={[styles.state, styles.writing]}>작성 중</Text>
           ) : badge && badge.tone !== 'success' ? (
-            <Badge
-              label={badge.label}
-              tone={badge.tone}
-              spinning={badge.spinning}
-            />
+            <Text style={styles.state}>{badge.label}</Text>
           ) : null}
         </View>
         <Text
@@ -195,6 +191,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   date: { fontFamily: fonts.semibold, fontSize: 14, color: warm.brown },
+  state: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
+  writing: { color: warm.clay },
   excerpt: {
     fontFamily: fonts.regular,
     fontSize: 13,

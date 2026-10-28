@@ -156,10 +156,11 @@ function EntryCard({
       <SafeImage uri={entry.coverPhotoUrl} style={styles.thumb} />
       <View style={styles.entryBody}>
         <View style={styles.entryHead}>
-          <Text style={styles.cardLabel}>일기</Text>
-          {!confirmed ? (
-            <Badge label="작성 중" tone="clay" icon="create-outline" />
-          ) : null}
+          {/* 작성 중은 꾸밈 없이 글자로만 */}
+          <Text style={styles.cardLabel}>
+            일기
+            {!confirmed ? <Text style={styles.writing}> · 작성 중</Text> : null}
+          </Text>
         </View>
         <Text style={styles.summary} numberOfLines={2}>
           {entry.summary ??
@@ -203,6 +204,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   cardLabel: { fontFamily: fonts.semibold, fontSize: 13, color: warm.tan },
+  writing: { color: warm.clay },
   todo: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 4 },
   check: {
     width: 22,
