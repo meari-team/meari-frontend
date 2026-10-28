@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { EntrySummaryDto } from '@/api/entries';
 import { SafeImage } from '@/components/SafeImage';
 import { groupByMonth } from '@/lib/calendar';
-import { colors, radius, spacing } from '@/theme';
+import { fonts, radius, spacing, warm } from '@/theme';
 
 type Props = {
   entries: EntrySummaryDto[];
@@ -54,12 +54,12 @@ export function YearView({ entries, onPressEntry }: Props) {
 const styles = StyleSheet.create({
   wrap: { gap: spacing.lg },
   group: { gap: spacing.sm },
-  month: { fontSize: 16, fontWeight: '700', color: colors.text },
+  month: { fontFamily: fonts.bold, fontSize: 16, color: warm.ink },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   tile: {
     width: '23.5%',
     aspectRatio: 1,
-    borderRadius: radius.sm,
+    borderRadius: 7,
     overflow: 'hidden',
   },
   pressed: { opacity: 0.8 },
@@ -70,16 +70,16 @@ const styles = StyleSheet.create({
     bottom: 4,
     paddingHorizontal: 6,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(74,52,42,0.6)',
   },
-  labelText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  labelText: { fontFamily: fonts.bold, color: warm.field, fontSize: 11 },
   writing: {
     position: 'absolute',
     top: 4,
     right: 4,
     paddingHorizontal: 6,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: 'rgba(253,249,245,0.9)',
   },
-  writingText: { fontSize: 10, color: colors.textMuted },
+  writingText: { fontFamily: fonts.semibold, fontSize: 10, color: warm.clay },
 });

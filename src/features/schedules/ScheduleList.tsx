@@ -19,14 +19,15 @@ import {
 } from '@/api/schedules';
 import { Button } from '@/components/Button';
 import { Section } from '@/components/Section';
-import { TextField } from '@/components/TextField';
+import { AuthButton } from '@/features/auth/AuthButton';
+import { AuthField } from '@/features/auth/AuthField';
 import {
   normalizeTime,
   SCHEDULE_TITLE_MAX,
   SCHEDULES_PER_DAY_MAX,
   validateTitle,
 } from '@/lib/schedule';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing, warm } from '@/theme';
 
 type Props = {
   date: string;
@@ -181,7 +182,7 @@ function ScheduleRow({
   );
 }
 
-// 새 일정(initial 없음) 또는 수정(initial 있음). 캘린더의 일정 시트에서도 쓴다
+// 새 일정(initial 없음) 또는 수정(initial 있음). 캘린더의 일정 시트에서 쓴다 (웜톤 알약 입력칸·버튼)
 export function ScheduleForm({
   date,
   initial,
@@ -231,23 +232,22 @@ export function ScheduleForm({
   };
 
   return (
-    <View style={[styles.form, initial && styles.editForm]}>
-      <TextField
-        label={initial ? '일정 수정' : '일정 추가'}
+    <View style={styles.form}>
+      <AuthField
         value={title}
         onChangeText={setTitle}
         maxLength={SCHEDULE_TITLE_MAX}
-        placeholder="예: 동아리 회의"
+        placeholder="일정 이름 (예: 동아리 회의)"
         autoFocus={autoFocus}
         returnKeyType="done"
         onSubmitEditing={submit}
         testID={initial ? 'schedule-edit-title' : 'schedule-title'}
       />
-      <TextField
-        label="시간 (선택)"
+      <AuthField
         value={time}
         onChangeText={setTime}
-        placeholder="예: 14:30 — 비우면 할 일로"
+        placeholder="시간 (선택, 예: 14:30)"
+        hint="시간을 비워 두면 체크하는 할 일이 돼요."
         keyboardType="numbers-and-punctuation"
         maxLength={8}
         returnKeyType="done"
@@ -259,27 +259,23 @@ export function ScheduleForm({
           {localError ?? errorMessage(mutation.error)}
         </Text>
       ) : null}
-      <View style={styles.formButtons}>
-        <View style={styles.flex}>
-          <Button
-            title={initial ? '저장' : '추가'}
-            onPress={submit}
-            loading={mutation.isPending}
-            disabled={title.trim().length === 0}
-            testID={initial ? 'schedule-save' : 'schedule-add'}
-          />
-        </View>
-        {initial ? (
-          <View style={styles.flex}>
-            <Button
-              title="취소"
-              variant="ghost"
-              onPress={() => onDone?.()}
-              disabled={mutation.isPending}
-            />
-          </View>
-        ) : null}
-      </View>
+      <AuthButton
+        title={initial ? '저장' : '추가'}
+        onPress={submit}
+        loading={mutation.isPending}
+        disabled={title.trim().length === 0}
+        testID={initial ? 'schedule-save' : 'schedule-add'}
+      />
+      {initial ? (
+        <Pressable
+          accessibilityRole="button"
+          disabled={mutation.isPending}
+          onPress={() => onDone?.()}
+          style={({ pressed }) => [styles.textButton, pressed && styles.dim]}
+        >
+          <Text style={styles.textButtonLabel}>취소</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -309,13 +305,12 @@ const styles = StyleSheet.create({
   empty: { fontSize: 14, color: colors.textMuted },
   hint: { fontSize: 13, color: colors.textMuted },
   error: { fontSize: 13, color: colors.danger },
-  form: { gap: spacing.sm },
-  editForm: {
-    padding: spacing.sm,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.primarySoft,
+  form: { gap: 14 },
+  textButton: { alignSelf: 'center', padding: 6 },
+  textButtonLabel: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: warm.brown,
   },
-  formButtons: { flexDirection: 'row', gap: spacing.sm },
-  flex: { flex: 1 },
+  dim: { opacity: 0.6 },
 });

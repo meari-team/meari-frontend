@@ -18,7 +18,7 @@ import { StateView } from '@/components/StateView';
 import { indexBadgeOf } from '@/features/today/stage';
 import { formatKoreanDate } from '@/lib/dates';
 import { feedRows, type FeedRow } from '@/lib/feed';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, spacing, warm } from '@/theme';
 
 type Props = {
   // 상단 월간/연간/목록 전환. 목록에서는 FlatList가 화면 스크롤을 맡으므로 헤더로 넣는다
@@ -49,7 +49,7 @@ export function FeedItem({ item }: { item: EntryFeedItemDto }) {
         <View style={styles.titleRow}>
           <Text style={styles.date}>{formatKoreanDate(item.date)}</Text>
           {!confirmed ? (
-            <Badge label="작성 중" tone="warning" icon="create-outline" />
+            <Badge label="작성 중" tone="clay" icon="create-outline" />
           ) : badge && badge.tone !== 'success' ? (
             <Badge
               label={badge.label}
@@ -73,11 +73,7 @@ export function FeedItem({ item }: { item: EntryFeedItemDto }) {
           </View>
           {item.photoCount > 0 ? (
             <View style={styles.photoCount}>
-              <Ionicons
-                name="image-outline"
-                size={13}
-                color={colors.textMuted}
-              />
+              <Ionicons name="image-outline" size={13} color={warm.tan} />
               <Text style={styles.metaText}>{item.photoCount}</Text>
             </View>
           ) : null}
@@ -101,7 +97,7 @@ export function ListView({ header }: Props) {
 
   let footer: ReactElement | undefined;
   if (feed.isFetchingNextPage) {
-    footer = <ActivityIndicator style={styles.footer} color={colors.primary} />;
+    footer = <ActivityIndicator style={styles.footer} color={warm.tan} />;
   } else if (feed.isFetchNextPageError) {
     footer = (
       <View style={styles.footer}>
@@ -170,26 +166,27 @@ export function ListView({ header }: Props) {
 }
 
 const styles = StyleSheet.create({
-  list: { flex: 1, backgroundColor: colors.background },
+  list: { flex: 1, backgroundColor: warm.background },
   content: { padding: spacing.lg, gap: spacing.sm, flexGrow: 1 },
   header: { gap: spacing.md, marginBottom: spacing.sm },
   month: {
+    fontFamily: fonts.bold,
     fontSize: 15,
-    fontWeight: '700',
-    color: colors.textMuted,
+    color: warm.tan,
     marginTop: spacing.md,
   },
+  // 홈 "최근 기록"과 같은 테두리 카드
   card: {
     flexDirection: 'row',
     gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    padding: 12,
+    borderRadius: 17,
+    backgroundColor: warm.field,
+    borderWidth: 1.5,
+    borderColor: warm.sand,
   },
   pressed: { opacity: 0.8 },
-  thumb: { width: 72, height: 72, borderRadius: radius.sm },
+  thumb: { width: 82, height: 82, borderRadius: 7 },
   body: { flex: 1, gap: spacing.xs },
   titleRow: {
     flexDirection: 'row',
@@ -197,19 +194,29 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  date: { fontSize: 15, fontWeight: '700', color: colors.text },
-  excerpt: { fontSize: 14, lineHeight: 20, color: colors.text },
-  excerptEmpty: { color: colors.textMuted },
+  date: { fontFamily: fonts.semibold, fontSize: 14, color: warm.brown },
+  excerpt: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: warm.black,
+  },
+  excerptEmpty: { color: warm.tan },
   meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   dots: { flexDirection: 'row', gap: 4, flex: 1 },
   dot: { width: 8, height: 8, borderRadius: 4 },
   photoCount: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  metaText: { fontSize: 12, color: colors.textMuted },
+  metaText: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
   footer: {
     paddingVertical: spacing.lg,
     alignItems: 'center',
     gap: spacing.sm,
   },
   footerError: { color: colors.danger, fontSize: 14, textAlign: 'center' },
-  end: { textAlign: 'center', color: colors.textMuted, fontSize: 13 },
+  end: {
+    textAlign: 'center',
+    fontFamily: fonts.regular,
+    color: warm.tan,
+    fontSize: 13,
+  },
 });
