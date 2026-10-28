@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useDeleteEntry } from '@/api/entries';
 import { ApiError, errorMessage } from '@/api/errors';
-import { Button } from '@/components/Button';
-import { Section } from '@/components/Section';
-import { colors, spacing } from '@/theme';
+import { colors, fonts, spacing, warm } from '@/theme';
 
 // 삭제는 AI 기억을 먼저 지운다. AI가 안 되면 503이고 아무것도 지워지지 않는다
 const deleteFailMessage = (e: unknown) =>
@@ -26,14 +30,15 @@ export function DeleteEntrySection({
   return (
     <View style={styles.area}>
       {confirming ? (
-        <Section
-          title="이 일기를 지울까요?"
-          hint="사진과 과거의 나의 기억에서도 함께 지워지고, 되돌릴 수 없어요."
-        >
-          <Button
-            title="삭제"
-            variant="danger"
-            loading={remove.isPending}
+        <View style={styles.confirm}>
+          <Text style={styles.title}>이 일기를 지울까요?</Text>
+          <Text style={styles.hint}>
+            사진과 과거의 나의 기억에서도 함께 지워지고, 되돌릴 수 없어요.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: remove.isPending }}
+            disabled={remove.isPending}
             onPress={() =>
               remove.mutate(undefined, {
                 onSuccess: () => {
@@ -42,21 +47,30 @@ export function DeleteEntrySection({
                 },
               })
             }
+            style={({ pressed }) => [styles.delete, pressed && styles.pressed]}
             testID="confirm-delete"
-          />
-          <Button
-            title="취소"
-            variant="ghost"
+          >
+            {remove.isPending ? (
+              <ActivityIndicator color={warm.field} />
+            ) : (
+              <Text style={styles.deleteText}>삭제</Text>
+            )}
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
             disabled={remove.isPending}
             onPress={() => {
               setConfirming(false);
               remove.reset();
             }}
-          />
+            style={({ pressed }) => [styles.link, pressed && styles.pressed]}
+          >
+            <Text style={styles.cancelText}>취소</Text>
+          </Pressable>
           {remove.isError ? (
             <Text style={styles.error}>{deleteFailMessage(remove.error)}</Text>
           ) : null}
-        </Section>
+        </View>
       ) : (
         <Pressable
           accessibilityRole="button"
@@ -74,13 +88,34 @@ export function DeleteEntrySection({
 
 const styles = StyleSheet.create({
   area: { marginTop: spacing.lg },
-  // 평소엔 눈에 덜 띄게: 맨 아래 작은 회색 링크
+  // 평소엔 눈에 덜 띄게: 맨 아래 작은 링크
   link: { alignSelf: 'center', paddingVertical: spacing.sm },
   linkText: {
+    fontFamily: fonts.medium,
     fontSize: 13,
-    color: colors.textMuted,
+    color: warm.tan,
     textDecorationLine: 'underline',
   },
   pressed: { opacity: 0.6 },
+  confirm: {
+    gap: 10,
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: warm.field,
+    borderWidth: 1,
+    borderColor: warm.sand,
+  },
+  title: { fontFamily: fonts.bold, fontSize: 16, color: warm.black },
+  hint: { fontFamily: fonts.regular, fontSize: 13, color: warm.tan },
+  delete: {
+    height: 45,
+    borderRadius: 26,
+    marginTop: 4,
+    backgroundColor: warm.sunday,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteText: { fontFamily: fonts.semibold, fontSize: 16, color: warm.field },
+  cancelText: { fontFamily: fonts.semibold, fontSize: 14, color: warm.brown },
   error: { color: colors.danger, fontSize: 14 },
 });

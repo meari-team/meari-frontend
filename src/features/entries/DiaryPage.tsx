@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ChecklistCategoryDto, EntryDto, PhotoDto } from '@/api/entries';
 import { useDaySchedules } from '@/api/schedules';
 import { SafeImage } from '@/components/SafeImage';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, spacing, warm } from '@/theme';
 import { checkedLabels, longKoreanDate, memoryLineOf } from './diary-page';
 
 // 확정한 일기 한 쪽: 날짜 · 한 줄(제목) · 사진 · 본문 · 체크한 항목 · 기억 상태(제외·실패일 때만).
@@ -33,7 +33,13 @@ export function DiaryPage({
       </Text>
 
       {checked.length > 0 ? (
-        <Text style={styles.checked}>{checked.join(' · ')}</Text>
+        <View style={styles.tags}>
+          {checked.map((label) => (
+            <Text key={label} style={styles.tag}>
+              {label}
+            </Text>
+          ))}
+        </View>
       ) : null}
 
       {memory ? (
@@ -102,61 +108,87 @@ export function DaySchedulesQuiet({ date }: { date: string }) {
 }
 
 const styles = StyleSheet.create({
+  // 홈 카드와 같은 종이 한 장 (바탕 + 갈색 그림자)
   page: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md + 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.lg - 2,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
+    backgroundColor: warm.field,
+    borderRadius: 10,
+    paddingHorizontal: 22,
+    paddingTop: 24,
+    paddingBottom: 20,
     gap: spacing.md,
+    shadowColor: warm.brown,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 3,
   },
-  date: { fontSize: 13, color: colors.textMuted, letterSpacing: 0.2 },
+  date: { fontFamily: fonts.medium, fontSize: 13, color: warm.tan },
   note: {
+    fontFamily: fonts.bold,
     fontSize: 20,
     lineHeight: 28,
-    fontWeight: '700',
-    color: colors.text,
+    color: warm.black,
     marginTop: -spacing.xs,
   },
   photos: { gap: spacing.sm },
   photo: {
     width: '100%',
     aspectRatio: 4 / 3,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceMuted,
+    borderRadius: 7,
+    backgroundColor: warm.background,
   },
   thumbs: { flexDirection: 'row', gap: spacing.sm },
   thumbWrap: {
-    borderRadius: radius.sm,
+    borderRadius: 9,
     borderWidth: 2,
     borderColor: 'transparent',
-    opacity: 0.6,
+    opacity: 0.55,
   },
-  thumbOn: { borderColor: colors.text, opacity: 1 },
-  thumb: { width: 56, height: 56, borderRadius: radius.sm - 2 },
-  body: { fontSize: 16.5, lineHeight: 29, color: colors.text },
-  checked: { fontSize: 14, color: colors.textMuted },
+  thumbOn: { borderColor: warm.tan, opacity: 1 },
+  thumb: { width: 56, height: 56, borderRadius: 7 },
+  body: {
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    lineHeight: 28,
+    color: warm.black,
+  },
+  // 체크한 항목: 모래색 테두리의 작은 알약 (아이콘 없이 글자만)
+  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tag: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: warm.brown,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: warm.sand,
+    overflow: 'hidden',
+  },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     paddingTop: spacing.sm + 4,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: warm.sand,
   },
-  footerText: { fontSize: 13, color: colors.textMuted },
+  footerText: { fontFamily: fonts.medium, fontSize: 13, color: warm.tan },
   failed: { color: colors.danger },
-  schedules: { gap: spacing.sm, paddingHorizontal: spacing.xs },
-  schedulesLabel: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
-  scheduleRow: { flexDirection: 'row', gap: spacing.sm + 4 },
+  schedules: { gap: 10, paddingHorizontal: 4 },
+  schedulesLabel: { fontFamily: fonts.semibold, fontSize: 13, color: warm.tan },
+  scheduleRow: { flexDirection: 'row', gap: 12 },
   scheduleTime: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: warm.ink,
     fontVariant: ['tabular-nums'],
   },
-  scheduleTitle: { flex: 1, fontSize: 15, color: colors.text },
-  scheduleDone: { color: colors.textMuted, textDecorationLine: 'line-through' },
+  scheduleTitle: {
+    flex: 1,
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: warm.black,
+  },
+  scheduleDone: { color: warm.tan, textDecorationLine: 'line-through' },
 });
