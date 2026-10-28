@@ -1,15 +1,15 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useChecklist, useEntry, useUpdateMemory } from '@/api/entries';
 import { ApiError, errorMessage } from '@/api/errors';
-import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { StateView } from '@/components/StateView';
+import { AuthButton } from '@/features/auth/AuthButton';
 import { DeleteEntrySection } from '@/features/entries/DeleteEntrySection';
 import { DaySchedulesQuiet, DiaryPage } from '@/features/entries/DiaryPage';
 import { formatKoreanDate, normalizeEntryDate } from '@/lib/dates';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, spacing, warm } from '@/theme';
 
 // 기억에서 제외는 AI 기억을 먼저 지운다. AI가 안 되면 503
 const aiIndexFailMessage = (e: unknown, action: string) =>
@@ -25,7 +25,18 @@ export default function EntryDetailScreen() {
   const checklist = useChecklist();
   const memory = useUpdateMemory(date);
 
-  const header = <Stack.Screen options={{ title: formatKoreanDate(date) }} />;
+  // 머리줄도 웜톤 바탕에 맞춘다 (그림자 줄 없이)
+  const header = (
+    <Stack.Screen
+      options={{
+        title: formatKoreanDate(date),
+        headerStyle: { backgroundColor: warm.background },
+        headerShadowVisible: false,
+        headerTintColor: warm.ink,
+        headerTitleStyle: { fontFamily: fonts.semibold, fontSize: 16 },
+      }}
+    />
+  );
 
   if (entry.isPending || checklist.isPending) {
     return (
@@ -71,7 +82,7 @@ export default function EntryDetailScreen() {
   return (
     <>
       {header}
-      <Screen edges={['bottom']}>
+      <Screen edges={['bottom']} backgroundColor={warm.background}>
         {confirmed ? (
           <DiaryPage date={date} entry={data} categories={checklist.data} />
         ) : (
@@ -80,7 +91,7 @@ export default function EntryDetailScreen() {
             <Text style={styles.draftHint}>
               확정한 일기만 과거의 나의 기억이 돼요.
             </Text>
-            <Button
+            <AuthButton
               title="이어 쓰기"
               onPress={() => router.push(`/today?date=${date}`)}
             />
@@ -92,7 +103,7 @@ export default function EntryDetailScreen() {
         {confirmed ? (
           <>
             <View style={styles.actions}>
-              <Button
+              <AuthButton
                 title="이때의 나와 대화하기"
                 testID="talk-to-past-self"
                 onPress={() =>
@@ -102,9 +113,8 @@ export default function EntryDetailScreen() {
                   })
                 }
               />
-              <Button
-                title="수정하기"
-                variant="secondary"
+              <Pressable
+                accessibilityRole="button"
                 testID="edit-entry"
                 onPress={() =>
                   router.push({
@@ -112,7 +122,13 @@ export default function EntryDetailScreen() {
                     params: { date, edit: String(Date.now()) },
                   })
                 }
-              />
+                style={({ pressed }) => [
+                  styles.outline,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.outlineText}>수정하기</Text>
+              </Pressable>
             </View>
 
             {/* 기억 포함 여부: 조용한 설정 한 줄 */}
@@ -126,8 +142,10 @@ export default function EntryDetailScreen() {
               <Switch
                 accessibilityLabel="과거의 나 기억에 포함"
                 value={!data.excludedFromMemory}
-                trackColor={{ true: colors.primary, false: colors.border }}
-                thumbColor={colors.surface}
+                trackColor={{ true: warm.tan, false: warm.sand }}
+                thumbColor={warm.field}
+                // 웹(react-native-web)은 켜진 손잡이 색을 따로 받는다 (안 주면 청록색)
+                {...({ activeThumbColor: warm.field } as object)}
                 disabled={memory.isPending}
                 onValueChange={(include) => memory.mutate(!include)}
               />
@@ -153,29 +171,52 @@ export default function EntryDetailScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  pressed: { opacity: 0.7 },
   draft: {
     gap: spacing.sm,
-    padding: spacing.lg - 2,
-    borderRadius: radius.md + 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    padding: 22,
+    borderRadius: 10,
+    backgroundColor: warm.field,
+    shadowColor: warm.brown,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 3,
   },
-  draftTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
+  draftTitle: { fontFamily: fonts.bold, fontSize: 17, color: warm.black },
   draftHint: {
+    fontFamily: fonts.regular,
     fontSize: 14,
-    color: colors.textMuted,
+    color: warm.tan,
     marginBottom: spacing.sm,
   },
-  actions: { gap: spacing.sm, marginTop: spacing.sm },
+  actions: { gap: 10, marginTop: spacing.sm },
+  // 보조 버튼: 주 버튼과 같은 알약, 테두리만
+  outline: {
+    height: 45,
+    borderRadius: 26,
+    borderWidth: 1.5,
+    borderColor: warm.tan,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outlineText: { fontFamily: fonts.semibold, fontSize: 16, color: warm.brown },
   setting: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
+    marginTop: spacing.sm,
+    paddingTop: spacing.md,
+    paddingHorizontal: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: warm.sand,
   },
-  settingTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
-  settingHint: { fontSize: 13, lineHeight: 18, color: colors.textMuted },
+  settingTitle: { fontFamily: fonts.semibold, fontSize: 15, color: warm.ink },
+  settingHint: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    color: warm.tan,
+  },
   error: { color: colors.danger, fontSize: 14 },
 });
