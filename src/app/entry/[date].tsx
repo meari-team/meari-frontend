@@ -8,7 +8,7 @@ import { StateView } from '@/components/StateView';
 import { AuthButton } from '@/features/auth/AuthButton';
 import { DeleteEntrySection } from '@/features/entries/DeleteEntrySection';
 import { DaySchedulesQuiet, DiaryPage } from '@/features/entries/DiaryPage';
-import { formatKoreanDate, normalizeEntryDate } from '@/lib/dates';
+import { normalizeEntryDate } from '@/lib/dates';
 import { colors, fonts, spacing, warm } from '@/theme';
 
 // 기억에서 제외는 AI 기억을 먼저 지운다. AI가 안 되면 503
@@ -25,11 +25,11 @@ export default function EntryDetailScreen() {
   const checklist = useChecklist();
   const memory = useUpdateMemory(date);
 
-  // 머리줄도 웜톤 바탕에 맞춘다 (그림자 줄 없이)
+  // 머리줄은 뒤로 가기만. 날짜는 일기 맨 위에 이미 있어서 제목은 비운다 (웜톤 바탕, 그림자 줄 없이)
   const header = (
     <Stack.Screen
       options={{
-        title: formatKoreanDate(date),
+        title: '',
         headerStyle: { backgroundColor: warm.background },
         headerShadowVisible: false,
         headerTintColor: warm.ink,
