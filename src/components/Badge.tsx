@@ -3,8 +3,7 @@ import type { ComponentProps } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, warm } from '@/theme';
 
-type Tone =
-  'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'warm' | 'clay';
+type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'warm';
 
 const TONES: Record<Tone, { bg: string; fg: string }> = {
   neutral: { bg: colors.surfaceMuted, fg: colors.textMuted },
@@ -12,9 +11,8 @@ const TONES: Record<Tone, { bg: string; fg: string }> = {
   success: { bg: colors.successSoft, fg: colors.success },
   warning: { bg: colors.warningSoft, fg: colors.warning },
   danger: { bg: colors.dangerSoft, fg: colors.danger },
-  // 웜톤 화면용: 오늘 표시 / 작성 중
+  // 웜톤 화면용: 오늘 표시
   warm: { bg: warm.tan, fg: warm.field },
-  clay: { bg: 'rgba(201,138,98,0.16)', fg: warm.clay },
 };
 
 type Props = {
