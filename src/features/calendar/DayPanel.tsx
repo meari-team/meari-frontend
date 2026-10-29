@@ -10,7 +10,7 @@ import {
 import type { EntrySummaryDto } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
 import {
-  useDaySchedules,
+  useSchedules,
   useToggleSchedule,
   type ScheduleDto,
 } from '@/api/schedules';
@@ -20,16 +20,27 @@ import { SafeImage } from '@/components/SafeImage';
 import { dayTitleOf } from '@/lib/calendar';
 import { colors, fonts, spacing, warm } from '@/theme';
 
+// 캘린더가 이미 읽어 둔 격자 전체 기간의 일정 (날마다 따로 읽지 않는다)
+type MonthSchedules = ReturnType<typeof useSchedules>;
+
 type Props = {
   date: string;
   today: string;
   entry?: EntrySummaryDto;
+  schedules: MonthSchedules;
   // 일정을 누르면 수정 시트를 연다
   onEditSchedule: (schedule: ScheduleDto) => void;
 };
 
 // 캘린더에서 고른 날: "20. 화" 제목 + 할 일(일정 체크) + 그날 일기
-export function DayPanel({ date, today, entry, onEditSchedule }: Props) {
+// 그날 일정은 캘린더가 읽어 둔 달 일정에서 골라 쓴다 — 날짜·달을 바꿔도 로딩으로 접혔다 펴지지 않는다
+export function DayPanel({
+  date,
+  today,
+  entry,
+  schedules,
+  onEditSchedule,
+}: Props) {
   return (
     <View style={styles.wrap} testID="day-panel">
       <View style={styles.handle} />
@@ -38,7 +49,7 @@ export function DayPanel({ date, today, entry, onEditSchedule }: Props) {
         {date === today ? <Badge label="오늘" tone="warm" /> : null}
       </View>
 
-      <Todos date={date} onEdit={onEditSchedule} />
+      <Todos date={date} list={schedules} onEdit={onEditSchedule} />
       <EntryCard date={date} today={today} entry={entry} />
     </View>
   );
@@ -46,13 +57,15 @@ export function DayPanel({ date, today, entry, onEditSchedule }: Props) {
 
 function Todos({
   date,
+  list,
   onEdit,
 }: {
   date: string;
+  list: MonthSchedules;
   onEdit: (schedule: ScheduleDto) => void;
 }) {
-  const list = useDaySchedules(date);
   const toggle = useToggleSchedule();
+  const items = (list.data ?? []).filter((s) => s.date === date);
 
   let body;
   if (list.isPending) {
@@ -68,14 +81,14 @@ function Todos({
         />
       </>
     );
-  } else if (list.data.length === 0) {
+  } else if (items.length === 0) {
     body = (
       <Text style={styles.empty}>
         일정이 없어요. 오른쪽 아래 + 로 추가해 보세요.
       </Text>
     );
   } else {
-    body = list.data.map((s) => (
+    body = items.map((s) => (
       <View key={s.id} style={styles.todo} testID={`schedule-${s.id}`}>
         <Pressable
           accessibilityRole="checkbox"

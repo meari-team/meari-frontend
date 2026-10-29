@@ -74,7 +74,18 @@ export function FeedItem({ item }: { item: EntryFeedItemDto }) {
 export function ListView({ header }: Props) {
   const latest = monthKeyOf(todayKst());
   const [month, setMonth] = useState<MonthKey>(latest);
+  // 당겨서 새로고침 표시는 사용자가 당겼을 때만. 달을 넘길 때의 읽기(isRefetching)에 묶으면
+  // iOS에서 새로고침 표시가 저절로 켜졌다 꺼지며 목록이 아래로 끌렸다 올라간다
+  const [pulling, setPulling] = useState(false);
   const feed = useMonthFeed(month);
+  const refresh = async () => {
+    setPulling(true);
+    try {
+      await feed.refetch();
+    } finally {
+      setPulling(false);
+    }
+  };
   const atLatest = month.year === latest.year && month.month === latest.month;
   const go = (delta: number) =>
     setMonth((m) => shiftMonthKey(m, delta, latest));
@@ -158,8 +169,8 @@ export function ListView({ header }: Props) {
         </View>
       }
       ListEmptyComponent={empty}
-      onRefresh={() => void feed.refetch()}
-      refreshing={feed.isRefetching}
+      onRefresh={refresh}
+      refreshing={pulling}
       contentContainerStyle={[
         styles.content,
         feed.isPlaceholderData && styles.loadingNext,
