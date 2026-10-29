@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { fonts, warm } from '@/theme';
 
 export default function Layout() {
   return (
@@ -12,7 +13,17 @@ export default function Layout() {
       <Stack.Screen name="category" options={{ title: '카테고리' }} />
       <Stack.Screen name="password" options={{ title: '비밀번호 변경' }} />
       <Stack.Screen name="withdraw" options={{ title: '회원 탈퇴' }} />
-      <Stack.Screen name="privacy" options={{ title: '개인정보 처리방침' }} />
+      <Stack.Screen
+        name="privacy"
+        options={{
+          title: '개인정보 처리방침',
+          // 웜톤 화면: 바탕과 같은 머리줄, 그림자 줄 없이
+          headerStyle: { backgroundColor: warm.background },
+          headerShadowVisible: false,
+          headerTintColor: warm.ink,
+          headerTitleStyle: { fontFamily: fonts.semibold, fontSize: 16 },
+        }}
+      />
     </Stack>
   );
 }
