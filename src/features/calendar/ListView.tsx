@@ -1,22 +1,20 @@
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { useEntriesFeed, type EntryFeedItemDto } from '@/api/feed';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useState, type ReactElement } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMonthFeed, type EntryFeedItemDto } from '@/api/feed';
 import { errorMessage } from '@/api/errors';
-import { Button } from '@/components/Button';
 import { SafeImage } from '@/components/SafeImage';
 import { StateView } from '@/components/StateView';
 import { indexBadgeOf } from '@/features/today/stage';
-import { formatKoreanDate } from '@/lib/dates';
-import { feedRows, type FeedRow } from '@/lib/feed';
-import { colors, fonts, spacing, warm } from '@/theme';
+import { formatKoreanDate, todayKst } from '@/lib/dates';
+import {
+  monthKeyOf,
+  monthTitle,
+  shiftMonthKey,
+  type MonthKey,
+} from '@/lib/feed';
+import { fonts, spacing, warm } from '@/theme';
 
 type Props = {
   // 상단 월간/연간/목록 전환. 목록에서는 FlatList가 화면 스크롤을 맡으므로 헤더로 넣는다
@@ -72,37 +70,51 @@ export function FeedItem({ item }: { item: EntryFeedItemDto }) {
   );
 }
 
-// 목록 보기: 전체 일기를 최신순으로, 내리면 다음 페이지 (캘린더 탭)
+// 목록 보기: 한 달씩 끊어서 최신순으로. 위 ‹ 2026년 10월 › 로 달을 넘긴다 (캘린더 탭)
 export function ListView({ header }: Props) {
-  const feed = useEntriesFeed();
-  const rows = feedRows(feed.items);
+  const latest = monthKeyOf(todayKst());
+  const [month, setMonth] = useState<MonthKey>(latest);
+  const feed = useMonthFeed(month);
+  const atLatest = month.year === latest.year && month.month === latest.month;
+  const go = (delta: number) =>
+    setMonth((m) => shiftMonthKey(m, delta, latest));
 
-  const renderRow = ({ item: row }: { item: FeedRow<EntryFeedItemDto> }) =>
-    row.type === 'month' ? (
-      <Text style={styles.month}>{row.label}</Text>
-    ) : (
-      <FeedItem item={row.item} />
-    );
-
-  let footer: ReactElement | undefined;
-  if (feed.isFetchingNextPage) {
-    footer = <ActivityIndicator style={styles.footer} color={warm.tan} />;
-  } else if (feed.isFetchNextPageError) {
-    footer = (
-      <View style={styles.footer}>
-        <Text style={styles.footerError}>{errorMessage(feed.error)}</Text>
-        <Button
-          title="다시 불러오기"
-          variant="ghost"
-          onPress={() => void feed.fetchNextPage()}
-        />
+  const bar = (
+    <View style={styles.bar}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="이전 달"
+        hitSlop={10}
+        onPress={() => go(-1)}
+        testID="list-prev-month"
+      >
+        <Ionicons name="chevron-back" size={22} color={warm.ink} />
+      </Pressable>
+      <View style={styles.barTitle}>
+        <Text style={styles.barMonth} testID="list-month">
+          {monthTitle(month)}
+        </Text>
+        <Text style={styles.barCount}>
+          {feed.data ? `${feed.data.length}편` : ' '}
+        </Text>
       </View>
-    );
-  } else if (feed.isSuccess && !feed.hasNextPage && feed.items.length > 0) {
-    footer = (
-      <Text style={[styles.footer, styles.end]}>처음 기록까지 다 봤어요</Text>
-    );
-  }
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="다음 달"
+        accessibilityState={{ disabled: atLatest }}
+        disabled={atLatest}
+        hitSlop={10}
+        onPress={() => go(1)}
+        testID="list-next-month"
+      >
+        <Ionicons
+          name="chevron-forward"
+          size={22}
+          color={atLatest ? warm.sand : warm.ink}
+        />
+      </Pressable>
+    </View>
+  );
 
   let empty: ReactElement;
   if (feed.isPending) {
@@ -115,13 +127,20 @@ export function ListView({ header }: Props) {
         onRetry={() => void feed.refetch()}
       />
     );
+  } else if (atLatest) {
+    empty = (
+      <StateView
+        status="empty"
+        message="이번 달에는 아직 기록이 없어요."
+        actionLabel="오늘 일기 쓰기"
+        onAction={() => router.push('/today')}
+      />
+    );
   } else {
     empty = (
       <StateView
         status="empty"
-        message="아직 기록이 없어요."
-        actionLabel="오늘 일기 쓰기"
-        onAction={() => router.push('/today')}
+        message={`${month.month}월에는 기록이 없어요.`}
       />
     );
   }
@@ -129,25 +148,18 @@ export function ListView({ header }: Props) {
   return (
     <FlatList
       testID="entries-feed"
-      data={feed.isError && feed.items.length === 0 ? [] : rows}
-      keyExtractor={(row) => row.key}
-      renderItem={renderRow}
-      ListHeaderComponent={header}
-      ListHeaderComponentStyle={styles.header}
+      data={feed.data ?? []}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => <FeedItem item={item} />}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          {header}
+          {bar}
+        </View>
+      }
       ListEmptyComponent={empty}
-      ListFooterComponent={footer}
-      onEndReached={() => {
-        if (
-          feed.hasNextPage &&
-          !feed.isFetchingNextPage &&
-          !feed.isFetchNextPageError
-        ) {
-          void feed.fetchNextPage();
-        }
-      }}
-      onEndReachedThreshold={0.5}
       onRefresh={() => void feed.refetch()}
-      refreshing={feed.isRefetching && !feed.isFetchingNextPage}
+      refreshing={feed.isRefetching}
       contentContainerStyle={styles.content}
       style={styles.list}
     />
@@ -157,16 +169,20 @@ export function ListView({ header }: Props) {
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: warm.background },
   content: { padding: spacing.lg, flexGrow: 1 },
-  header: { gap: spacing.md, marginBottom: spacing.sm },
-  month: {
-    fontFamily: fonts.bold,
-    fontSize: 17,
-    color: warm.ink,
-    marginTop: spacing.lg,
-    paddingBottom: spacing.sm,
+  header: { gap: spacing.md },
+  // 달 넘기기 줄: ‹ 2026년 10월 · 17편 ›
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: warm.sand,
   },
+  barTitle: { alignItems: 'center', gap: 2 },
+  barMonth: { fontFamily: fonts.bold, fontSize: 17, color: warm.ink },
+  barCount: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -195,16 +211,4 @@ const styles = StyleSheet.create({
   },
   excerptEmpty: { color: warm.tan },
   thumb: { width: 64, height: 64, borderRadius: 7 },
-  footer: {
-    paddingVertical: spacing.lg,
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  footerError: { color: colors.danger, fontSize: 14, textAlign: 'center' },
-  end: {
-    textAlign: 'center',
-    fontFamily: fonts.regular,
-    color: warm.tan,
-    fontSize: 13,
-  },
 });
