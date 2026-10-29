@@ -1,5 +1,5 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { mergePages, nextBeforeOf } from '@/lib/feed';
+import { useQuery } from '@tanstack/react-query';
+import { inMonth, monthFeedQuery, type MonthKey } from '@/lib/feed';
 import { api } from './client';
 import { entriesKey } from './entries';
 import { unwrap } from './errors';
@@ -7,27 +7,22 @@ import type { components } from './schema';
 
 export type EntryFeedItemDto = components['schemas']['EntryFeedItemDto'];
 
-const PAGE_SIZE = 20;
-
-// 전체 일기 목록(최신순, 커서 = 날짜). entriesKey 아래 두어 일기가 바뀌면 함께 갱신된다
+// 전체 일기 목록(달 단위). entriesKey 아래 두어 일기가 바뀌면 함께 갱신된다
 export const entriesFeedKey = [...entriesKey, 'feed'] as const;
 
-export function useEntriesFeed() {
-  const query = useInfiniteQuery({
-    queryKey: entriesFeedKey,
-    initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam }) =>
-      unwrap(
+// 한 달 치 일기 (최신순). 한 달은 31편을 넘지 않아 한 번에 읽는다
+export function useMonthFeed(month: MonthKey) {
+  return useQuery({
+    queryKey: [...entriesFeedKey, month.year, month.month],
+    queryFn: async () => {
+      const page = await unwrap(
         api.GET('/api/v1/entries/feed', {
-          params: { query: { before: pageParam, limit: PAGE_SIZE } },
+          params: { query: monthFeedQuery(month) },
         }),
-      ),
-    getNextPageParam: nextBeforeOf,
+      );
+      return inMonth(page.items, month);
+    },
   });
-  return {
-    ...query,
-    items: query.data ? mergePages(query.data.pages) : [],
-  };
 }
 
 // 홈의 최근 기록 (첫 페이지만). entriesKey 아래라 일기가 바뀌면 함께 갱신된다
