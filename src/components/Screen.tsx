@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   Platform,
   RefreshControl,
@@ -31,6 +32,7 @@ export function Screen({
   onRefresh,
   footer,
   backgroundColor,
+  footerStyle,
 }: {
   children: ReactNode;
   edges?: Edge[];
@@ -39,6 +41,8 @@ export function Screen({
   footer?: ReactNode;
   // 웜톤 시안을 적용한 화면은 바탕색을 넘긴다
   backgroundColor?: string;
+  // 아래 고정 영역 모양 바꾸기 (예: 웜톤 화면은 선·바탕 없이)
+  footerStyle?: StyleProp<ViewStyle>;
 }) {
   return (
     <SafeAreaView
@@ -63,7 +67,9 @@ export function Screen({
         >
           {children}
         </ScrollView>
-        {footer ? <View style={styles.footer}>{footer}</View> : null}
+        {footer ? (
+          <View style={[styles.footer, footerStyle]}>{footer}</View>
+        ) : null}
       </KeyboardAvoider>
     </SafeAreaView>
   );
