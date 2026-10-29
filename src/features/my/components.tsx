@@ -1,6 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { colors, fonts, warm } from '@/theme';
 import type { DIARY_STYLES } from './logic';
 
@@ -223,4 +229,164 @@ const styles = StyleSheet.create({
     color: warm.ink,
     paddingLeft: 28,
   },
+});
+
+// ── 마이페이지 하위 화면 공용 (웜톤 시안을 따른 카드·버튼) ──
+
+// 종이 카드 (작은 제목·안내를 붙일 수 있다)
+export function WarmCard({
+  title,
+  hint,
+  children,
+}: {
+  title?: string;
+  hint?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <View style={warmStyles.card}>
+      {title ? <Text style={warmStyles.cardTitle}>{title}</Text> : null}
+      {hint ? <Text style={warmStyles.cardHint}>{hint}</Text> : null}
+      {children}
+    </View>
+  );
+}
+
+type PillProps = {
+  title: string;
+  onPress: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  testID?: string;
+};
+
+// 테두리만 있는 알약 버튼 (보조 동작)
+export function OutlineButton({ title, onPress, disabled, testID }: PillProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      testID={testID}
+      style={({ pressed }) => [
+        warmStyles.pill,
+        warmStyles.outline,
+        disabled && warmStyles.dim,
+        pressed && warmStyles.pressed,
+      ]}
+    >
+      <Text style={warmStyles.outlineText}>{title}</Text>
+    </Pressable>
+  );
+}
+
+// 지우기처럼 되돌릴 수 없는 동작의 알약 버튼 (차분한 빨강)
+export function DangerButton({
+  title,
+  onPress,
+  disabled,
+  loading,
+  testID,
+}: PillProps) {
+  const inactive = disabled || loading;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: inactive, busy: loading }}
+      disabled={inactive}
+      onPress={onPress}
+      testID={testID}
+      style={({ pressed }) => [
+        warmStyles.pill,
+        warmStyles.danger,
+        disabled && !loading && warmStyles.dim,
+        pressed && warmStyles.pressed,
+      ]}
+    >
+      {loading ? (
+        <ActivityIndicator color={warm.field} />
+      ) : (
+        <Text style={warmStyles.dangerText}>{title}</Text>
+      )}
+    </Pressable>
+  );
+}
+
+// 글자만 있는 버튼 (취소·돌아가기)
+export function TextButton({
+  title,
+  onPress,
+  disabled,
+  tone = 'brown',
+  testID,
+}: PillProps & { tone?: 'brown' | 'danger' }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      hitSlop={6}
+      testID={testID}
+      style={({ pressed }) => [
+        warmStyles.textButton,
+        pressed && warmStyles.pressed,
+      ]}
+    >
+      <Text
+        style={[
+          warmStyles.textButtonLabel,
+          tone === 'danger' && warmStyles.textDanger,
+        ]}
+      >
+        {title}
+      </Text>
+    </Pressable>
+  );
+}
+
+const warmStyles = StyleSheet.create({
+  card: {
+    gap: 14,
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: warm.field,
+    shadowColor: warm.brown,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 3,
+  },
+  cardTitle: { fontFamily: fonts.semibold, fontSize: 16, color: warm.black },
+  cardHint: {
+    marginTop: -8,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    lineHeight: 19,
+    color: warm.brown,
+  },
+  pill: {
+    height: 45,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outline: { borderWidth: 1.5, borderColor: warm.tan },
+  outlineText: { fontFamily: fonts.semibold, fontSize: 16, color: warm.brown },
+  danger: { backgroundColor: warm.sunday },
+  dangerText: { fontFamily: fonts.semibold, fontSize: 16, color: warm.field },
+  textButton: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  textButtonLabel: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: warm.brown,
+  },
+  textDanger: { color: warm.sunday },
+  dim: { opacity: 0.45 },
+  pressed: { opacity: 0.7 },
 });
