@@ -53,7 +53,7 @@ export const DIARY_STYLES: {
 export const diaryStyleLabel = (value: DiaryStyle) =>
   DIARY_STYLES.find((s) => s.value === value)?.label ?? value;
 
-// 가입 시각(ISO) → KST 기준 "2026. 10. 24."와 오늘까지 며칠째인지(가입일이 1일째)
+// 가입 시각(ISO) → KST 기준 "2026.10.24"와 오늘까지 며칠째인지(가입일이 1일째)
 export function joinInfo(
   createdAt: string,
   today: string,
@@ -61,11 +61,10 @@ export function joinInfo(
   const joined = new Date(new Date(createdAt).getTime() + 9 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10);
-  const [y, m, d] = joined.split('-').map(Number);
   const diff =
     (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${joined}T00:00:00Z`)) /
     86_400_000;
-  return { label: `${y}. ${m}. ${d}.`, days: Math.max(1, diff + 1) };
+  return { label: joined.replaceAll('-', '.'), days: Math.max(1, diff + 1) };
 }
 
 export function nicknameError(raw: string): string | null {

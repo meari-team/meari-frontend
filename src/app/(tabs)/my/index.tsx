@@ -1,16 +1,15 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useMe } from '@/api/auth';
 import { useChecklist, useEntriesRange } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
 import { useUpdateMe } from '@/api/profile';
-import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { StateView } from '@/components/StateView';
-import { TextField } from '@/components/TextField';
+import { AuthButton } from '@/features/auth/AuthButton';
+import { AuthField } from '@/features/auth/AuthField';
 import { recordStats, shiftDate } from '@/features/home/logic';
 import {
   SettingsGroup,
@@ -28,9 +27,11 @@ import {
 } from '@/features/my/logic';
 import { todayKst } from '@/lib/dates';
 import { useAuth } from '@/stores/auth';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, spacing, warm } from '@/theme';
 
 const VERSION = Constants.expoConfig?.version ?? '0.1.0';
+
+const background = require('../../../../assets/images/decor/my-bg.png');
 
 const ABOUT_PAST_SELF =
   '과거의 나는 고른 날짜까지 쓴 확정 일기만으로 AI가 재구성한 모습이에요. ' +
@@ -89,273 +90,324 @@ export default function MyScreen() {
     n === undefined ? '–' : `${n}${unit}`;
 
   return (
-    <Screen edges={['top']}>
-      <Text style={styles.pageTitle}>마이페이지</Text>
+    <View style={styles.screen}>
+      {/* 위·아래 동심원 장식 (시안). 화면에 고정되고 카드가 위로 지나간다 */}
+      <View style={styles.decor} pointerEvents="none">
+        <Image source={background} style={styles.decorImage} />
+      </View>
+      <Screen edges={['top']} backgroundColor="transparent">
+        <Text style={styles.pageTitle}>마이페이지</Text>
 
-      {/* 프로필 */}
-      <View style={styles.profileCard}>
-        {editing ? (
-          <View style={styles.editBox}>
-            <TextField
-              label="닉네임"
-              value={nickname}
-              onChangeText={setNickname}
-              maxLength={NICKNAME_MAX}
-              hint={`최대 ${NICKNAME_MAX}자`}
-              error={nickname.length > 0 ? nickError : null}
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={
-                nickError || update.isPending ? undefined : saveNickname
-              }
-              testID="nickname-input"
-            />
-            <View style={styles.row}>
-              <View style={styles.flex}>
-                <Button
-                  title="취소"
-                  variant="ghost"
-                  disabled={update.isPending}
-                  onPress={() => {
-                    setEditing(false);
-                    update.reset();
-                  }}
-                />
-              </View>
-              <View style={styles.flex}>
-                <Button
-                  title="저장"
-                  disabled={!!nickError}
-                  loading={update.isPending}
-                  onPress={saveNickname}
-                  testID="nickname-save"
-                />
-              </View>
+        {/* 프로필 */}
+        <View style={styles.profileCard}>
+          {editing ? (
+            <View style={styles.editBox}>
+              <AuthField
+                placeholder="닉네임"
+                value={nickname}
+                onChangeText={setNickname}
+                maxLength={NICKNAME_MAX}
+                hint={`최대 ${NICKNAME_MAX}자`}
+                error={nickname.length > 0 ? nickError : null}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={
+                  nickError || update.isPending ? undefined : saveNickname
+                }
+                testID="nickname-input"
+              />
+              <AuthButton
+                title="저장"
+                disabled={!!nickError}
+                loading={update.isPending}
+                onPress={saveNickname}
+                testID="nickname-save"
+              />
+              <Pressable
+                accessibilityRole="button"
+                disabled={update.isPending}
+                onPress={() => {
+                  setEditing(false);
+                  update.reset();
+                }}
+                style={({ pressed }) => [
+                  styles.textButton,
+                  pressed && styles.dim,
+                ]}
+              >
+                <Text style={styles.textButtonLabel}>취소</Text>
+              </Pressable>
             </View>
-          </View>
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`닉네임 ${user.nickname}, 눌러서 수정`}
-            onPress={startEdit}
-            style={({ pressed }) => [styles.profile, pressed && styles.dim]}
-            testID="nickname-edit"
-          >
-            <View style={styles.flex}>
-              <View style={styles.nameRow}>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`닉네임 ${user.nickname}, 눌러서 수정`}
+              onPress={startEdit}
+              style={({ pressed }) => [styles.profile, pressed && styles.dim]}
+              testID="nickname-edit"
+            >
+              <View style={styles.flex}>
+                {/* 이름을 누르면 닉네임 수정 */}
                 <Text style={styles.nickname} testID="nickname">
                   {user.nickname}
                 </Text>
-                <Ionicons name="pencil" size={15} color={colors.textMuted} />
+                <Text style={styles.muted}>{user.email}</Text>
+                <Text style={styles.since}>
+                  {joined.label} 가입 - 함께한 지 {joined.days}일 째
+                </Text>
               </View>
-              <Text style={styles.muted}>{user.email}</Text>
-              <Text style={styles.since}>
-                {joined.label} 가입 · 함께한 지 {joined.days}일째
+            </Pressable>
+          )}
+
+          <View style={styles.stats}>
+            <StatTile
+              value={statValue(stats?.total, '편')}
+              label="총 일기"
+              testID="my-stat-total"
+            />
+            <StatTile
+              value={statValue(stats?.monthCount, '일')}
+              label="이번 달 기록"
+            />
+            <StatTile
+              value={statValue(stats?.streak, '일')}
+              label="연속 기록"
+            />
+          </View>
+        </View>
+
+        {update.isError ? (
+          <Text style={styles.error}>{errorMessage(update.error)}</Text>
+        ) : null}
+
+        <SettingsGroup title="계정">
+          <SettingsRow
+            title="비밀번호 변경"
+            testID="my-password"
+            onPress={() => router.push('/my/password')}
+            last
+          />
+        </SettingsGroup>
+
+        {/* AI 설정 */}
+        <SettingsGroup title="AI 설정">
+          <SettingsRow
+            title="AI 일기 문체"
+            value={diaryStyleLabel(user.diaryStyle)}
+            expanded={open === 'style'}
+            onPress={() => toggle('style')}
+            last={open !== 'style'}
+            testID="open-style"
+          />
+          {open === 'style' ? (
+            <View style={styles.expand} accessibilityRole="radiogroup">
+              {DIARY_STYLES.map((s) => (
+                <StyleOption
+                  key={s.value}
+                  option={s}
+                  selected={user.diaryStyle === s.value}
+                  disabled={update.isPending}
+                  onPress={() => chooseStyle(s.value)}
+                />
+              ))}
+              <Text style={styles.note}>
+                지금은 저장만 되고, AI 일기에는 곧 반영돼요.
               </Text>
             </View>
-          </Pressable>
-        )}
+          ) : null}
+        </SettingsGroup>
 
-        <View style={styles.stats}>
-          <StatTile
-            value={statValue(stats?.total, '편')}
-            label="총 일기"
-            testID="my-stat-total"
+        {/* 기록 */}
+        <SettingsGroup title="기록">
+          <SettingsRow
+            title="전체 일기 보기"
+            value={stats ? `${stats.total}편` : undefined}
+            onPress={() =>
+              router.navigate({
+                pathname: '/calendar',
+                params: { mode: 'list', at: String(Date.now()) },
+              })
+            }
+            testID="open-all-entries"
           />
-          <StatTile
-            value={statValue(stats?.monthCount, '일')}
-            label="이번 달 기록"
+          <SettingsRow
+            title="체크리스트 관리"
+            description="오늘의 일기에서 고르는 항목"
+            value={
+              checklist.data ? `카테고리 ${checklist.data.length}개` : undefined
+            }
+            onPress={() => router.push('/my/checklist')}
+            last
+            testID="open-checklist"
           />
-          <StatTile value={statValue(stats?.streak, '일')} label="연속 기록" />
-        </View>
-      </View>
+        </SettingsGroup>
 
-      {update.isError ? (
-        <Text style={styles.error}>{errorMessage(update.error)}</Text>
-      ) : null}
-
-      <SettingsGroup title="계정">
-        <SettingsRow
-          title="비밀번호 변경"
-          testID="my-password"
-          onPress={() => router.push('/my/password')}
-          last
-        />
-      </SettingsGroup>
-
-      {/* AI 설정 */}
-      <SettingsGroup title="AI 설정">
-        <SettingsRow
-          title="AI 일기 문체"
-          description="초안을 쓸 때의 말투"
-          value={diaryStyleLabel(user.diaryStyle)}
-          expanded={open === 'style'}
-          onPress={() => toggle('style')}
-          last={open !== 'style'}
-          testID="open-style"
-        />
-        {open === 'style' ? (
-          <View style={styles.expand} accessibilityRole="radiogroup">
-            {DIARY_STYLES.map((s) => (
-              <StyleOption
-                key={s.value}
-                option={s}
-                selected={user.diaryStyle === s.value}
-                disabled={update.isPending}
-                onPress={() => chooseStyle(s.value)}
-              />
-            ))}
-            <Text style={styles.note}>
-              지금은 저장만 되고, AI 일기에는 곧 반영돼요.
+        {/* 안내 */}
+        <SettingsGroup title="안내">
+          <SettingsRow
+            title="과거의 나는 이렇게 만들어져요"
+            expanded={open === 'pastSelf'}
+            onPress={() => toggle('pastSelf')}
+            testID="open-about-past-self"
+          />
+          {open === 'pastSelf' ? (
+            <Text
+              style={[styles.expand, styles.expandDivider, styles.aboutText]}
+            >
+              {ABOUT_PAST_SELF}
             </Text>
-          </View>
-        ) : null}
-      </SettingsGroup>
+          ) : null}
+          <SettingsRow
+            title="개인정보 처리방침"
+            description="모으는 정보, 외부 AI, 보관과 삭제"
+            onPress={() => router.push('/my/privacy')}
+            testID="open-privacy"
+            last
+          />
+        </SettingsGroup>
 
-      {/* 기록 */}
-      <SettingsGroup title="기록">
-        <SettingsRow
-          title="전체 일기 보기"
-          value={stats ? `${stats.total}편` : undefined}
-          onPress={() =>
-            router.navigate({
-              pathname: '/calendar',
-              params: { mode: 'list', at: String(Date.now()) },
-            })
-          }
-          testID="open-all-entries"
-        />
-        <SettingsRow
-          title="체크리스트 관리"
-          description="오늘의 일기에서 고르는 항목"
-          value={
-            checklist.data ? `카테고리 ${checklist.data.length}개` : undefined
-          }
-          onPress={() => router.push('/my/checklist')}
-          last
-          testID="open-checklist"
-        />
-      </SettingsGroup>
-
-      {/* 안내 */}
-      <SettingsGroup title="안내">
-        <SettingsRow
-          title="과거의 나는 이렇게 만들어져요"
-          expanded={open === 'pastSelf'}
-          onPress={() => toggle('pastSelf')}
-          testID="open-about-past-self"
-        />
-        {open === 'pastSelf' ? (
-          <Text style={[styles.expand, styles.expandDivider, styles.aboutText]}>
-            {ABOUT_PAST_SELF}
-          </Text>
-        ) : null}
-        <SettingsRow
-          title="개인정보 처리방침"
-          description="모으는 정보, 외부 AI, 보관과 삭제"
-          onPress={() => router.push('/my/privacy')}
-          testID="open-privacy"
-        />
-        <SettingsRow title="버전" value={VERSION} last />
-      </SettingsGroup>
-
-      {/* 계정 */}
-      <SettingsGroup>
-        <SettingsRow
-          title="로그아웃"
-          onPress={() => toggle('logout')}
-          last={open !== 'logout'}
-          testID="open-logout"
-        />
-        {open === 'logout' ? (
-          <View style={styles.expand}>
-            <Text style={styles.aboutText}>
-              로그아웃할까요? 기록은 그대로 남아 있어요.
-            </Text>
-            <View style={styles.row}>
-              <View style={styles.flex}>
-                <Button
-                  title="취소"
-                  variant="ghost"
+        {/* 계정 */}
+        <SettingsGroup>
+          <SettingsRow
+            title="로그아웃"
+            onPress={() => toggle('logout')}
+            last={open !== 'logout'}
+            testID="open-logout"
+          />
+          {open === 'logout' ? (
+            <View style={styles.expand}>
+              <Text style={styles.aboutText}>
+                로그아웃할까요? 기록은 그대로 남아 있어요.
+              </Text>
+              <View style={styles.row}>
+                <Pressable
+                  accessibilityRole="button"
                   onPress={() => setOpen(null)}
-                />
-              </View>
-              <View style={styles.flex}>
-                <Button
-                  title="로그아웃"
-                  onPress={signOut}
-                  testID="logout-confirm"
-                />
+                  style={({ pressed }) => [
+                    styles.half,
+                    styles.outline,
+                    pressed && styles.dim,
+                  ]}
+                >
+                  <Text style={styles.outlineText}>취소</Text>
+                </Pressable>
+                <View style={styles.half}>
+                  <AuthButton
+                    title="로그아웃"
+                    onPress={signOut}
+                    testID="logout-confirm"
+                  />
+                </View>
               </View>
             </View>
-          </View>
-        ) : null}
-      </SettingsGroup>
+          ) : null}
+        </SettingsGroup>
 
-      <Pressable
-        accessibilityRole="button"
-        hitSlop={8}
-        onPress={() => router.push('/my/withdraw')}
-        style={({ pressed }) => [styles.withdraw, pressed && styles.dim]}
-        testID="open-withdraw"
-      >
-        <Text style={styles.withdrawText}>회원 탈퇴</Text>
-      </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => router.push('/my/withdraw')}
+          style={({ pressed }) => [styles.withdraw, pressed && styles.dim]}
+          testID="open-withdraw"
+        >
+          <Text style={styles.withdrawText}>회원 탈퇴</Text>
+        </Pressable>
 
-      <Text style={styles.footer}>
-        메아리 {VERSION} · AI가 기록으로 재구성한 내용은 실제와 다를 수 있어요.
-      </Text>
-    </Screen>
+        <Text style={styles.footer}>
+          메아리 {VERSION} · AI가 기록으로 재구성한 내용은 실제와 다를 수
+          있어요.
+        </Text>
+      </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: warm.background },
+  // 웹은 Image의 aspectRatio를 무시해서 크기는 감싼 View가 정한다
+  decor: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    aspectRatio: 402 / 874,
+  },
+  decorImage: { width: '100%', height: '100%' },
   flex: { flex: 1 },
   row: { flexDirection: 'row', gap: spacing.sm },
+  half: { flex: 1 },
   dim: { opacity: 0.7 },
-  pageTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-    paddingTop: spacing.sm,
-  },
+  pageTitle: { fontFamily: fonts.bold, fontSize: 24, color: warm.black },
   profileCard: {
-    gap: spacing.md,
-    padding: spacing.md + 4,
-    borderRadius: radius.md + 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    gap: 17,
+    padding: 20,
+    marginBottom: 2,
+    borderRadius: 10,
+    backgroundColor: warm.field,
+    shadowColor: warm.brown,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 3,
   },
-  editBox: { gap: spacing.sm + 4 },
-  profile: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  nickname: { fontSize: 21, fontWeight: '800', color: colors.text },
-  muted: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
-  since: { fontSize: 13, color: colors.primary, marginTop: 4 },
-  stats: { flexDirection: 'row', gap: spacing.sm },
-  expand: {
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
+  editBox: { gap: 12 },
+  profile: { flexDirection: 'row', alignItems: 'center' },
+  nickname: { fontFamily: fonts.bold, fontSize: 20, color: warm.black },
+  muted: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    color: warm.brown,
+    marginTop: 8,
   },
+  since: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    color: warm.brown,
+    marginTop: 3,
+  },
+  stats: { flexDirection: 'row', gap: 16 },
+  textButton: { alignSelf: 'center', padding: 6 },
+  textButtonLabel: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: warm.brown,
+  },
+  outline: {
+    height: 45,
+    borderRadius: 26,
+    borderWidth: 1.5,
+    borderColor: warm.tan,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outlineText: { fontFamily: fonts.semibold, fontSize: 16, color: warm.brown },
+  expand: { gap: 10, paddingHorizontal: 20, paddingBottom: 18 },
   // 펼친 내용 아래에 다른 행이 이어질 때
-  expandDivider: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+  expandDivider: { borderBottomWidth: 1, borderBottomColor: warm.sand },
+  aboutText: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    lineHeight: 21,
+    color: warm.ink,
   },
-  aboutText: { fontSize: 14, lineHeight: 21, color: colors.textMuted },
-  note: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
+  note: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: warm.tan,
+    textAlign: 'center',
+  },
   error: { color: colors.danger, fontSize: 14 },
   withdraw: { alignSelf: 'center', paddingVertical: spacing.xs },
   withdrawText: {
-    fontSize: 14,
-    color: colors.textMuted,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: warm.tan,
     textDecorationLine: 'underline',
   },
   footer: {
+    fontFamily: fonts.regular,
     fontSize: 12,
-    color: colors.textMuted,
+    color: warm.tan,
     textAlign: 'center',
     marginBottom: spacing.md,
   },
