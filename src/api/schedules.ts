@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -23,6 +24,8 @@ function invalidateSchedules(client: QueryClient) {
 export function useSchedules(from: string, to: string) {
   return useQuery({
     queryKey: [...schedulesKey, from, to],
+    // 달을 넘기는 동안 앞 달 점을 유지 (화면이 튀지 않게)
+    placeholderData: keepPreviousData,
     queryFn: async () =>
       (
         await unwrap(
