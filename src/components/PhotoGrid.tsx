@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { colors, radius, spacing } from '@/theme';
+import { fonts, warm } from '@/theme';
 
 export type PhotoTile = {
   key: string;
@@ -18,13 +18,14 @@ export type PhotoTile = {
 type Props = {
   photos: PhotoTile[];
   max: number;
-  onAdd?: () => void; // 없으면 추가 칸을 그리지 않는다 (보기 모드)
+  onAdd?: () => void; // 없으면 빈 칸을 그리지 않는다 (보기 모드)
   onRemove?: (key: string) => void;
   onRetry?: (key: string) => void;
   disabled?: boolean;
 };
 
-// 정사각형 사진 칸. 업로드 중·실패 상태와 추가 칸을 함께 그린다
+// 정사각형 사진 칸을 한 줄에 max개 (시안: 3칸). 빈 칸을 누르면 사진을 고른다.
+// 업로드 중·실패 상태를 사진 위에 함께 그린다
 export function PhotoGrid({
   photos,
   max,
@@ -33,7 +34,7 @@ export function PhotoGrid({
   onRetry,
   disabled,
 }: Props) {
-  const canAdd = !!onAdd && photos.length < max;
+  const empty = onAdd ? Math.max(0, max - photos.length) : 0;
   return (
     <View style={styles.grid}>
       {photos.map((p) => (
@@ -46,7 +47,7 @@ export function PhotoGrid({
           />
           {p.status === 'uploading' ? (
             <View style={styles.overlay}>
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={warm.field} />
             </View>
           ) : null}
           {p.status === 'failed' ? (
@@ -56,7 +57,7 @@ export function PhotoGrid({
               style={[styles.overlay, styles.failed]}
               onPress={() => onRetry?.(p.key)}
             >
-              <Ionicons name="refresh" size={22} color="#fff" />
+              <Ionicons name="refresh" size={20} color={warm.field} />
               <Text style={styles.overlayText}>다시 올리기</Text>
             </Pressable>
           ) : null}
@@ -68,41 +69,40 @@ export function PhotoGrid({
               style={styles.remove}
               onPress={() => onRemove(p.key)}
             >
-              <Ionicons name="close" size={14} color="#fff" />
+              <Ionicons name="close" size={13} color={warm.field} />
             </Pressable>
           ) : null}
         </View>
       ))}
-      {canAdd ? (
+      {Array.from({ length: empty }, (_, i) => (
         <Pressable
+          key={`empty-${i}`}
           accessibilityRole="button"
-          accessibilityLabel="사진 추가"
+          accessibilityLabel="사진 고르기"
+          testID={i === 0 ? 'today-pick-photos' : undefined}
           disabled={disabled}
           onPress={onAdd}
           style={({ pressed }) => [
             styles.tile,
-            styles.add,
+            styles.empty,
             (pressed || disabled) && styles.dim,
           ]}
         >
-          <Ionicons name="add" size={28} color={colors.textMuted} />
-          <Text style={styles.addText}>
-            {photos.length}/{max}
-          </Text>
+          <Text style={styles.plus}>+</Text>
         </Pressable>
-      ) : null}
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  grid: { flexDirection: 'row', gap: 11 },
   tile: {
-    width: '31%',
+    flex: 1,
     aspectRatio: 1,
-    borderRadius: radius.sm,
+    borderRadius: 7,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: warm.background,
   },
   image: { width: '100%', height: '100%' },
   overlay: {
@@ -110,29 +110,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(74,52,42,0.35)',
   },
-  failed: { backgroundColor: 'rgba(209,67,67,0.65)' },
-  overlayText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  failed: { backgroundColor: 'rgba(198,90,78,0.7)' },
+  overlayText: { fontFamily: fonts.semibold, fontSize: 11, color: warm.field },
   remove: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    top: 5,
+    right: 5,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(74,52,42,0.6)',
   },
-  add: {
+  empty: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(215,201,184,0.35)',
   },
-  addText: { fontSize: 12, color: colors.textMuted },
+  plus: { fontFamily: fonts.regular, fontSize: 28, color: warm.tan },
   dim: { opacity: 0.6 },
 });

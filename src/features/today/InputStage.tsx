@@ -1,7 +1,14 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import {
   useAnalyze,
   useDeletePhoto,
@@ -11,15 +18,12 @@ import {
   type EntryDto,
 } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
-import { Button } from '@/components/Button';
-import { Chip } from '@/components/Chip';
 import { PhotoGrid, type PhotoTile } from '@/components/PhotoGrid';
 import { Screen } from '@/components/Screen';
-import { TextField } from '@/components/TextField';
-import { useDaySchedules } from '@/api/schedules';
 import { todayKst } from '@/lib/dates';
 import { compressForUpload, MAX_PHOTOS } from '@/lib/image';
-import { colors, radius, spacing } from '@/theme';
+import { AuthButton } from '@/features/auth/AuthButton';
+import { colors, fonts, warm } from '@/theme';
 import { ANALYZE_MESSAGES, BusyView } from './BusyView';
 import { inputFooterOf, remainingSlots, type InputStep } from './stage';
 import { TodayTitle } from './TodayTitle';
@@ -35,7 +39,7 @@ type Props = {
 const NOTE_MAX = 200;
 
 // 입력 단계 (화면 전체를 그린다). 두 단계로 나눠 한 번에 하나만 묻는다
-//   1/2 사진(1~3장) + 한 줄 + 그날 일정 한 줄 → [다음]
+//   1/2 사진(1~3장) + 한 줄 → [다음]
 //   2/2 오늘 한 일 체크(선택) → [AI로 일기 만들기] → 분석
 // 단계를 오가도 입력은 이 컴포넌트 상태에 남는다
 export function InputStage({ date, entry, categories }: Props) {
@@ -172,13 +176,13 @@ export function InputStage({ date, entry, categories }: Props) {
   const title = (
     <TodayTitle
       date={date}
-      right={<Text style={styles.stepCount}>{step} / 2</Text>}
+      right={<Text style={styles.stepCount}>{step}/2</Text>}
     />
   );
 
   if (analyze.isPending) {
     return (
-      <Screen edges={['top']}>
+      <Screen edges={['top']} backgroundColor={warm.background}>
         <TodayTitle date={date} />
         <BusyView messages={ANALYZE_MESSAGES} />
       </Screen>
@@ -199,213 +203,254 @@ export function InputStage({ date, entry, categories }: Props) {
     setStep(2);
   };
 
+  // 시안: 아래 고정 황갈색 알약 버튼 하나 (2단계는 아무것도 안 골라도 바로 만들 수 있다)
   const footer = (
     <>
       {footerState.hint ? (
         <Text style={styles.hint}>{footerState.hint}</Text>
       ) : null}
-      <View style={styles.footerRow}>
-        {footerState.skip ? (
-          <View style={styles.skip}>
-            <Button
-              title="건너뛰기"
-              variant="ghost"
-              onPress={startAnalyze}
-              testID="today-skip"
-            />
-          </View>
-        ) : null}
-        <View style={styles.primary}>
-          <Button
-            title={footerState.primary}
-            onPress={step === 1 ? goNext : startAnalyze}
-            disabled={!footerState.enabled}
-            loading={step === 2 && save.isPending && !analyze.isPending}
-            testID={step === 1 ? 'today-next' : 'today-analyze'}
-          />
-        </View>
-      </View>
+      <AuthButton
+        title={footerState.primary}
+        onPress={step === 1 ? goNext : startAnalyze}
+        disabled={!footerState.enabled}
+        loading={step === 2 && save.isPending && !analyze.isPending}
+        testID={step === 1 ? 'today-next' : 'today-analyze'}
+      />
     </>
   );
 
   return (
-    // 단계가 바뀌면 스크롤을 맨 위에서 다시 시작한다
-    <Screen key={step} edges={['top']} footer={footer}>
-      {title}
-      <View style={styles.track}>
-        <View style={[styles.fill, step === 2 && styles.fillDone]} />
+    <View style={styles.screen}>
+      {/* 아래 동심원 장식 (시안). 탭바 바로 위에 붙는다 */}
+      <View style={styles.decor} pointerEvents="none">
+        <Image source={bottomDecor} style={styles.decorImage} />
       </View>
+      {/* 단계가 바뀌면 스크롤을 맨 위에서 다시 시작한다 */}
+      <Screen
+        key={step}
+        edges={['top']}
+        footer={footer}
+        backgroundColor="transparent"
+        footerStyle={styles.footer}
+      >
+        {title}
+        <View style={styles.track}>
+          <View style={[styles.fill, step === 2 && styles.fillDone]} />
+        </View>
 
-      {step === 1 ? (
-        <>
-          <View style={styles.ask}>
-            <Text style={styles.question}>
-              {dayWord} 찍은 사진을 골라 주세요
-            </Text>
-            <Text style={styles.sub}>
-              1~{MAX_PHOTOS}장. 사진만 골라도 AI가 일기를 써 줘요.
-            </Text>
-          </View>
+        {step === 1 ? (
+          <>
+            <View style={[styles.card, styles.firstCard]}>
+              <View style={styles.ask}>
+                <Text style={styles.question}>
+                  {dayWord} 찍은 사진을 골라주세요
+                </Text>
+                <Text style={styles.sub}>
+                  1~{MAX_PHOTOS}장 사진만 골라도 AI가 일기를 써 줘요.
+                </Text>
+              </View>
+              <PhotoGrid
+                photos={tiles}
+                max={MAX_PHOTOS}
+                onAdd={pickPhotos}
+                onRemove={remove}
+                onRetry={retry}
+                disabled={removePhoto.isPending}
+              />
+              {notice ? <Text style={styles.notice}>{notice}</Text> : null}
+            </View>
 
-          {tiles.length === 0 ? (
+            <View style={styles.noteWrap}>
+              <View style={styles.noteBox}>
+                <TextInput
+                  value={note}
+                  onChangeText={setNote}
+                  onBlur={saveNote}
+                  maxLength={NOTE_MAX}
+                  placeholder="한 줄로 남기기(선택)"
+                  placeholderTextColor={warm.placeholder}
+                  accessibilityLabel="한 줄로 남기기 (선택)"
+                  returnKeyType="done"
+                  style={styles.noteInput}
+                  testID="today-note"
+                />
+              </View>
+              <Text style={styles.noteHint}>
+                {note.length}/{NOTE_MAX}
+                {'   '}적어 두면 AI가 더 정확히 일기를 작성할 수 있어요.
+              </Text>
+            </View>
+          </>
+        ) : (
+          <>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="사진 고르기"
-              onPress={pickPhotos}
-              testID="today-pick-photos"
-              style={({ pressed }) => [styles.hero, pressed && styles.dim]}
+              accessibilityLabel="이전 단계로"
+              hitSlop={8}
+              onPress={() => setStep(1)}
+              testID="today-back"
+              style={({ pressed }) => [styles.backLink, pressed && styles.dim]}
             >
-              <Ionicons name="add" size={36} color={colors.primary} />
-              <Text style={styles.heroText}>사진 고르기</Text>
-              <Text style={styles.heroCount}>0/{MAX_PHOTOS}</Text>
+              <Text style={styles.backText}>{'<'} 사진, 한 줄 다시 보기</Text>
             </Pressable>
-          ) : (
-            <PhotoGrid
-              photos={tiles}
-              max={MAX_PHOTOS}
-              onAdd={pickPhotos}
-              onRemove={remove}
-              onRetry={retry}
-              disabled={removePhoto.isPending}
-            />
-          )}
-          {notice ? <Text style={styles.notice}>{notice}</Text> : null}
 
-          <TextField
-            label="한 줄로 남기기 (선택)"
-            value={note}
-            onChangeText={setNote}
-            onBlur={saveNote}
-            maxLength={NOTE_MAX}
-            placeholder="예: 중간고사 끝나고 친구랑 파스타"
-            returnKeyType="done"
-            hint={`${note.length}/${NOTE_MAX} · 적어 두면 AI가 덜 헷갈려요`}
-            testID="today-note"
-          />
-
-          <ScheduleLine date={date} dayWord={dayWord} />
-        </>
-      ) : (
-        <>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="이전 단계로"
-            hitSlop={8}
-            onPress={() => setStep(1)}
-            testID="today-back"
-            style={styles.backLink}
-          >
-            <Text style={styles.backText}>‹ 사진·한 줄 다시 보기</Text>
-          </Pressable>
-          <View style={styles.ask}>
-            <Text style={styles.question}>{dayWord} 한 일을 골라 주세요</Text>
-            <Text style={styles.sub}>
-              선택이에요. 고르면 AI가 일기에 참고해요.
-            </Text>
-          </View>
-
-          <View style={styles.card}>
-            {categories.map((c) => (
-              <View key={c.id} style={styles.category}>
-                <Text style={styles.categoryName}>{c.name}</Text>
-                <View style={styles.chips}>
-                  {c.items.map((item) => (
-                    <Chip
-                      key={item.id}
-                      label={item.label}
-                      color={c.color}
-                      selected={checked.has(item.id)}
-                      onPress={() => toggle(item.id)}
-                    />
-                  ))}
-                </View>
+            <View style={[styles.card, styles.stepTwoCard]}>
+              <View style={styles.ask}>
+                <Text style={styles.question}>
+                  {dayWord} 한 일을 골라주세요
+                </Text>
+                <Text style={styles.sub}>
+                  선택사항이에요. 고르면 AI가 일기에 참고해요.
+                </Text>
               </View>
-            ))}
-            {categories.length === 0 ? (
-              <Text style={styles.sub}>
-                체크리스트 항목이 없어요. 마이페이지에서 추가할 수 있어요.
-              </Text>
-            ) : null}
-          </View>
-        </>
-      )}
+              <View style={styles.box}>
+                {categories.map((c) => (
+                  <View key={c.id} style={styles.category}>
+                    <Text style={styles.categoryName}>{c.name}</Text>
+                    <View style={styles.chips}>
+                      {c.items.map((item) => {
+                        const on = checked.has(item.id);
+                        return (
+                          <Pressable
+                            key={item.id}
+                            accessibilityRole="checkbox"
+                            accessibilityState={{ checked: on }}
+                            onPress={() => toggle(item.id)}
+                            style={[styles.chip, on && styles.chipOn]}
+                          >
+                            <Text
+                              style={[styles.chipText, on && styles.chipTextOn]}
+                            >
+                              {item.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                ))}
+                {categories.length === 0 ? (
+                  <Text style={styles.empty}>
+                    체크리스트 항목이 없어요. 마이페이지에서 추가할 수 있어요.
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          </>
+        )}
 
-      {actionError ? (
-        <Text style={styles.error} testID="today-analyze-error">
-          {errorMessage(actionError)}
-        </Text>
-      ) : null}
-    </Screen>
-  );
-}
-
-// 그날 일정은 카드 대신 한 줄로 (AI가 참고한다). 없으면 그리지 않는다
-function ScheduleLine({ date, dayWord }: { date: string; dayWord: string }) {
-  const list = useDaySchedules(date);
-  const items = list.data ?? [];
-  if (items.length === 0) return null;
-  const [first, ...rest] = items;
-  return (
-    <View style={styles.schedule} testID="today-schedule-line">
-      <Text style={styles.scheduleText} numberOfLines={1}>
-        <Text style={styles.scheduleLabel}>{dayWord} 일정 · </Text>
-        {first.time ? `${first.time} ` : ''}
-        {first.title}
-        {rest.length > 0 ? ` 외 ${rest.length}개` : ''}
-      </Text>
-      <Text style={styles.scheduleHint}>AI가 일기를 쓸 때 참고해요</Text>
+        {actionError ? (
+          <Text style={styles.error} testID="today-analyze-error">
+            {errorMessage(actionError)}
+          </Text>
+        ) : null}
+      </Screen>
     </View>
   );
 }
 
+const bottomDecor = require('../../../assets/images/decor/today-bottom.png');
+
+// 홈 카드와 같은 종이 카드
+const card = {
+  padding: 21,
+  borderRadius: 10,
+  backgroundColor: warm.field,
+  shadowColor: warm.brown,
+  shadowOffset: { width: 3, height: 3 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.5,
+  elevation: 3,
+} as const;
+
 const styles = StyleSheet.create({
-  stepCount: { fontSize: 15, fontWeight: '600', color: colors.textMuted },
+  screen: { flex: 1, backgroundColor: warm.background },
+  // 웹은 Image의 aspectRatio를 무시해서 크기는 감싼 View가 정한다
+  decor: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    aspectRatio: 402 / 371,
+  },
+  decorImage: { width: '100%', height: '100%' },
+  stepCount: { fontFamily: fonts.semibold, fontSize: 20, color: warm.brown },
   track: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.surfaceMuted,
+    height: 3,
+    marginTop: 5,
+    borderRadius: 1.5,
+    backgroundColor: warm.sand,
     overflow: 'hidden',
   },
-  fill: { width: '50%', height: '100%', backgroundColor: colors.primary },
+  fill: { width: '50%', height: '100%', backgroundColor: warm.ink },
   fillDone: { width: '100%' },
-  ask: { gap: spacing.xs, marginTop: spacing.sm },
-  question: { fontSize: 20, fontWeight: '700', color: colors.text },
-  sub: { fontSize: 14, lineHeight: 20, color: colors.textMuted },
-  hero: {
-    height: 200,
-    borderRadius: radius.md,
+  card: { ...card, gap: 20 },
+  firstCard: { marginTop: 37 },
+  stepTwoCard: { marginTop: 9 },
+  ask: { gap: 8 },
+  question: { fontFamily: fonts.semibold, fontSize: 16, color: warm.black },
+  sub: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
+  notice: { fontFamily: fonts.medium, fontSize: 13, color: warm.clay },
+  noteWrap: { marginTop: 2 },
+  noteBox: { ...card, padding: 0, height: 45, justifyContent: 'center' },
+  noteInput: {
+    flex: 1,
+    paddingHorizontal: 20,
+    fontFamily: fonts.medium,
+    fontSize: 16,
+    color: warm.ink,
+  },
+  noteHint: {
+    marginTop: 9,
+    marginLeft: 19,
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    color: warm.tan,
+  },
+  backLink: { alignSelf: 'flex-start', marginTop: -4 },
+  backText: { fontFamily: fonts.bold, fontSize: 13, color: warm.ink },
+  box: {
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    borderRadius: 17,
     borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: warm.sand,
+  },
+  category: { gap: 6 },
+  categoryName: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    color: warm.brown,
+    marginLeft: 3,
+  },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  chip: {
+    minWidth: 52,
+    height: 30,
+    paddingHorizontal: 13,
+    borderRadius: 17,
+    borderWidth: 1.5,
+    borderColor: warm.sand,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
   },
-  heroText: { fontSize: 16, fontWeight: '600', color: colors.text },
-  heroCount: { fontSize: 13, color: colors.textMuted },
-  dim: { opacity: 0.7 },
-  schedule: { gap: 2 },
-  scheduleText: { fontSize: 15, color: colors.text },
-  scheduleLabel: { fontWeight: '600', color: colors.textMuted },
-  scheduleHint: { fontSize: 12, color: colors.textMuted },
-  backLink: { alignSelf: 'flex-start', marginTop: spacing.xs },
-  backText: { fontSize: 14, fontWeight: '600', color: colors.primary },
-  card: {
-    gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  category: { gap: spacing.xs + 2 },
-  categoryName: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  notice: { fontSize: 14, color: colors.warning },
+  chipOn: { backgroundColor: warm.sand, borderColor: warm.brown },
+  chipText: { fontFamily: fonts.regular, fontSize: 13, color: warm.black },
+  chipTextOn: { fontFamily: fonts.semibold, color: warm.ink },
+  dim: { opacity: 0.6 },
+  empty: { fontFamily: fonts.regular, fontSize: 13, color: warm.tan },
   error: { fontSize: 14, color: colors.danger },
-  hint: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
-  footerRow: { flexDirection: 'row', gap: spacing.sm },
-  skip: { flex: 1 },
-  primary: { flex: 2 },
+  hint: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: warm.tan,
+    textAlign: 'center',
+  },
+  // 선·바탕 없이 장식 위에 버튼만 뜬다
+  footer: {
+    borderTopWidth: 0,
+    backgroundColor: 'transparent',
+    paddingBottom: 19,
+  },
 });

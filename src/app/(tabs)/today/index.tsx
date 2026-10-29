@@ -13,6 +13,7 @@ import { ReadyStage } from '@/features/today/ReadyStage';
 import { stageOf } from '@/features/today/stage';
 import { TodayTitle } from '@/features/today/TodayTitle';
 import { normalizeEntryDate } from '@/lib/dates';
+import { warm } from '@/theme';
 
 // 오늘의 일기. 서버의 일기 상태에 따라 단계를 그린다 (prd.md §7-1)
 // ?date=YYYY-MM-DD로 지난 날짜도 쓸 수 있다 (미래·잘못된 값은 오늘)
@@ -41,7 +42,7 @@ export default function TodayScreen() {
 
   if (entry.isPending || checklist.isPending) {
     return (
-      <Screen edges={['top']}>
+      <Screen edges={['top']} backgroundColor={warm.background}>
         {title}
         <StateView status="loading" />
       </Screen>
@@ -49,7 +50,7 @@ export default function TodayScreen() {
   }
   if (entry.isError || checklist.isError) {
     return (
-      <Screen edges={['top']}>
+      <Screen edges={['top']} backgroundColor={warm.background}>
         {title}
         <StateView
           status="error"
@@ -139,7 +140,7 @@ export default function TodayScreen() {
   }
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={['top']} backgroundColor={warm.background}>
       {title}
       {body}
       {remove}
