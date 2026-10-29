@@ -1,20 +1,19 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ApiError, errorMessage } from '@/api/errors';
 import { useWithdraw } from '@/api/profile';
-import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
-import { Section } from '@/components/Section';
-import { colors, radius, spacing } from '@/theme';
+import { AuthButton } from '@/features/auth/AuthButton';
+import { DangerButton, TextButton, WarmCard } from '@/features/my/components';
+import { colors, fonts, warm } from '@/theme';
 
 const LOSSES = [
-  { icon: 'book-outline', label: '모든 일기와 사진' },
-  { icon: 'chatbubbles-outline', label: '과거의 나와 나눈 대화' },
-  { icon: 'sparkles-outline', label: 'AI가 기억하고 있는 내 기록' },
-  { icon: 'checkbox-outline', label: '일정·체크리스트와 프로필' },
-] as const;
+  '모든 일기와 사진',
+  '과거의 나와 나눈 대화',
+  'AI가 기억하고 있는 내 기록',
+  '일정·체크리스트와 프로필',
+];
 
 // 서버가 AI 기억을 먼저 지우고, 하나라도 실패하면 아무것도 지우지 않는다 (503)
 const withdrawFailMessage = (e: unknown) =>
@@ -28,54 +27,44 @@ export default function WithdrawScreen() {
   const withdraw = useWithdraw();
 
   return (
-    <Screen edges={[]}>
-      <View style={styles.hero}>
-        <View style={styles.heroIcon}>
-          <Ionicons name="warning-outline" size={28} color={colors.danger} />
-        </View>
-        <Text style={styles.heroTitle}>탈퇴하면 모든 기록이 지워져요</Text>
-        <Text style={styles.heroText}>
-          지운 기록은 되돌릴 수 없어요. 잠시 쉬고 싶다면 로그아웃만 해도 기록은
-          그대로 남아요.
-        </Text>
-      </View>
-
-      <Section title="함께 지워지는 것">
+    <Screen edges={[]} backgroundColor={warm.background}>
+      <WarmCard
+        title="탈퇴하면 모든 기록이 지워져요"
+        hint="지운 기록은 되돌릴 수 없어요. 잠시 쉬고 싶다면 로그아웃만 해도 기록은 그대로 남아요."
+      >
         <View style={styles.list}>
-          {LOSSES.map((l) => (
-            <View key={l.label} style={styles.item}>
-              <Ionicons name={l.icon} size={18} color={colors.danger} />
-              <Text style={styles.itemText}>{l.label}</Text>
+          <Text style={styles.listTitle}>함께 지워지는 것</Text>
+          {LOSSES.map((label) => (
+            <View key={label} style={styles.item}>
+              <Text style={styles.bullet}>·</Text>
+              <Text style={styles.itemText}>{label}</Text>
             </View>
           ))}
         </View>
-      </Section>
+      </WarmCard>
 
       {step === 'intro' ? (
         <>
-          <Button title="돌아가기" onPress={() => router.back()} />
-          <Button
+          <AuthButton title="돌아가기" onPress={() => router.back()} />
+          <TextButton
             title="그래도 탈퇴할래요"
-            variant="ghost"
             onPress={() => setStep('confirm')}
             testID="withdraw-continue"
           />
         </>
       ) : (
-        <Section
+        <WarmCard
           title="정말 탈퇴할까요?"
           hint="버튼을 누르면 바로 모든 기록이 지워지고 로그아웃돼요."
         >
-          <Button
+          <DangerButton
             title="모든 기록 지우고 탈퇴"
-            variant="danger"
             loading={withdraw.isPending}
             onPress={() => withdraw.mutate()}
             testID="withdraw-confirm"
           />
-          <Button
+          <TextButton
             title="취소"
-            variant="ghost"
             disabled={withdraw.isPending}
             onPress={() => {
               withdraw.reset();
@@ -87,38 +76,41 @@ export default function WithdrawScreen() {
               {withdrawFailMessage(withdraw.error)}
             </Text>
           ) : null}
-        </Section>
+        </WarmCard>
       )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md + 4,
-    backgroundColor: colors.dangerSoft,
+  // 지워지는 것 목록: 카드 안 모래색 테두리 상자
+  list: {
+    gap: 6,
+    padding: 16,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: warm.sand,
+    backgroundColor: warm.background,
   },
-  heroIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
+  listTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    color: warm.brown,
+    marginBottom: 2,
   },
-  heroTitle: { fontSize: 19, fontWeight: '800', color: colors.text },
-  heroText: {
+  item: { flexDirection: 'row', gap: 6 },
+  bullet: {
+    fontFamily: fonts.bold,
     fontSize: 14,
     lineHeight: 21,
-    color: colors.textMuted,
-    textAlign: 'center',
+    color: warm.sunday,
   },
-  list: { gap: spacing.sm + 2 },
-  item: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2 },
-  itemText: { fontSize: 15, color: colors.text },
+  itemText: {
+    flex: 1,
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    lineHeight: 21,
+    color: warm.ink,
+  },
   error: { color: colors.danger, fontSize: 14 },
 });

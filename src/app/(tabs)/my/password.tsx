@@ -3,11 +3,12 @@ import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { ApiError, errorMessage } from '@/api/errors';
 import { useChangePassword } from '@/api/profile';
-import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
-import { TextField } from '@/components/TextField';
+import { AuthButton } from '@/features/auth/AuthButton';
+import { AuthField } from '@/features/auth/AuthField';
+import { WarmCard } from '@/features/my/components';
 import { checkPasswordChange, PASSWORD_RULE } from '@/lib/password';
-import { colors, spacing } from '@/theme';
+import { colors, fonts, warm } from '@/theme';
 
 // 비밀번호 변경 (U4). 바꿔도 로그인은 그대로 유지된다
 export default function PasswordScreen() {
@@ -32,13 +33,15 @@ export default function PasswordScreen() {
     return (
       <Screen
         edges={[]}
-        footer={<Button title="확인" onPress={() => router.back()} />}
+        backgroundColor={warm.background}
+        footerStyle={styles.footer}
+        footer={<AuthButton title="확인" onPress={() => router.back()} />}
       >
-        <View style={styles.done} testID="password-done">
-          <Text style={styles.doneTitle}>비밀번호를 바꿨어요</Text>
-          <Text style={styles.doneText}>
-            다음에 로그인할 때부터 새 비밀번호를 써 주세요.
-          </Text>
+        <View testID="password-done">
+          <WarmCard
+            title="비밀번호를 바꿨어요"
+            hint="다음에 로그인할 때부터 새 비밀번호를 써 주세요."
+          />
         </View>
       </Screen>
     );
@@ -47,8 +50,10 @@ export default function PasswordScreen() {
   return (
     <Screen
       edges={[]}
+      backgroundColor={warm.background}
+      footerStyle={styles.footer}
       footer={
-        <Button
+        <AuthButton
           title="변경하기"
           onPress={submit}
           disabled={!check.canSubmit}
@@ -57,8 +62,12 @@ export default function PasswordScreen() {
         />
       }
     >
-      <TextField
-        label="지금 비밀번호"
+      <Text style={styles.lead}>
+        지금 비밀번호를 한 번 확인한 뒤 새 비밀번호로 바꿔요. 바꿔도 로그인은
+        그대로 유지돼요.
+      </Text>
+      <AuthField
+        placeholder="지금 비밀번호"
         value={current}
         onChangeText={(v) => {
           setCurrent(v);
@@ -72,9 +81,9 @@ export default function PasswordScreen() {
         onSubmitEditing={() => nextRef.current?.focus()}
         testID="password-current"
       />
-      <TextField
+      <AuthField
         ref={nextRef}
-        label="새 비밀번호"
+        placeholder="새 비밀번호"
         value={next}
         onChangeText={setNext}
         secureTextEntry
@@ -86,9 +95,9 @@ export default function PasswordScreen() {
         onSubmitEditing={() => confirmRef.current?.focus()}
         testID="password-new"
       />
-      <TextField
+      <AuthField
         ref={confirmRef}
-        label="새 비밀번호 확인"
+        placeholder="새 비밀번호 확인"
         value={confirm}
         onChangeText={setConfirm}
         secureTextEntry
@@ -110,8 +119,14 @@ export default function PasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  done: { gap: spacing.sm, paddingTop: spacing.lg },
-  doneTitle: { fontSize: 22, fontWeight: '700', color: colors.text },
-  doneText: { fontSize: 15, lineHeight: 22, color: colors.textMuted },
+  lead: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    lineHeight: 20,
+    color: warm.brown,
+    marginBottom: 4,
+  },
   error: { fontSize: 14, color: colors.danger },
+  // 선·바탕 없이 버튼만
+  footer: { borderTopWidth: 0, backgroundColor: warm.background },
 });

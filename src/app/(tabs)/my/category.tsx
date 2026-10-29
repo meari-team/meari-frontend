@@ -9,11 +9,16 @@ import {
 } from '@/api/checklist';
 import { useChecklist, type ChecklistCategoryDto } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
-import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
-import { Section } from '@/components/Section';
 import { StateView } from '@/components/StateView';
-import { TextField } from '@/components/TextField';
+import { AuthButton } from '@/features/auth/AuthButton';
+import { AuthField } from '@/features/auth/AuthField';
+import {
+  DangerButton,
+  OutlineButton,
+  TextButton,
+  WarmCard,
+} from '@/features/my/components';
 import {
   CATEGORY_COLORS,
   CATEGORY_NAME_MAX,
@@ -27,7 +32,7 @@ import {
   type CategoryDraft,
   type DraftItem,
 } from '@/features/my/logic';
-import { colors, radius, spacing } from '@/theme';
+import { colors, warm } from '@/theme';
 
 let seq = 0;
 const newKey = () => `new-${Date.now()}-${seq++}`;
@@ -134,14 +139,13 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
   };
 
   return (
-    <Screen edges={[]}>
-      <Section title="이름과 색">
-        <TextField
-          label="이름"
+    <Screen edges={[]} backgroundColor={warm.background}>
+      <WarmCard title="이름과 색">
+        <AuthField
+          placeholder="이름 (예: 운동)"
           value={draft.name}
           onChangeText={(name) => setDraft((d) => ({ ...d, name }))}
           maxLength={CATEGORY_NAME_MAX}
-          placeholder="예: 운동"
           returnKeyType="done"
           error={touched ? errors.name : null}
           testID="category-name"
@@ -164,20 +168,19 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
             );
           })}
         </View>
-      </Section>
+      </WarmCard>
 
-      <Section
+      <WarmCard
         title="항목"
         hint={`최대 ${ITEMS_MAX}개, 각 ${ITEM_LABEL_MAX}자까지. 빈 칸은 저장하지 않아요.`}
       >
         {draft.items.map((item, index) => (
           <View key={item.key} style={styles.itemRow}>
             <View style={styles.flex}>
-              <TextField
-                label={`항목 ${index + 1}`}
+              <AuthField
+                placeholder={`항목 ${index + 1} (예: 걷기)`}
                 value={item.label}
                 onChangeText={(label) => setItem(item.key, { label })}
-                placeholder="예: 걷기"
                 returnKeyType="done"
                 error={
                   touched && errors.itemKeys.includes(item.key)
@@ -198,53 +201,40 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
               ]}
               testID={`item-delete-${index}`}
             >
-              <Ionicons name="close" size={20} color={colors.textMuted} />
+              <Ionicons name="close" size={18} color={warm.tan} />
             </Pressable>
           </View>
         ))}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: draft.items.length >= ITEMS_MAX }}
+        <OutlineButton
+          title={`+ 항목 추가 (${draft.items.length}/${ITEMS_MAX})`}
           disabled={draft.items.length >= ITEMS_MAX}
           onPress={addItem}
-          style={({ pressed }) => [
-            styles.addItem,
-            draft.items.length >= ITEMS_MAX && styles.disabled,
-            pressed && styles.pressed,
-          ]}
           testID="item-add"
-        >
-          <Ionicons name="add" size={18} color={colors.primary} />
-          <Text style={styles.addItemText}>
-            항목 추가 ({draft.items.length}/{ITEMS_MAX})
-          </Text>
-        </Pressable>
+        />
         {touched && errors.items ? (
           <Text style={styles.error}>{errors.items}</Text>
         ) : null}
-      </Section>
+      </WarmCard>
 
       {confirmingSave ? (
-        <Section
+        <WarmCard
           title="저장하면 지워지는 항목이 있어요"
           hint={`${removed.join(', ')} — 이 항목의 지난 체크 기록도 함께 지워지고 되돌릴 수 없어요.`}
         >
-          <Button
+          <DangerButton
             title="지우고 저장"
-            variant="danger"
             loading={saving}
             onPress={save}
             testID="confirm-save"
           />
-          <Button
+          <TextButton
             title="취소"
-            variant="ghost"
             disabled={saving}
             onPress={() => setConfirmingSave(false)}
           />
-        </Section>
+        </WarmCard>
       ) : (
-        <Button
+        <AuthButton
           title={editing ? '저장' : '추가'}
           loading={saving}
           disabled={touched && !valid}
@@ -259,22 +249,20 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
       {category ? (
         <View style={styles.deleteArea}>
           {confirmingDelete ? (
-            <Section
+            <WarmCard
               title={`'${category.name}' 카테고리를 지울까요?`}
               hint="항목과 지난 일기에 남은 이 카테고리의 체크가 모두 지워지고, 되돌릴 수 없어요."
             >
-              <Button
+              <DangerButton
                 title="삭제"
-                variant="danger"
                 loading={remove.isPending}
                 onPress={() =>
                   remove.mutate(undefined, { onSuccess: () => router.back() })
                 }
                 testID="confirm-delete-category"
               />
-              <Button
+              <TextButton
                 title="취소"
-                variant="ghost"
                 disabled={remove.isPending}
                 onPress={() => {
                   setConfirmingDelete(false);
@@ -284,20 +272,14 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
               {remove.isError ? (
                 <Text style={styles.error}>{errorMessage(remove.error)}</Text>
               ) : null}
-            </Section>
+            </WarmCard>
           ) : (
-            <Pressable
-              accessibilityRole="button"
+            <TextButton
+              title="이 카테고리 삭제"
+              tone="danger"
               onPress={() => setConfirmingDelete(true)}
-              style={({ pressed }) => [
-                styles.deleteLink,
-                pressed && styles.pressed,
-              ]}
               testID="delete-category"
-            >
-              <Ionicons name="trash-outline" size={16} color={colors.danger} />
-              <Text style={styles.deleteText}>이 카테고리 삭제</Text>
-            </Pressable>
+            />
           )}
         </View>
       ) : null}
@@ -307,45 +289,23 @@ function CategoryForm({ category }: { category?: ChecklistCategoryDto }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  colors: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  colors: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   swatchRing: {
     padding: 3,
-    borderRadius: radius.pill,
+    borderRadius: 999,
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  swatchSelected: { borderColor: colors.text },
-  swatch: { width: 28, height: 28, borderRadius: 14 },
-  itemRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
+  swatchSelected: { borderColor: warm.ink },
+  swatch: { width: 26, height: 26, borderRadius: 13 },
+  itemRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
   itemDelete: {
-    width: 44,
-    height: 52,
+    width: 32,
+    height: 45,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.sm,
   },
   pressed: { opacity: 0.6 },
-  disabled: { opacity: 0.4 },
-  addItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    minHeight: 44,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.primary,
-  },
-  addItemText: { fontSize: 14, fontWeight: '600', color: colors.primary },
-  deleteLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-  },
-  deleteText: { fontSize: 15, fontWeight: '600', color: colors.danger },
   error: { color: colors.danger, fontSize: 14 },
-  deleteArea: { marginTop: spacing.lg },
+  deleteArea: { marginTop: 8 },
 });

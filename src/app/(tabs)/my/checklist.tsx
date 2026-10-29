@@ -5,8 +5,9 @@ import { useChecklist } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
 import { Screen } from '@/components/Screen';
 import { StateView } from '@/components/StateView';
+import { OutlineButton } from '@/features/my/components';
 import { CATEGORIES_MAX } from '@/features/my/logic';
-import { colors, radius, spacing } from '@/theme';
+import { fonts, warm } from '@/theme';
 
 // 체크리스트 카테고리 목록 → 누르면 편집, 아래에서 추가
 export default function ChecklistScreen() {
@@ -27,9 +28,9 @@ export default function ChecklistScreen() {
   const full = categories.length >= CATEGORIES_MAX;
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={[]} backgroundColor={warm.background}>
       <Text style={styles.intro}>
-        오늘의 일기에서 체크하는 항목이에요. 체크한 항목은 AI가 일기를 쓸 때
+        오늘의 일기에서 고르는 항목이에요. 고른 항목은 AI가 일기를 쓸 때
         참고해요.
       </Text>
       {categories.length === 0 ? (
@@ -38,7 +39,7 @@ export default function ChecklistScreen() {
         </Text>
       ) : (
         <View style={styles.list}>
-          {categories.map((c) => (
+          {categories.map((c, i) => (
             <Pressable
               key={c.id}
               accessibilityRole="button"
@@ -46,45 +47,35 @@ export default function ChecklistScreen() {
               onPress={() =>
                 router.push({ pathname: '/my/category', params: { id: c.id } })
               }
-              style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.row,
+                i < categories.length - 1 && styles.divider,
+                pressed && styles.pressed,
+              ]}
               testID={`category-${c.name}`}
             >
-              <View style={[styles.dot, { backgroundColor: `${c.color}26` }]}>
-                <View style={[styles.dotInner, { backgroundColor: c.color }]} />
-              </View>
               <View style={styles.flex}>
                 <View style={styles.nameRow}>
+                  {/* 카테고리 색은 이름 앞 작은 점으로만 */}
+                  <View style={[styles.dot, { backgroundColor: c.color }]} />
                   <Text style={styles.name}>{c.name}</Text>
                   <Text style={styles.count}>{c.items.length}개</Text>
                 </View>
                 <Text style={styles.items} numberOfLines={1}>
-                  {c.items.map((i) => i.label).join(' · ') || '항목 없음'}
+                  {c.items.map((item) => item.label).join(' · ') || '항목 없음'}
                 </Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={colors.textMuted}
-              />
+              <Ionicons name="chevron-forward" size={18} color={warm.tan} />
             </Pressable>
           ))}
         </View>
       )}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: full }}
+      <OutlineButton
+        title="+ 카테고리 추가"
         disabled={full}
         onPress={() => router.push('/my/category')}
-        style={({ pressed }) => [
-          styles.add,
-          full && styles.addDisabled,
-          pressed && styles.pressed,
-        ]}
         testID="add-category"
-      >
-        <Ionicons name="add" size={20} color={colors.primary} />
-        <Text style={styles.addText}>카테고리 추가</Text>
-      </Pressable>
+      />
       {full ? (
         <Text style={styles.hint}>
           카테고리는 {CATEGORIES_MAX}개까지 만들 수 있어요.
@@ -96,49 +87,53 @@ export default function ChecklistScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  intro: { fontSize: 14, lineHeight: 20, color: colors.textMuted },
+  intro: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    lineHeight: 20,
+    color: warm.brown,
+  },
+  // 홈과 같은 종이 카드
   list: {
-    borderRadius: radius.md + 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
+    borderRadius: 10,
+    backgroundColor: warm.field,
+    shadowColor: warm.brown,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 3,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm + 4,
-    padding: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    minHeight: 61,
   },
-  pressed: { backgroundColor: colors.surfaceMuted },
-  dot: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
+  divider: { borderBottomWidth: 1, borderBottomColor: warm.sand },
+  pressed: { opacity: 0.6 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  name: { fontFamily: fonts.semibold, fontSize: 16, color: warm.black },
+  count: { fontFamily: fonts.medium, fontSize: 13, color: warm.tan },
+  items: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: warm.brown,
+    marginTop: 4,
+    marginLeft: 16,
   },
-  dotInner: { width: 12, height: 12, borderRadius: 6 },
-  nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
-  name: { fontSize: 16, fontWeight: '600', color: colors.text },
-  count: { fontSize: 12, color: colors.textMuted },
-  add: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    minHeight: 52,
-    borderRadius: radius.md + 4,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
+  empty: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: warm.tan,
+    textAlign: 'center',
   },
-  addDisabled: { opacity: 0.4 },
-  addText: { fontSize: 15, fontWeight: '600', color: colors.primary },
-  items: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  empty: { fontSize: 15, color: colors.textMuted, textAlign: 'center' },
-  hint: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
+  hint: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: warm.tan,
+    textAlign: 'center',
+  },
 });
