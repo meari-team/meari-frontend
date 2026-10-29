@@ -20,7 +20,7 @@ export const PRESET_SHORT: Record<Preset, string> = {
   '1Y': '1년',
 };
 
-// 아래 고정 바 둘째 줄: "기록 16편 · 마지막 일기 첫 줄" / 모자라면 "기록이 모자라요 (3/7)"
+// 그날의 나 카드 둘째 줄: "16편 - 마지막 일기 첫 줄" / 모자라면 "기록이 모자라요 (3/7)"
 export function selfBarLine(
   a: { available: boolean; recordCount: number; requiredCount: number },
   lastText: string | null,
@@ -28,9 +28,7 @@ export function selfBarLine(
   if (!a.available) {
     return `기록이 모자라요 (${a.recordCount}/${a.requiredCount})`;
   }
-  return lastText
-    ? `기록 ${a.recordCount}편 · ${lastText}`
-    : `기록 ${a.recordCount}편`;
+  return lastText ? `${a.recordCount}편 - ${lastText}` : `${a.recordCount}편`;
 }
 
 // "10월 10일" (요일 없이, 대화 제목·배지용)
@@ -176,16 +174,4 @@ export function relativeTime(iso: string, now = Date.now()): string {
   if (days === 1) return '어제';
   if (days < 7) return `${days}일 전`;
   return shortKoreanDate(kst(t));
-}
-
-// 과거의 나 첫 화면의 최근 대화: 3개까지만, 더 있으면 전체 보기
-export const RECENT_SESSIONS = 3;
-export function recentSessionsView<T>(sessions: T[]): {
-  shown: T[];
-  hasMore: boolean;
-} {
-  return {
-    shown: sessions.slice(0, RECENT_SESSIONS),
-    hasMore: sessions.length > RECENT_SESSIONS,
-  };
 }

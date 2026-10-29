@@ -3,8 +3,9 @@ import { useChatSessions } from '@/api/past-self';
 import { Screen } from '@/components/Screen';
 import { StateView } from '@/components/StateView';
 import { SessionRows } from '@/features/past-self/components';
+import { warm } from '@/theme';
 
-// 지난 대화 전체 (과거의 나 첫 화면의 최근 대화 → 전체 보기)
+// 지난 대화 전체 (과거의 나 첫 화면 오른쪽 위 말풍선)
 export default function SessionsScreen() {
   const sessions = useChatSessions();
 
@@ -24,6 +25,7 @@ export default function SessionsScreen() {
   return (
     <Screen
       edges={[]}
+      backgroundColor={warm.background}
       refreshing={sessions.isRefetching}
       onRefresh={() => void sessions.refetch()}
     >
