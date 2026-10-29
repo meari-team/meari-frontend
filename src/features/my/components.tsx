@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, warm } from '@/theme';
 import type { DIARY_STYLES } from './logic';
 
 // 설정 묶음: 작은 제목 + 행들이 붙어 있는 카드
@@ -62,9 +62,7 @@ export function SettingsRow({
           {value}
         </Text>
       ) : null}
-      {onPress ? (
-        <Ionicons name={chevron} size={18} color={colors.disabled} />
-      ) : null}
+      {onPress ? <Ionicons name={chevron} size={18} color={warm.tan} /> : null}
     </>
   );
   const style = [styles.row, !last && styles.rowDivider];
@@ -88,7 +86,7 @@ export function SettingsRow({
   );
 }
 
-// 기록 요약 한 칸
+// 기록 요약 한 칸 (시안: 이름 위, 값 아래)
 export function StatTile({
   value,
   label,
@@ -100,8 +98,8 @@ export function StatTile({
 }) {
   return (
     <View style={styles.stat} testID={testID}>
-      <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>{value}</Text>
     </View>
   );
 }
@@ -136,7 +134,7 @@ export function StyleOption({
         <Ionicons
           name={selected ? 'radio-button-on' : 'radio-button-off'}
           size={20}
-          color={selected ? colors.primary : colors.disabled}
+          color={selected ? warm.brown : warm.sand}
         />
         <Text style={styles.optionLabel}>{option.label}</Text>
         <Text style={styles.optionHint}>{option.hint}</Text>
@@ -147,67 +145,82 @@ export function StyleOption({
 }
 
 const styles = StyleSheet.create({
-  group: { gap: spacing.sm },
+  group: { gap: 6 },
   groupTitle: {
+    fontFamily: fonts.semibold,
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMuted,
-    paddingHorizontal: spacing.xs,
+    color: warm.brown,
+    paddingHorizontal: 6,
   },
+  // 홈과 같은 종이 카드
   groupCard: {
-    borderRadius: radius.md + 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
+    borderRadius: 10,
+    backgroundColor: warm.field,
+    shadowColor: warm.brown,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 3,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm + 4,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 6,
-    minHeight: 56,
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    minHeight: 61,
   },
-  rowDivider: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+  rowDivider: { borderBottomWidth: 1, borderBottomColor: warm.sand },
+  pressed: { opacity: 0.6 },
+  rowText: { flex: 1, gap: 3 },
+  rowTitle: { fontFamily: fonts.semibold, fontSize: 16, color: warm.black },
+  rowDescription: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: warm.brown,
   },
-  pressed: { backgroundColor: colors.surfaceMuted },
-  rowText: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
-  rowDescription: { fontSize: 13, lineHeight: 18, color: colors.textMuted },
-  rowValue: { fontSize: 14, color: colors.textMuted, maxWidth: 140 },
+  rowValue: {
+    fontFamily: fonts.medium,
+    fontSize: 15,
+    color: warm.brown,
+    maxWidth: 140,
+  },
   dangerText: { color: colors.danger },
   stat: {
     flex: 1,
     alignItems: 'center',
-    gap: 2,
-    paddingVertical: spacing.sm + 4,
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-  },
-  statValue: { fontSize: 18, fontWeight: '800', color: colors.text },
-  statLabel: { fontSize: 12, color: colors.textMuted },
-  option: {
-    gap: spacing.xs + 2,
-    padding: spacing.md,
-    borderRadius: radius.md,
+    gap: 4,
+    paddingVertical: 9,
+    borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: warm.tan,
+    backgroundColor: warm.background,
   },
-  optionSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
+  statLabel: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
+  statValue: { fontFamily: fonts.semibold, fontSize: 16, color: warm.black },
+  option: {
+    gap: 6,
+    padding: 16,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: warm.sand,
+    backgroundColor: warm.field,
   },
-  optionHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  optionLabel: { fontSize: 15, fontWeight: '700', color: colors.text },
-  optionHint: { fontSize: 13, color: colors.textMuted, flexShrink: 1 },
+  optionSelected: { borderColor: warm.brown, backgroundColor: warm.background },
+  optionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  optionLabel: { fontFamily: fonts.bold, fontSize: 15, color: warm.black },
+  optionHint: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: warm.tan,
+    flexShrink: 1,
+  },
   optionExample: {
+    fontFamily: fonts.regular,
     fontSize: 14,
     lineHeight: 20,
-    color: colors.text,
+    color: warm.ink,
     paddingLeft: 28,
   },
 });
