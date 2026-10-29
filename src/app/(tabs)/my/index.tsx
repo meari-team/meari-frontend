@@ -15,7 +15,8 @@ import {
   SettingsGroup,
   SettingsRow,
   StatTile,
-  StyleOption,
+  Expand,
+  StylePicker,
 } from '@/features/my/components';
 import {
   DIARY_STYLES,
@@ -196,24 +197,21 @@ export default function MyScreen() {
             value={diaryStyleLabel(user.diaryStyle)}
             expanded={open === 'style'}
             onPress={() => toggle('style')}
-            last={open !== 'style'}
+            last
             testID="open-style"
           />
           {open === 'style' ? (
-            <View style={styles.expand} accessibilityRole="radiogroup">
-              {DIARY_STYLES.map((s) => (
-                <StyleOption
-                  key={s.value}
-                  option={s}
-                  selected={user.diaryStyle === s.value}
-                  disabled={update.isPending}
-                  onPress={() => chooseStyle(s.value)}
-                />
-              ))}
+            <Expand>
+              <StylePicker
+                options={DIARY_STYLES}
+                value={user.diaryStyle}
+                disabled={update.isPending}
+                onChange={chooseStyle}
+              />
               <Text style={styles.note}>
                 지금은 저장만 되고, AI 일기에는 곧 반영돼요.
               </Text>
-            </View>
+            </Expand>
           ) : null}
         </SettingsGroup>
 
@@ -248,14 +246,15 @@ export default function MyScreen() {
             title="과거의 나는 이렇게 만들어져요"
             expanded={open === 'pastSelf'}
             onPress={() => toggle('pastSelf')}
+            last={open === 'pastSelf'}
             testID="open-about-past-self"
           />
           {open === 'pastSelf' ? (
-            <Text
-              style={[styles.expand, styles.expandDivider, styles.aboutText]}
-            >
-              {ABOUT_PAST_SELF}
-            </Text>
+            <Expand divider>
+              <View style={styles.aboutBox}>
+                <Text style={styles.aboutText}>{ABOUT_PAST_SELF}</Text>
+              </View>
+            </Expand>
           ) : null}
           <SettingsRow
             title="개인정보 처리방침"
@@ -270,12 +269,13 @@ export default function MyScreen() {
         <SettingsGroup>
           <SettingsRow
             title="로그아웃"
+            expanded={open === 'logout'}
             onPress={() => toggle('logout')}
-            last={open !== 'logout'}
+            last
             testID="open-logout"
           />
           {open === 'logout' ? (
-            <View style={styles.expand}>
+            <Expand>
               <Text style={styles.aboutText}>
                 로그아웃할까요? 기록은 그대로 남아 있어요.
               </Text>
@@ -299,7 +299,7 @@ export default function MyScreen() {
                   />
                 </View>
               </View>
-            </View>
+            </Expand>
           ) : null}
         </SettingsGroup>
 
@@ -381,9 +381,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   outlineText: { fontFamily: fonts.semibold, fontSize: 16, color: warm.brown },
-  expand: { gap: 10, paddingHorizontal: 20, paddingBottom: 18 },
-  // 펼친 내용 아래에 다른 행이 이어질 때
-  expandDivider: { borderBottomWidth: 1, borderBottomColor: warm.sand },
+  // 과거의 나 안내: 바탕색 종이 조각
+  aboutBox: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: warm.background,
+  },
   aboutText: {
     fontFamily: fonts.regular,
     fontSize: 14,
