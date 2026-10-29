@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { inMonth, monthFeedQuery, type MonthKey } from '@/lib/feed';
 import { api } from './client';
 import { entriesKey } from './entries';
@@ -14,6 +14,8 @@ export const entriesFeedKey = [...entriesKey, 'feed'] as const;
 export function useMonthFeed(month: MonthKey) {
   return useQuery({
     queryKey: [...entriesFeedKey, month.year, month.month],
+    // 다음 달을 읽는 동안 지금 목록을 그대로 둬서 화면이 위로 당겨지지 않게
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const page = await unwrap(
         api.GET('/api/v1/entries/feed', {

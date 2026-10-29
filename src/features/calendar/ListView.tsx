@@ -95,7 +95,7 @@ export function ListView({ header }: Props) {
           {monthTitle(month)}
         </Text>
         <Text style={styles.barCount}>
-          {feed.data ? `${feed.data.length}편` : ' '}
+          {feed.data ? `${feed.data.length}편` : ''}
         </Text>
       </View>
       <Pressable
@@ -160,7 +160,10 @@ export function ListView({ header }: Props) {
       ListEmptyComponent={empty}
       onRefresh={() => void feed.refetch()}
       refreshing={feed.isRefetching}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        feed.isPlaceholderData && styles.loadingNext,
+      ]}
       style={styles.list}
     />
   );
@@ -168,6 +171,8 @@ export function ListView({ header }: Props) {
 
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: warm.background },
+  // 다음 달을 읽는 중: 앞 달 목록을 흐리게 둔다
+  loadingNext: { opacity: 0.5 },
   content: { padding: spacing.lg, flexGrow: 1 },
   header: { gap: spacing.md },
   // 달 넘기기 줄: ‹ 2026년 10월 · 17편 ›
@@ -180,9 +185,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: warm.sand,
   },
-  barTitle: { alignItems: 'center', gap: 2 },
+  // 달과 편수를 한 줄에, 사이를 띄워서
+  barTitle: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
   barMonth: { fontFamily: fonts.bold, fontSize: 17, color: warm.ink },
-  barCount: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
+  barCount: { fontFamily: fonts.semibold, fontSize: 14, color: warm.tan },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',

@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -220,9 +221,11 @@ export function useConfirm(date: string) {
 export type EntrySummaryDto = components['schemas']['EntrySummaryDto'];
 
 // 캘린더 목록 (월간·연간 공용, 최대 366일)
+// 범위가 바뀌는 동안(달 넘기기)엔 앞 범위 결과를 그대로 보여 줘서 화면이 접혔다 펴지며 튀지 않게 한다
 export function useEntriesRange(from: string, to: string) {
   return useQuery({
     queryKey: [...entriesKey, from, to],
+    placeholderData: keepPreviousData,
     queryFn: async () =>
       (
         await unwrap(
