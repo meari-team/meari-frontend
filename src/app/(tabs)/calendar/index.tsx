@@ -214,6 +214,7 @@ export default function CalendarScreen() {
           date={selected}
           today={today}
           entry={list.data.find((e) => e.date === selected)}
+          schedules={schedules}
           onEditSchedule={(s) => setSheet({ date: selected, editing: s })}
         />
         <View style={{ height: FLOATING_SPACE }} />
