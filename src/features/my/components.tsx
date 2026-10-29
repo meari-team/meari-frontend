@@ -1,7 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   Pressable,
   StyleSheet,
   Text,
@@ -43,16 +45,10 @@ export function SettingsRow({
   onPress?: () => void;
   last?: boolean;
   danger?: boolean;
-  // 펼침 행이면 › 대신 ⌄/⌃
+  // 펼침 행이면 › 대신 ⌄ (펼치면 반 바퀴 돈다)
   expanded?: boolean;
   testID?: string;
 }) {
-  const chevron =
-    expanded === undefined
-      ? 'chevron-forward'
-      : expanded
-        ? 'chevron-up'
-        : 'chevron-down';
   const body = (
     <>
       <View style={styles.rowText}>
@@ -68,7 +64,11 @@ export function SettingsRow({
           {value}
         </Text>
       ) : null}
-      {onPress ? <Ionicons name={chevron} size={18} color={warm.tan} /> : null}
+      {onPress && expanded !== undefined ? (
+        <TurningChevron open={expanded} />
+      ) : onPress ? (
+        <Ionicons name="chevron-forward" size={18} color={warm.tan} />
+      ) : null}
     </>
   );
   const style = [styles.row, !last && styles.rowDivider];
@@ -92,6 +92,69 @@ export function SettingsRow({
   );
 }
 
+// 펼침 행의 ⌄: 열고 닫을 때 부드럽게 돈다
+function TurningChevron({ open }: { open: boolean }) {
+  const [turn] = useState(() => new Animated.Value(open ? 1 : 0));
+  useEffect(() => {
+    Animated.timing(turn, {
+      toValue: open ? 1 : 0,
+      duration: 200,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  }, [open, turn]);
+  const rotate = turn.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+  return (
+    <Animated.View style={{ transform: [{ rotate }] }}>
+      <Ionicons name="chevron-down" size={18} color={warm.tan} />
+    </Animated.View>
+  );
+}
+
+// 펼침 행 아래에 열리는 내용. 나타날 때 살짝 내려오며 보인다.
+// divider: 아래에 다른 행이 이어지면 구분선
+export function Expand({
+  children,
+  divider = false,
+}: {
+  children: ReactNode;
+  divider?: boolean;
+}) {
+  const [shown] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    Animated.timing(shown, {
+      toValue: 1,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [shown]);
+  return (
+    <Animated.View
+      style={[
+        styles.expand,
+        divider && styles.expandDivider,
+        {
+          opacity: shown,
+          transform: [
+            {
+              translateY: shown.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-6, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
 // 기록 요약 한 칸 (시안: 이름 위, 값 아래)
 export function StatTile({
   value,
@@ -110,43 +173,51 @@ export function StatTile({
   );
 }
 
-// 문체 선택 카드: 이름 · 설명 · 같은 하루를 그 문체로 쓴 예시
-export function StyleOption({
-  option,
-  selected,
+// 문체 고르기: 알약 3개 중 하나 + 고른 문체로 같은 하루를 쓴 예시 한 장
+export function StylePicker({
+  options,
+  value,
   disabled,
-  onPress,
+  onChange,
 }: {
-  option: (typeof DIARY_STYLES)[number];
-  selected: boolean;
+  options: typeof DIARY_STYLES;
+  value: string;
   disabled: boolean;
-  onPress: () => void;
+  onChange: (value: (typeof DIARY_STYLES)[number]['value']) => void;
 }) {
+  const current = options.find((o) => o.value === value) ?? options[0];
   return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected, disabled }}
-      accessibilityLabel={`${option.label} 문체, ${option.hint}`}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.option,
-        selected && styles.optionSelected,
-        pressed && styles.pressed,
-      ]}
-      testID={`style-${option.value}`}
-    >
-      <View style={styles.optionHeader}>
-        <Ionicons
-          name={selected ? 'radio-button-on' : 'radio-button-off'}
-          size={20}
-          color={selected ? warm.brown : warm.sand}
-        />
-        <Text style={styles.optionLabel}>{option.label}</Text>
-        <Text style={styles.optionHint}>{option.hint}</Text>
+    <View style={styles.picker}>
+      <View style={styles.segments} accessibilityRole="radiogroup">
+        {options.map((o) => {
+          const on = o.value === current.value;
+          return (
+            <Pressable
+              key={o.value}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: on, disabled }}
+              accessibilityLabel={`${o.label} 문체, ${o.hint}`}
+              disabled={disabled}
+              onPress={() => onChange(o.value)}
+              style={({ pressed }) => [
+                styles.segment,
+                on && styles.segmentOn,
+                pressed && styles.pressed,
+              ]}
+              testID={`style-${o.value}`}
+            >
+              <Text style={[styles.segmentText, on && styles.segmentTextOn]}>
+                {o.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
-      <Text style={styles.optionExample}>“{option.example}”</Text>
-    </Pressable>
+      <View style={styles.example}>
+        <Text style={styles.exampleHint}>{current.hint}</Text>
+        <Text style={styles.exampleText}>“{current.example}”</Text>
+      </View>
+    </View>
   );
 }
 
@@ -205,29 +276,36 @@ const styles = StyleSheet.create({
   },
   statLabel: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
   statValue: { fontFamily: fonts.semibold, fontSize: 16, color: warm.black },
-  option: {
-    gap: 6,
-    padding: 16,
-    borderRadius: 10,
+  expand: { gap: 12, paddingHorizontal: 20, paddingTop: 2, paddingBottom: 20 },
+  expandDivider: { borderBottomWidth: 1, borderBottomColor: warm.sand },
+  picker: { gap: 12 },
+  segments: { flexDirection: 'row', gap: 8 },
+  segment: {
+    flex: 1,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1.5,
     borderColor: warm.sand,
-    backgroundColor: warm.field,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  optionSelected: { borderColor: warm.brown, backgroundColor: warm.background },
-  optionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  optionLabel: { fontFamily: fonts.bold, fontSize: 15, color: warm.black },
-  optionHint: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    color: warm.tan,
-    flexShrink: 1,
+  segmentOn: { backgroundColor: warm.ink, borderColor: warm.ink },
+  segmentText: { fontFamily: fonts.semibold, fontSize: 14, color: warm.brown },
+  segmentTextOn: { color: warm.field },
+  // 예시: 바탕색 종이 조각
+  example: {
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: warm.background,
   },
-  optionExample: {
+  exampleHint: { fontFamily: fonts.semibold, fontSize: 12, color: warm.tan },
+  exampleText: {
     fontFamily: fonts.regular,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
     color: warm.ink,
-    paddingLeft: 28,
   },
 });
 
