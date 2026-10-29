@@ -17,12 +17,10 @@ import {
   type AvailabilityPresetDto,
   type ChatSessionDto,
 } from '@/api/past-self';
-import { Button } from '@/components/Button';
-import { Section } from '@/components/Section';
 import { MonthView } from '@/features/calendar/MonthView';
 import { entryPreviewText } from '@/features/home/logic';
 import { shiftMonth, yearMonthOf, type YearMonth } from '@/lib/calendar';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, spacing, warm } from '@/theme';
 import {
   PRESET_LABELS,
   PRESET_SHORT,
@@ -30,7 +28,6 @@ import {
   dotState,
   lastConfirmedOnOrBefore,
   pastSelfTitle,
-  recentSessionsView,
   relativeTime,
   selfBarLine,
   shortKoreanDate,
@@ -68,14 +65,14 @@ export function PresetTabs({
             aria-selected={on}
             disabled={!p.available}
             onPress={() => onPick(p.anchorDate)}
-            style={({ pressed }) => [
-              styles.tab,
-              !p.available && styles.tabOff,
-              pressed && styles.pressed,
-            ]}
+            style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
           >
             <Text
-              style={[styles.tabText, on && styles.tabTextOn]}
+              style={[
+                styles.tabText,
+                on && styles.tabTextOn,
+                !p.available && styles.tabTextOff,
+              ]}
               numberOfLines={1}
             >
               {PRESET_SHORT[p.preset]}
@@ -88,7 +85,7 @@ export function PresetTabs({
   );
 }
 
-// 화면 아래 고정 바: 고른 기준일의 나 · 기록 수 · 그때의 마지막 일기 한 줄 → [대화하기]
+// 그날의 나 카드: 고른 기준일의 나 · 기록 수 - 그때의 마지막 일기 한 줄 → [대화하기]
 export function SelfBar({
   anchor,
   entries,
@@ -113,7 +110,7 @@ export function SelfBar({
   else line = selfBarLine(a!, lastText);
 
   return (
-    <View testID="self-bar">
+    <View testID="self-bar" style={styles.selfCard}>
       <View style={styles.bar}>
         <Pressable
           style={({ pressed }) => [styles.barText, pressed && styles.pressed]}
@@ -149,7 +146,7 @@ export function SelfBar({
           ]}
         >
           {create.isPending ? (
-            <ActivityIndicator color={colors.primaryText} />
+            <ActivityIndicator color={warm.field} />
           ) : (
             <Text style={styles.talkText}>대화하기</Text>
           )}
@@ -171,9 +168,8 @@ function useLastText(entry: EntrySummaryDto | null): string | null {
   return entry.summary ?? (detail.data ? entryPreviewText(detail.data) : null);
 }
 
-const DOT = 10;
-
-// 월별 기록 흐름. 점 = 하루 일기, 눌러서 기준일로. 기준일 이후 점은 흐리게
+// 월별 기록 흐름 카드. 점 = 하루 일기, 눌러서 기준일로. 기준일 이후 점은 흐리게(모래색).
+// 기준일에는 세로 표시와 "9/25"를 붙인다
 export function Timeline({
   entries,
   today,
@@ -188,22 +184,22 @@ export function Timeline({
   onPickOther: () => void;
 }) {
   const months = timelineMonths(entries, today);
+  const anchorLabel = `${Number(anchor.slice(5, 7))}/${Number(anchor.slice(8))}`;
   return (
-    <Section
-      title="기록 흐름"
-      hint="점을 누르면 그날의 나로 바뀌어요. 흐린 점은 그때의 나가 모르는 기록이에요."
-      action={{
-        label: '다른 날 고르기',
-        onPress: onPickOther,
-        testID: 'pick-other-day',
-      }}
-    >
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>기록 흐름</Text>
+      <Text style={styles.cardHint}>
+        점을 누르면 그날의 나로 바뀌어요.{'\n'}흐린 점은 그때의 나가 모르는
+        기록이에요.
+      </Text>
       {months.length === 0 ? (
         <Text style={styles.muted}>아직 쓴 일기가 없어요.</Text>
       ) : (
         <View style={styles.rows} testID="timeline">
           {months.map((m) => {
             const here = anchor.startsWith(m.key);
+            const anchorLeft =
+              `${dayPosition(Number(anchor.slice(8)), m.days) * 100}%` as const;
             return (
               <View key={m.key} style={styles.row}>
                 <Text style={[styles.month, here && styles.monthOn]}>
@@ -211,16 +207,6 @@ export function Timeline({
                 </Text>
                 <View style={styles.track}>
                   <View style={styles.rail} />
-                  {here ? (
-                    <View
-                      style={[
-                        styles.marker,
-                        {
-                          left: `${dayPosition(Number(anchor.slice(8)), m.days) * 100}%`,
-                        },
-                      ]}
-                    />
-                  ) : null}
                   {m.dots.map((d) => (
                     <Pressable
                       key={d.date}
@@ -232,19 +218,39 @@ export function Timeline({
                       style={[
                         styles.dot,
                         DOT_STYLE[dotState(d, anchor)],
-                        d.date === anchor && styles.dotOn,
                         { left: `${dayPosition(d.day, m.days) * 100}%` },
                       ]}
                     />
                   ))}
+                  {here ? (
+                    <>
+                      <View
+                        pointerEvents="none"
+                        style={[styles.marker, { left: anchorLeft }]}
+                      />
+                      <Text
+                        pointerEvents="none"
+                        style={[styles.markerLabel, { left: anchorLeft }]}
+                      >
+                        {anchorLabel}
+                      </Text>
+                    </>
+                  ) : null}
                 </View>
-                <Text style={styles.here}>{here ? '◀ 여기' : ''}</Text>
               </View>
             );
           })}
         </View>
       )}
-    </Section>
+      <Pressable
+        accessibilityRole="button"
+        testID="pick-other-day"
+        onPress={onPickOther}
+        style={({ pressed }) => [styles.link, pressed && styles.pressed]}
+      >
+        <Text style={styles.linkText}>캘린더에서 고르기</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -333,53 +339,6 @@ export function DateSheet({
   );
 }
 
-// 최근 대화: 기준일 제목 · 마지막 메시지 · 시간
-// 최근 대화: 3개까지만, 더 있으면 "전체 보기" → 지난 대화 화면
-export function RecentSessions({
-  sessions,
-  pending,
-  error,
-  onRetry,
-}: {
-  sessions: ChatSessionDto[] | undefined;
-  pending: boolean;
-  error: unknown;
-  onRetry: () => void;
-}) {
-  const view = sessions ? recentSessionsView(sessions) : null;
-  let body;
-  if (pending) {
-    body = <ActivityIndicator color={colors.primary} />;
-  } else if (error || !view) {
-    body = (
-      <View style={styles.failed}>
-        <Text style={styles.error}>{errorMessage(error)}</Text>
-        <Button title="다시 시도" variant="ghost" onPress={onRetry} />
-      </View>
-    );
-  } else if (view.shown.length === 0) {
-    body = <Text style={styles.muted}>아직 나눈 대화가 없어요.</Text>;
-  } else {
-    body = <SessionRows sessions={view.shown} />;
-  }
-  return (
-    <Section
-      title="최근 대화"
-      action={
-        view?.hasMore
-          ? {
-              label: '전체 보기',
-              testID: 'sessions-all',
-              onPress: () => router.push('/past-self/sessions'),
-            }
-          : undefined
-      }
-    >
-      {body}
-    </Section>
-  );
-}
-
 // 대화 목록 줄들: "M월 D일까지의 나 · 언제" + 마지막 메시지 한 줄 (최근 대화·지난 대화 공용)
 export function SessionRows({ sessions }: { sessions: ChatSessionDto[] }) {
   return sessions.map((s, i) => (
@@ -407,128 +366,153 @@ export function SessionRows({ sessions }: { sessions: ChatSessionDto[] }) {
   ));
 }
 
+const DOT = 12;
+const TRACK = 20;
+
 const DOT_STYLE: Record<DotState, object> = {
-  known: { backgroundColor: colors.primary },
-  draft: { backgroundColor: colors.disabled },
-  unknown: { backgroundColor: colors.primary, opacity: 0.2 },
+  known: { backgroundColor: warm.brown },
+  draft: { borderWidth: 1.5, borderColor: warm.sand },
+  unknown: { backgroundColor: warm.sand },
 };
+
+// 홈과 같은 종이 카드
+const card = {
+  padding: 20,
+  borderRadius: 10,
+  backgroundColor: warm.field,
+  shadowColor: warm.brown,
+  shadowOffset: { width: 3, height: 3 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.5,
+  elevation: 3,
+} as const;
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
-  muted: { fontSize: 14, lineHeight: 20, color: colors.textMuted },
-  error: { fontSize: 14, color: colors.danger },
-  failed: { gap: spacing.xs },
+  muted: { fontFamily: fonts.regular, fontSize: 14, color: warm.tan },
+  error: { fontSize: 14, color: colors.danger, marginTop: 8 },
 
+  // 시점 탭: 아래 모래색 줄 위에 고른 탭만 진갈색 밑줄
   tabs: {
     flexDirection: 'row',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    marginTop: 7,
+    borderBottomWidth: 2,
+    borderBottomColor: warm.sand,
   },
-  tab: { flex: 1, alignItems: 'center', paddingTop: spacing.sm },
-  tabOff: { opacity: 0.35 },
-  tabText: { fontSize: 15, fontWeight: '500', color: colors.textMuted },
-  tabTextOn: { fontWeight: '700', color: colors.text },
+  tab: { flex: 1, alignItems: 'center' },
+  tabText: { fontFamily: fonts.semibold, fontSize: 15, color: warm.tan },
+  tabTextOn: { color: warm.black },
+  tabTextOff: { color: warm.sand },
   tabLine: {
     alignSelf: 'stretch',
     height: 2,
-    marginTop: spacing.sm,
-    marginHorizontal: spacing.sm,
-    borderRadius: 1,
+    marginTop: 10,
+    marginBottom: -2,
     backgroundColor: 'transparent',
   },
-  tabLineOn: { backgroundColor: colors.text },
+  tabLineOn: { backgroundColor: warm.ink },
 
-  bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  barText: { flex: 1, gap: 2 },
-  barTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  barLine: { fontSize: 13, color: colors.textMuted },
-  barLineOff: { color: colors.danger },
-  talk: {
-    minWidth: 96,
-    height: 46,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-  },
-  talkOff: { backgroundColor: colors.disabled },
-  talkText: { fontSize: 15, fontWeight: '700', color: colors.primaryText },
-
-  rows: { gap: spacing.sm + 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  month: {
-    width: 64,
+  card: { ...card, marginTop: 7 },
+  cardTitle: { fontFamily: fonts.semibold, fontSize: 16, color: warm.black },
+  cardHint: {
+    marginTop: 8,
+    fontFamily: fonts.semibold,
     fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMuted,
+    lineHeight: 18,
+    color: warm.brown,
   },
-  monthOn: { color: colors.text },
-  track: { flex: 1, height: 22, justifyContent: 'center' },
-  rail: { height: 2, borderRadius: 1, backgroundColor: colors.surfaceMuted },
-  marker: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 2,
-    marginLeft: -1,
-    borderRadius: 1,
-    backgroundColor: colors.text,
+  rows: { gap: 11, marginTop: 19, paddingRight: 22 },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  month: {
+    width: 66,
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    lineHeight: 20,
+    color: warm.tan,
   },
+  monthOn: { color: warm.ink },
+  track: { flex: 1, height: TRACK, justifyContent: 'center' },
+  rail: { height: 2, backgroundColor: warm.sand },
   dot: {
     position: 'absolute',
-    top: (22 - DOT) / 2,
+    top: (TRACK - DOT) / 2,
     width: DOT,
     height: DOT,
     marginLeft: -DOT / 2,
     borderRadius: DOT / 2,
   },
-  dotOn: {
-    borderWidth: 2,
-    borderColor: colors.surface,
-    transform: [{ scale: 1.4 }],
+  marker: {
+    position: 'absolute',
+    top: 3,
+    width: 2,
+    height: 14,
+    marginLeft: 6,
+    backgroundColor: warm.brown,
   },
-  here: {
-    width: 44,
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.text,
+  markerLabel: {
+    position: 'absolute',
+    top: -14,
+    width: 40,
+    marginLeft: -13,
+    textAlign: 'center',
+    fontFamily: fonts.bold,
+    fontSize: 10,
+    color: warm.brown,
   },
+  link: { alignSelf: 'center', padding: 10, marginTop: 8, marginBottom: -10 },
+  linkText: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
 
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' },
+  selfCard: { ...card, marginTop: 2 },
+  bar: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  barText: { flex: 1, gap: 8 },
+  barTitle: { fontFamily: fonts.semibold, fontSize: 16, color: warm.black },
+  barLine: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
+  barLineOff: { color: warm.sunday },
+  talk: {
+    width: 109,
+    height: 45,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: warm.tan,
+  },
+  talkOff: { opacity: 0.45 },
+  talkText: { fontFamily: fonts.semibold, fontSize: 15, color: warm.field },
+
+  backdrop: { flex: 1, backgroundColor: 'rgba(74,52,42,0.3)' },
   sheet: {
     gap: spacing.sm + 4,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    borderTopLeftRadius: radius.md * 2,
-    borderTopRightRadius: radius.md * 2,
-    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    backgroundColor: warm.background,
   },
   handle: {
     alignSelf: 'center',
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.border,
+    backgroundColor: warm.sand,
   },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  sheetTitle: { fontFamily: fonts.bold, fontSize: 18, color: warm.black },
   arrow: {
     fontSize: 28,
     lineHeight: 30,
-    color: colors.text,
+    color: warm.ink,
     paddingHorizontal: 8,
   },
-  arrowOff: { color: colors.disabled },
+  arrowOff: { color: warm.sand },
 
-  session: { gap: 2, paddingVertical: spacing.sm + 2 },
+  session: { gap: 4, paddingVertical: 14 },
   sessionDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: warm.sand,
   },
   sessionTop: {
     flexDirection: 'row',
@@ -536,7 +520,11 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     gap: spacing.sm,
   },
-  sessionTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
-  sessionTime: { fontSize: 12, color: colors.textMuted },
-  sessionPreview: { fontSize: 14, color: colors.textMuted },
+  sessionTitle: { fontFamily: fonts.semibold, fontSize: 15, color: warm.black },
+  sessionTime: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
+  sessionPreview: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: warm.brown,
+  },
 });
