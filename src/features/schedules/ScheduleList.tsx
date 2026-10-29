@@ -52,7 +52,7 @@ export function ScheduleList({
   if (list.isPending) {
     return (
       <Section title={title} hint={hint}>
-        <ActivityIndicator color={colors.primary} />
+        <ActivityIndicator color={warm.tan} />
       </Section>
     );
   }
@@ -163,7 +163,7 @@ function ScheduleRow({
               testID={`schedule-delete-${schedule.id}`}
             >
               {remove.isPending ? (
-                <ActivityIndicator size="small" color={colors.textMuted} />
+                <ActivityIndicator size="small" color={warm.tan} />
               ) : (
                 <Ionicons
                   name="trash-outline"
