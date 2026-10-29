@@ -26,6 +26,7 @@ import {
   nicknameError,
   type DiaryStyle,
 } from '@/features/my/logic';
+import { WithdrawDialog } from '@/features/my/WithdrawDialog';
 import { todayKst } from '@/lib/dates';
 import { useAuth } from '@/stores/auth';
 import { colors, fonts, spacing, warm } from '@/theme';
@@ -53,6 +54,7 @@ export default function MyScreen() {
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState('');
   const [open, setOpen] = useState<Open>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
   const toggle = (key: Exclude<Open, null>) =>
     setOpen((o) => (o === key ? null : key));
 
@@ -306,12 +308,16 @@ export default function MyScreen() {
         <Pressable
           accessibilityRole="button"
           hitSlop={8}
-          onPress={() => router.push('/my/withdraw')}
+          onPress={() => setWithdrawing(true)}
           style={({ pressed }) => [styles.withdraw, pressed && styles.dim]}
           testID="open-withdraw"
         >
           <Text style={styles.withdrawText}>회원 탈퇴</Text>
         </Pressable>
+        <WithdrawDialog
+          visible={withdrawing}
+          onClose={() => setWithdrawing(false)}
+        />
 
         <Text style={styles.footer}>
           메아리 {VERSION} · AI가 기록으로 재구성한 내용은 실제와 다를 수
