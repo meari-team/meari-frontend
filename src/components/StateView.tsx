@@ -1,6 +1,6 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { colors, spacing } from '@/theme';
-import { Button } from './Button';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { fonts, warm } from '@/theme';
+import { EchoLoader } from './EchoLoader';
 
 type Props =
   | { status: 'loading'; message?: string }
@@ -13,12 +13,13 @@ type Props =
     };
 
 // 화면 전체의 로딩·에러·빈 상태. 모든 화면은 이 세 상태를 그린다 (prd.md §8)
+// 웜톤: 로딩은 메아리 고리, 다시 시도는 테두리 알약, 빈 상태 동작은 황갈색 알약
 export function StateView(props: Props) {
   return (
     <View style={styles.wrap} accessibilityLiveRegion="polite">
       {props.status === 'loading' ? (
         <>
-          <ActivityIndicator color={colors.primary} size="large" />
+          <EchoLoader />
           {props.message ? (
             <Text style={styles.message}>{props.message}</Text>
           ) : null}
@@ -28,7 +29,13 @@ export function StateView(props: Props) {
         <>
           <Text style={[styles.message, styles.error]}>{props.message}</Text>
           {props.onRetry ? (
-            <Button title="다시 시도" variant="ghost" onPress={props.onRetry} />
+            <Pressable
+              accessibilityRole="button"
+              onPress={props.onRetry}
+              style={({ pressed }) => [styles.retry, pressed && styles.pressed]}
+            >
+              <Text style={styles.retryText}>다시 시도</Text>
+            </Pressable>
           ) : null}
         </>
       ) : null}
@@ -36,7 +43,16 @@ export function StateView(props: Props) {
         <>
           <Text style={styles.message}>{props.message}</Text>
           {props.actionLabel && props.onAction ? (
-            <Button title={props.actionLabel} onPress={props.onAction} />
+            <Pressable
+              accessibilityRole="button"
+              onPress={props.onAction}
+              style={({ pressed }) => [
+                styles.action,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.actionText}>{props.actionLabel}</Text>
+            </Pressable>
           ) : null}
         </>
       ) : null}
@@ -49,15 +65,36 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.md,
-    padding: spacing.lg,
-    backgroundColor: colors.background,
+    gap: 18,
+    padding: 24,
+    backgroundColor: warm.background,
   },
   message: {
-    fontSize: 15,
+    fontFamily: fonts.medium,
+    fontSize: 14,
     lineHeight: 22,
-    color: colors.textMuted,
+    color: warm.brown,
     textAlign: 'center',
   },
-  error: { color: colors.danger },
+  error: { color: warm.sunday },
+  retry: {
+    height: 40,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: warm.tan,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retryText: { fontFamily: fonts.semibold, fontSize: 14, color: warm.brown },
+  action: {
+    height: 45,
+    paddingHorizontal: 32,
+    borderRadius: 26,
+    backgroundColor: warm.tan,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionText: { fontFamily: fonts.semibold, fontSize: 16, color: warm.field },
+  pressed: { opacity: 0.7 },
 });

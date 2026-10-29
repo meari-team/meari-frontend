@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
-import { colors, spacing } from '@/theme';
+import { spacing, warm } from '@/theme';
 
 const IOS = Platform.OS === 'ios';
 
@@ -60,7 +60,9 @@ export function Screen({
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={colors.primary}
+                tintColor={warm.tan}
+                colors={[warm.tan]}
+                progressBackgroundColor={warm.field}
               />
             ) : undefined
           }
@@ -76,15 +78,16 @@ export function Screen({
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  // 기본 바탕도 웜톤 (화면마다 backgroundColor로 바꿀 수 있다)
+  safe: { flex: 1, backgroundColor: warm.background },
   content: { flexGrow: 1, padding: spacing.lg, gap: spacing.md },
   footer: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm + 2,
     paddingBottom: spacing.md,
     gap: spacing.sm,
-    backgroundColor: colors.background,
+    backgroundColor: warm.background,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopColor: warm.sand,
   },
 });
