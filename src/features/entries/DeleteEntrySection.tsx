@@ -121,9 +121,9 @@ const styles = StyleSheet.create({
   // 평소엔 눈에 덜 띄게: 맨 아래 작은 링크
   link: { alignSelf: 'center', paddingVertical: spacing.sm },
   linkText: {
-    fontFamily: fonts.medium,
+    fontFamily: fonts.semibold,
     fontSize: 13,
-    color: warm.tan,
+    color: warm.brown,
     textDecorationLine: 'underline',
   },
   pressed: { opacity: 0.6 },
