@@ -1,13 +1,18 @@
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Stack } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 import { errorMessage } from '@/api/errors';
 import { useChatSessions } from '@/api/past-self';
 import { Screen } from '@/components/Screen';
+import { HeaderDecor, TopDecorFrame } from '@/components/TopDecor';
 import { StateView } from '@/components/StateView';
 import { SessionRows } from '@/features/past-self/components';
 import { warm } from '@/theme';
 
-const topDecor = require('../../../../assets/images/decor/past-top.png');
+const TOP_DECOR = {
+  source: require('../../../../assets/images/decor/past-top.png'),
+  aspectRatio: 402 / 473,
+};
 
 // 지난 대화 전체 (과거의 나 첫 화면 오른쪽 위 말풍선)
 export default function SessionsScreen() {
@@ -37,11 +42,11 @@ export default function SessionsScreen() {
     return <StateView status="empty" message="아직 나눈 대화가 없어요." />;
   }
   return (
-    <View style={styles.screen}>
-      {/* 위쪽 동심원 장식 (시안) */}
-      <View style={styles.decor} pointerEvents="none">
-        <Image source={topDecor} style={styles.decorImage} />
-      </View>
+    // 시안: 위쪽 동심원이 제목 줄 뒤부터 이어진다
+    <TopDecorFrame decor={TOP_DECOR} style={styles.screen}>
+      <Stack.Screen
+        options={{ headerBackground: () => <HeaderDecor {...TOP_DECOR} /> }}
+      />
       <Screen
         edges={[]}
         backgroundColor="transparent"
@@ -52,19 +57,10 @@ export default function SessionsScreen() {
           <SessionRows sessions={sessions.data} />
         </View>
       </Screen>
-    </View>
+    </TopDecorFrame>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: warm.background },
-  // 웹은 Image의 aspectRatio를 무시해서 크기는 감싼 View가 정한다
-  decor: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    aspectRatio: 402 / 473,
-  },
-  decorImage: { width: '100%', height: '100%' },
 });

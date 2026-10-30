@@ -35,6 +35,7 @@ import {
   type ChatMessageDto,
 } from '@/api/past-self';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
+import { HeaderDecor, TopDecorFrame } from '@/components/TopDecor';
 import { AuthButton } from '@/features/auth/AuthButton';
 import { TextButton } from '@/features/my/components';
 import { StateView } from '@/components/StateView';
@@ -49,7 +50,11 @@ import { isDateString } from '@/lib/dates';
 import { colors, fonts, warm } from '@/theme';
 
 const arrowUp = require('../../../../assets/images/chat/arrow-up.png');
-const topDecor = require('../../../../assets/images/decor/past-top.png');
+// 위 동심원 (과거의 나 첫 화면과 같은 그림)
+const TOP_DECOR = {
+  source: require('../../../../assets/images/decor/past-top.png'),
+  aspectRatio: 402 / 473,
+};
 const bottomDecor = require('../../../../assets/images/decor/chat-bottom.png');
 
 const MAX_LENGTH = 500;
@@ -122,7 +127,15 @@ export default function ChatScreen() {
   };
 
   const title = anchorDate ? pastSelfTitle(anchorDate) : '과거의 나';
-  const header = <Stack.Screen options={{ title }} />;
+  // 시안의 위쪽 동심원은 제목 줄 뒤부터 이어진다 (제목 줄 배경 + 본문을 같은 위치로)
+  const header = (
+    <Stack.Screen
+      options={{
+        title,
+        headerBackground: () => <HeaderDecor {...TOP_DECOR} />,
+      }}
+    />
+  );
 
   if (messages.isPending) {
     return (
@@ -148,11 +161,8 @@ export default function ChatScreen() {
   return (
     <>
       {header}
-      <View style={styles.screen}>
-        {/* 위·아래 동심원 장식 (시안). 화면에 고정 */}
-        <View style={styles.decorTop} pointerEvents="none">
-          <Image source={topDecor} style={styles.decorImage} />
-        </View>
+      {/* 위·아래 동심원 장식 (시안). 화면에 고정 */}
+      <TopDecorFrame decor={TOP_DECOR} style={styles.screen}>
         <View style={styles.decorBottom} pointerEvents="none">
           <Image source={bottomDecor} style={styles.decorImage} />
         </View>
@@ -309,7 +319,7 @@ export default function ChatScreen() {
             )}
           </KeyboardAvoider>
         </SafeAreaView>
-      </View>
+      </TopDecorFrame>
     </>
   );
 }
@@ -420,13 +430,6 @@ const BUBBLE_RADIUS = 20;
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: warm.background },
   // 웹은 Image의 aspectRatio를 무시해서 크기는 감싼 View가 정한다
-  decorTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    aspectRatio: 402 / 473,
-  },
   decorBottom: {
     position: 'absolute',
     bottom: 0,
