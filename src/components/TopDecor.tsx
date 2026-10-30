@@ -65,18 +65,10 @@ export function TopDecorFrame({
   );
 }
 
-// 잘리지 않은 동심원 한 벌 (시안 그림 735×735). 화면 맨 위에서 시작해 아래로 퍼져 내려온다.
-// 화면보다 넓어서 가로는 가운데 맞춤 (좌우는 화면 밖으로 나간다)
-const RINGS = require('../../assets/images/decor/rings-full.png');
-const RINGS_SIZE = 735;
-const BASE_WIDTH = 402;
-
-export function FullRings() {
-  return (
-    <View pointerEvents="none" style={styles.rings}>
-      <Image source={RINGS} style={styles.image} />
-    </View>
-  );
+// 제목 줄이 투명한 화면용: 시안 그림을 화면(폰) 맨 위, 상태바부터 그대로 깐다 (홈 화면과 같은 방식).
+// 시안 좌표의 y=0이 폰 화면 맨 위라서 위치 보정이 없다
+export function ScreenTopDecor({ decor }: { decor: Decor }) {
+  return <DecorImage {...decor} top={0} />;
 }
 
 const styles = StyleSheet.create({
@@ -88,12 +80,5 @@ const styles = StyleSheet.create({
   // 위로 당긴 그림이 제목 줄 위로 넘치지 않게
   frame: { overflow: 'hidden' },
   box: { position: 'absolute', left: 0, right: 0 },
-  rings: {
-    position: 'absolute',
-    top: 0,
-    width: `${(RINGS_SIZE / BASE_WIDTH) * 100}%`,
-    left: `${((BASE_WIDTH - RINGS_SIZE) / 2 / BASE_WIDTH) * 100}%`,
-    aspectRatio: 1,
-  },
   image: { width: '100%', height: '100%' },
 });
