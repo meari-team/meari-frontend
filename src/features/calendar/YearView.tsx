@@ -1,62 +1,92 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { EntrySummaryDto } from '@/api/entries';
 import { SafeImage } from '@/components/SafeImage';
-import { groupByMonth } from '@/lib/calendar';
-import { fonts, spacing, warm } from '@/theme';
+import { monthGrid, type YearMonth } from '@/lib/calendar';
+import { fonts, warm } from '@/theme';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-const GAP = 10;
+const DAY = 45;
 
 type Props = {
+  year: number;
   entries: EntrySummaryDto[];
   onPressEntry: (date: string) => void;
 };
 
-const dayLabel = (date: string) =>
-  `${Number(date.slice(8))}일 ${WEEKDAYS[new Date(`${date}T00:00:00Z`).getUTCDay()]}`;
+// 연간 캘린더 (시안 2:31): 기록이 있는 달마다 작은 달력. 일기를 쓴 날은 그날 대표 사진을 동그랗게,
+// 그 위에 흰 날짜. 안 쓴 날은 황갈색 날짜만. 달은 오래된 것부터 (맨 아래가 최근)
+export function YearView({ year, entries, onPressEntry }: Props) {
+  const byDate = new Map(entries.map((e) => [e.date, e]));
+  const months = [...new Set(entries.map((e) => Number(e.date.slice(5, 7))))]
+    .sort((a, b) => a - b)
+    .map((month): YearMonth => ({ year, month }));
 
-// 연간 보관함: 기록이 있는 날의 대표 사진을 달별로, 사진첩처럼 3열 + 사진 아래 날짜 (기획안 "사진 보관함")
-export function YearView({ entries, onPressEntry }: Props) {
   return (
     <View style={styles.wrap}>
-      {groupByMonth(entries).map((group) => (
-        <View key={group.month} style={styles.group}>
-          <View style={styles.monthRow}>
-            <Text style={styles.month}>{group.month}월</Text>
-            <Text style={styles.count}>{group.items.length}일 기록</Text>
+      {months.map((ym) => (
+        <View
+          key={ym.month}
+          style={styles.month}
+          testID={`year-month-${ym.month}`}
+        >
+          <Text style={styles.monthTitle}>{ym.month}월</Text>
+          <View style={styles.row}>
+            {WEEKDAYS.map((w) => (
+              <Text key={w} style={styles.weekday}>
+                {w}
+              </Text>
+            ))}
           </View>
-          <View style={styles.grid}>
-            {group.items.map((e) => {
-              const writing = e.status !== 'CONFIRMED';
-              return (
-                <Pressable
-                  key={e.date}
-                  testID={`archive-${e.date}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${Number(e.date.slice(5, 7))}월 ${Number(
-                    e.date.slice(8),
-                  )}일 일기${writing ? ', 작성 중' : ''}`}
-                  onPress={() => onPressEntry(e.date)}
-                  style={({ pressed }) => [
-                    styles.cell,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <SafeImage
-                    uri={e.coverPhotoUrl}
-                    style={[styles.image, writing && styles.faded]}
-                  />
-                  {/* 작성 중은 사진을 흐리게 하고 날짜 옆에 글자로만 */}
-                  <Text style={styles.caption} numberOfLines={1}>
-                    {dayLabel(e.date)}
-                    {writing ? (
-                      <Text style={styles.writing}> · 작성 중</Text>
-                    ) : null}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          {monthGrid(ym).map((week, wi) => (
+            <View key={wi} style={styles.row}>
+              {week.map((date, di) => {
+                if (!date)
+                  return <View key={`blank-${di}`} style={styles.cell} />;
+                const entry = byDate.get(date);
+                const day = Number(date.slice(8));
+                if (!entry) {
+                  return (
+                    <View key={date} style={styles.cell}>
+                      <View style={styles.day}>
+                        <Text style={styles.dayText}>{day}</Text>
+                      </View>
+                    </View>
+                  );
+                }
+                const writing = entry.status !== 'CONFIRMED';
+                return (
+                  <View key={date} style={styles.cell}>
+                    <Pressable
+                      testID={`archive-${date}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${ym.month}월 ${day}일 일기${writing ? ', 작성 중' : ''}`}
+                      onPress={() => onPressEntry(date)}
+                      style={({ pressed }) => [
+                        styles.day,
+                        writing && styles.faded,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      {/* 사진이 없으면 모래색 동그라미 */}
+                      {entry.coverPhotoUrl ? (
+                        <SafeImage
+                          uri={entry.coverPhotoUrl}
+                          style={styles.photo}
+                          showIcon={false}
+                        />
+                      ) : (
+                        <View style={styles.photo} />
+                      )}
+                      <View style={styles.shade} />
+                      <Text style={[styles.dayText, styles.dayOnPhoto]}>
+                        {day}
+                      </Text>
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+          ))}
         </View>
       ))}
     </View>
@@ -64,26 +94,52 @@ export function YearView({ entries, onPressEntry }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: spacing.lg },
-  group: { gap: 12 },
-  monthRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
+  wrap: { gap: 50, paddingBottom: 24 },
+  month: { gap: 8 },
+  monthTitle: {
+    marginLeft: 10,
+    marginBottom: 16,
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    color: warm.black,
   },
-  month: { fontFamily: fonts.bold, fontSize: 18, color: warm.ink },
-  count: { fontFamily: fonts.medium, fontSize: 13, color: warm.tan },
-  // 칸마다 안쪽 여백을 두고 바깥을 같은 만큼 당겨 3열을 정확히 나눈다
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -GAP / 2,
-    rowGap: 14,
+  // 7칸을 똑같이 나눠 칸 가운데에 45 동그라미
+  row: { flexDirection: 'row' },
+  cell: { flex: 1, alignItems: 'center' },
+  weekday: {
+    flex: 1,
+    marginBottom: 3,
+    textAlign: 'center',
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    lineHeight: 20,
+    color: warm.ink,
   },
-  cell: { width: '33.333%', paddingHorizontal: GAP / 2, gap: 6 },
+  day: {
+    width: DAY,
+    height: DAY,
+    borderRadius: DAY / 2,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photo: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: DAY / 2,
+    backgroundColor: warm.sand,
+  },
+  // 흰 날짜가 밝은 사진 위에서도 보이게 살짝 어둡게
+  shade: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(74,52,42,0.18)',
+  },
+  dayText: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    lineHeight: 23,
+    color: warm.tan,
+  },
+  dayOnPhoto: { color: '#FFFFFF' },
+  faded: { opacity: 0.6 },
   pressed: { opacity: 0.7 },
-  image: { width: '100%', aspectRatio: 1, borderRadius: 7 },
-  faded: { opacity: 0.55 },
-  caption: { fontFamily: fonts.medium, fontSize: 12, color: warm.brown },
-  writing: { color: warm.clay },
 });
