@@ -5,6 +5,8 @@ import {
   useLocalSearchParams,
   useNavigation,
 } from 'expo-router';
+// 투명한 제목 줄 아래로 내용을 내리려고 높이를 읽는다 (expo-router에 들어 있는 react-navigation)
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import {
   useCallback,
   useEffect,
@@ -35,7 +37,7 @@ import {
   type ChatMessageDto,
 } from '@/api/past-self';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
-import { HeaderDecor, TopDecorFrame } from '@/components/TopDecor';
+import { FullRings } from '@/components/TopDecor';
 import { AuthButton } from '@/features/auth/AuthButton';
 import { TextButton } from '@/features/my/components';
 import { StateView } from '@/components/StateView';
@@ -50,11 +52,6 @@ import { isDateString } from '@/lib/dates';
 import { colors, fonts, warm } from '@/theme';
 
 const arrowUp = require('../../../../assets/images/chat/arrow-up.png');
-// 위 동심원: 시안 '대화 시작·진행' 위치(첫 화면보다 오른쪽 3·아래 1)로 따로 잘라 둔 그림
-const TOP_DECOR = {
-  source: require('../../../../assets/images/decor/chat-top.png'),
-  aspectRatio: 402 / 473,
-};
 const bottomDecor = require('../../../../assets/images/decor/chat-bottom.png');
 
 const MAX_LENGTH = 500;
@@ -89,6 +86,7 @@ export default function ChatScreen() {
     }, [navigation]),
   );
 
+  const headerHeight = useHeaderHeight();
   const messages = useChatMessages(sessionId);
   const send = useSendMessage(sessionId);
   const [draft, setDraft] = useState('');
@@ -132,7 +130,9 @@ export default function ChatScreen() {
     <Stack.Screen
       options={{
         title,
-        headerBackground: () => <HeaderDecor {...TOP_DECOR} />,
+        // 제목 줄을 투명하게: 동심원이 화면 맨 위부터 잘리지 않고 제목 뒤로 쭉 내려온다
+        headerTransparent: true,
+        headerStyle: { backgroundColor: 'transparent' },
       }}
     />
   );
@@ -162,11 +162,15 @@ export default function ChatScreen() {
     <>
       {header}
       {/* 위·아래 동심원 장식 (시안). 화면에 고정 */}
-      <TopDecorFrame decor={TOP_DECOR} style={styles.screen}>
+      <View style={styles.screen}>
+        <FullRings />
         <View style={styles.decorBottom} pointerEvents="none">
           <Image source={bottomDecor} style={styles.decorImage} />
         </View>
-        <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <SafeAreaView
+          style={[styles.safe, { paddingTop: headerHeight }]}
+          edges={['bottom']}
+        >
           {/* 입력창이 키보드 바로 위에 붙는다 (헤더 높이는 KeyboardAvoider가 직접 잰다) */}
           <KeyboardAvoider>
             {/* 상시 고지 (prd.md §7-2 ⑩, AI 기본법) — 헤더 아래 얇은 한 줄, 스크롤해도 남는다 */}
@@ -319,7 +323,7 @@ export default function ChatScreen() {
             )}
           </KeyboardAvoider>
         </SafeAreaView>
-      </TopDecorFrame>
+      </View>
     </>
   );
 }
