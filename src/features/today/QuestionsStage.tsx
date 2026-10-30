@@ -6,7 +6,7 @@ import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Section } from '@/components/Section';
 import { TextField } from '@/components/TextField';
-import { colors, spacing } from '@/theme';
+import { colors, fonts, warm } from '@/theme';
 import { BusyView, GENERATE_MESSAGES } from './BusyView';
 import { answersPayload } from './stage';
 
@@ -46,9 +46,13 @@ export function QuestionsStage({ date, questions }: Props) {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.lead}>
-        사진만으로는 알기 어려운 게 있어요. 아는 만큼만 알려 주세요.
-      </Text>
+      {/* 저장 전 화면처럼: 작은 테두리 알약 + 갈색 안내 */}
+      <View style={styles.note}>
+        <Text style={styles.chip}>AI의 질문</Text>
+        <Text style={styles.lead}>
+          사진만으로는 알기 어려운 게 있어요. 아는 만큼만 알려 주세요.
+        </Text>
+      </View>
 
       {questions.map((q, i) => (
         <Section key={q.id} title={`${i + 1}. ${q.question}`} hint={q.reason}>
@@ -78,24 +82,40 @@ export function QuestionsStage({ date, questions }: Props) {
 
       {error ? <Text style={styles.error}>{errorMessage(error)}</Text> : null}
 
-      <Button
-        title="답하고 일기 만들기"
-        onPress={() => submit(true)}
-        disabled={!hasAnswer}
-        loading={answer.isPending}
-      />
-      <Button
-        title="건너뛰고 그냥 만들기"
-        variant="ghost"
-        onPress={() => submit(false)}
-      />
+      <View style={styles.buttons}>
+        <Button
+          title="답하고 일기 만들기"
+          onPress={() => submit(true)}
+          disabled={!hasAnswer}
+          loading={answer.isPending}
+        />
+        <Button
+          title="건너뛰고 그냥 만들기"
+          variant="secondary"
+          onPress={() => submit(false)}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: spacing.md },
-  lead: { fontSize: 15, lineHeight: 22, color: colors.text },
-  options: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  wrap: { gap: 20 },
+  note: { gap: 8, marginTop: -4 },
+  chip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 17,
+    borderWidth: 1.5,
+    borderColor: warm.sand,
+    fontFamily: fonts.bold,
+    fontSize: 11,
+    color: warm.ink,
+    overflow: 'hidden',
+  },
+  lead: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
+  options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  buttons: { gap: 14 },
   error: { fontSize: 14, color: colors.danger },
 });

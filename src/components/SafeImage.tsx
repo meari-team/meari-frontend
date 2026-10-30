@@ -8,7 +8,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { colors } from '@/theme';
+import { warm } from '@/theme';
 
 type Props = {
   uri: string | null | undefined;
@@ -35,7 +35,7 @@ export function SafeImage({
         accessibilityLabel={accessibilityLabel ?? '사진 없음'}
       >
         {showIcon ? (
-          <Ionicons name="image-outline" size={20} color={colors.textMuted} />
+          <Ionicons name="image-outline" size={20} color={warm.tan} />
         ) : null}
       </View>
     );
@@ -54,10 +54,10 @@ export function SafeImage({
 }
 
 const styles = StyleSheet.create({
-  image: { backgroundColor: colors.surfaceMuted },
+  image: { backgroundColor: warm.background },
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: warm.background,
   },
 });

@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radius, spacing } from '@/theme';
+import { fonts, warm } from '@/theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -12,7 +12,7 @@ type Props = {
   testID?: string;
 };
 
-// secondary: 테두리만 있는 보조 버튼 · danger: 되돌릴 수 없는 작업(삭제)의 최종 확인 버튼
+// 웜톤 알약 버튼. primary: 황갈색 · secondary: 테두리만 · ghost: 갈색 글자 · danger: 차분한 빨강(되돌릴 수 없는 작업)
 export function Button({
   title,
   onPress,
@@ -39,9 +39,7 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator
-          color={filled ? colors.primaryText : colors.primary}
-        />
+        <ActivityIndicator color={filled ? warm.field : warm.brown} />
       ) : (
         <Text
           style={[
@@ -62,25 +60,25 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 52,
-    borderRadius: radius.md,
+    minHeight: 47,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 20,
   },
-  primary: { backgroundColor: colors.primary },
+  primary: { backgroundColor: warm.tan },
   secondary: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: warm.field,
+    borderWidth: 1.5,
+    borderColor: warm.tan,
   },
   ghost: { backgroundColor: 'transparent' },
-  danger: { backgroundColor: colors.danger },
-  disabled: { backgroundColor: colors.disabled },
+  danger: { backgroundColor: warm.sunday },
+  disabled: { opacity: 0.5 },
   dim: { opacity: 0.5 },
   pressed: { opacity: 0.8 },
-  label: { fontSize: 16, fontWeight: '600' },
-  filledLabel: { color: colors.primaryText },
-  secondaryLabel: { color: colors.text },
-  ghostLabel: { color: colors.primary },
+  label: { fontFamily: fonts.semibold, fontSize: 16 },
+  filledLabel: { color: warm.field },
+  secondaryLabel: { color: warm.brown },
+  ghostLabel: { color: warm.brown },
 });
