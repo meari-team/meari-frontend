@@ -37,7 +37,7 @@ import {
   type ChatMessageDto,
 } from '@/api/past-self';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
-import { FullRings } from '@/components/TopDecor';
+import { ScreenTopDecor } from '@/components/TopDecor';
 import { AuthButton } from '@/features/auth/AuthButton';
 import { TextButton } from '@/features/my/components';
 import { StateView } from '@/components/StateView';
@@ -52,6 +52,11 @@ import { isDateString } from '@/lib/dates';
 import { colors, fonts, warm } from '@/theme';
 
 const arrowUp = require('../../../../assets/images/chat/arrow-up.png');
+// 위 동심원: 시안 '대화 시작·진행'(2:38·2:41) 위치 그대로 잘라 둔 그림
+const TOP_DECOR = {
+  source: require('../../../../assets/images/decor/chat-top.png'),
+  aspectRatio: 402 / 473,
+};
 const bottomDecor = require('../../../../assets/images/decor/chat-bottom.png');
 
 const MAX_LENGTH = 500;
@@ -130,7 +135,7 @@ export default function ChatScreen() {
     <Stack.Screen
       options={{
         title,
-        // 제목 줄을 투명하게: 동심원이 화면 맨 위부터 잘리지 않고 제목 뒤로 쭉 내려온다
+        // 제목 줄을 투명하게: 위쪽 동심원이 홈처럼 폰 화면 맨 위(상태바)부터 제목 뒤로 이어진다
         headerTransparent: true,
         headerStyle: { backgroundColor: 'transparent' },
       }}
@@ -163,7 +168,7 @@ export default function ChatScreen() {
       {header}
       {/* 위·아래 동심원 장식 (시안). 화면에 고정 */}
       <View style={styles.screen}>
-        <FullRings />
+        <ScreenTopDecor decor={TOP_DECOR} />
         <View style={styles.decorBottom} pointerEvents="none">
           <Image source={bottomDecor} style={styles.decorImage} />
         </View>
