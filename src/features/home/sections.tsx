@@ -14,7 +14,7 @@ import { useRecentEntries, type EntryFeedItemDto } from '@/api/feed';
 import { usePresets } from '@/api/past-self';
 import { useDaySchedules, useToggleSchedule } from '@/api/schedules';
 import { SafeImage } from '@/components/SafeImage';
-import { PRESET_LABELS, availabilityHint } from '@/features/past-self/logic';
+import { PRESET_LABELS } from '@/features/past-self/logic';
 import { fonts, warm } from '@/theme';
 import {
   TODAY_ACTION_LABEL,
@@ -109,6 +109,28 @@ export function TodayCard({ today }: { today: string }) {
     );
   }
 
+  // 아직 안 쓴 날 (시안 "홈 화면(new)"): 안내 한 줄 + 황갈색 알약 버튼
+  if (!e) {
+    return (
+      <Card title="오늘의 일기">
+        <Text style={styles.muted}>
+          오늘 찍은 사진 몇 장이면 일기가 완성돼요.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={open}
+          testID="home-today-action"
+          style={({ pressed }) => [
+            styles.writeButton,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Text style={styles.writeText}>{TODAY_ACTION_LABEL[action]}</Text>
+        </Pressable>
+      </Card>
+    );
+  }
+
   // 대표 사진을 맨 앞에. 사진이 모자란 칸은 빈 칸으로 둔다
   const photos = e
     ? [...e.photos].sort(
@@ -173,8 +195,18 @@ export function TodaySchedules({ today }: { today: string }) {
   const todos = list.data.filter((s) => !s.time).slice(0, SCHEDULE_PREVIEW);
   if (timed.length + todos.length === 0) {
     return (
-      <Card title="오늘의 일정" link={{ ...link, label: '일정 추가하기' }}>
-        <Text style={styles.muted}>오늘 일정이 없어요.</Text>
+      <Card title="오늘의 일정">
+        {/* 시안: 안내 옆 밑줄 링크 */}
+        <Text style={styles.muted}>
+          오늘 일정이 없어요.{'  '}
+          <Text
+            style={styles.inlineLink}
+            accessibilityRole="link"
+            onPress={link.onPress}
+          >
+            추가하기
+          </Text>
+        </Text>
       </Card>
     );
   }
@@ -241,11 +273,14 @@ export function PastSelfShortcuts() {
   if (!progress.available) {
     return (
       <Card title="과거의 나와 대화하기">
-        <Text style={styles.muted}>
-          {availabilityHint(progress.recordCount, PAST_SELF_REQUIRED)?.replace(
-            '대화할',
-            '과거의 나와 대화할',
-          )}
+        {/* 시안: 안내 + 아래 (모은 수/7) */}
+        <Text style={[styles.muted, styles.lockedHint]}>
+          기록이 {PAST_SELF_REQUIRED}일 이상 쌓이면 과거의 나와 대화할 수
+          있어요.
+        </Text>
+        <Text style={styles.lockedCount}>
+          ({Math.min(progress.recordCount, PAST_SELF_REQUIRED)}/
+          {PAST_SELF_REQUIRED})
         </Text>
       </Card>
     );
@@ -374,7 +409,34 @@ const styles = StyleSheet.create({
   },
   link: { alignSelf: 'center', padding: 10 },
   linkText: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
-  muted: { ...body, color: warm.tan, paddingBottom: 14 },
+  // 안내 문구 (시안: 갈색 SemiBold 13)
+  muted: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: warm.brown,
+    // 시안: 제목 바로 아래 (제목 여백 14 중 6을 당긴다)
+    marginTop: -6,
+    paddingBottom: 14,
+  },
+  inlineLink: { color: warm.ink, textDecorationLine: 'underline' },
+  lockedHint: { paddingBottom: 3 },
+  lockedCount: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    color: warm.tan,
+    paddingBottom: 14,
+  },
+  writeButton: {
+    height: 42,
+    marginTop: 7,
+    marginBottom: 14,
+    borderRadius: 24,
+    backgroundColor: warm.tan,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  writeText: { fontFamily: fonts.semibold, fontSize: 15, color: warm.field },
   underline: { textDecorationLine: 'underline' },
   body,
   photos: { flexDirection: 'row', gap: 11, marginBottom: 6 },

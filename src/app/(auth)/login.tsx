@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useRef, useState, type ComponentRef } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLogin } from '@/api/auth';
 import { errorMessage } from '@/api/errors';
 import { AuthButton } from '@/features/auth/AuthButton';
@@ -20,11 +20,13 @@ export default function LoginScreen() {
   const submit = () => login.mutate({ email: email.trim(), password });
 
   return (
-    <AuthScreen topRatio={218 / 874}>
-      {/* 로고 자리: 로고가 나오면 이미지로 바꾼다 */}
-      <Text style={styles.logo} accessibilityRole="header">
-        메아리
-      </Text>
+    <AuthScreen topRatio={221 / 874}>
+      <Image
+        source={logo}
+        style={styles.logo}
+        accessibilityRole="header"
+        accessibilityLabel="메아리"
+      />
       <Text style={styles.tagline}>사진 몇 장으로 남기는 오늘</Text>
 
       <View style={styles.fields}>
@@ -79,16 +81,14 @@ export default function LoginScreen() {
   );
 }
 
+const logo = require('../../../assets/images/brand/logo.png');
+
 const styles = StyleSheet.create({
-  logo: {
-    fontFamily: fonts.bold,
-    fontSize: 40,
-    color: warm.black,
-    textAlign: 'center',
-  },
+  // 로고 (시작 화면과 같은 그림을 작게)
+  logo: { alignSelf: 'center', width: 128, height: 50 },
   tagline: {
-    marginTop: 18,
-    fontFamily: fonts.regular,
+    marginTop: 10,
+    fontFamily: fonts.medium,
     fontSize: 16,
     color: warm.black,
     textAlign: 'center',
