@@ -6,7 +6,7 @@ import {
   type TextInputProps,
   View,
 } from 'react-native';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, warm } from '@/theme';
 
 type Props = TextInputProps & {
   ref?: Ref<ComponentRef<typeof TextInput>>;
@@ -21,7 +21,7 @@ export function TextField({ ref, label, hint, error, style, ...input }: Props) {
       <Text style={styles.label}>{label}</Text>
       <TextInput
         ref={ref}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={warm.placeholder}
         style={[styles.input, error ? styles.inputError : null, style]}
         // 내용만큼 늘어나는 여러 줄 입력은 자체 스크롤을 끈다.
         // 켜 두면 iOS에서 입력칸이 드래그를 가져가 화면(ScrollView)이 스크롤되지 않는다.
@@ -39,20 +39,25 @@ export function TextField({ ref, label, hint, error, style, ...input }: Props) {
   );
 }
 
+// 웜톤 입력칸: 바탕색 칸 + 모래색 테두리, 위에 작은 갈색 이름
 const styles = StyleSheet.create({
-  wrap: { gap: spacing.xs },
-  label: { fontSize: 14, fontWeight: '600', color: colors.text },
+  wrap: { gap: 6 },
+  label: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
   input: {
-    minHeight: 50,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
-    fontSize: 16,
-    color: colors.text,
+    minHeight: 47,
+    borderWidth: 1.5,
+    borderColor: warm.sand,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: warm.field,
+    fontFamily: fonts.medium,
+    fontSize: 15,
+    color: warm.ink,
+    // 웹에서 포커스 때 생기는 파란 테두리 제거
+    outlineWidth: 0,
   },
   inputError: { borderColor: colors.danger },
-  hint: { fontSize: 12, color: colors.textMuted },
-  error: { fontSize: 12, color: colors.danger },
+  hint: { fontFamily: fonts.medium, fontSize: 11, color: warm.tan },
+  error: { fontFamily: fonts.medium, fontSize: 12, color: colors.danger },
 });

@@ -2,7 +2,6 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { errorMessage } from '@/api/errors';
 import { useAvailability, useCreateSession } from '@/api/past-self';
-import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
@@ -13,7 +12,7 @@ import {
   shortKoreanDate,
 } from '@/features/past-self/logic';
 import { normalizeEntryDate } from '@/lib/dates';
-import { colors, spacing } from '@/theme';
+import { colors, fonts, warm } from '@/theme';
 
 // 시점 확인: 쓰이는 기록 범위와 "미래 정보 제한"을 알린 뒤 대화를 시작한다
 export default function ConfirmAnchor() {
@@ -73,27 +72,22 @@ export default function ConfirmAnchor() {
           ) : (
             <Text style={styles.body}>이 날까지 확정한 일기가 없어요.</Text>
           )}
-          {hint ? (
-            <Badge label={hint} tone="warning" icon="alert-circle-outline" />
-          ) : null}
+          {hint ? <Text style={styles.warn}>{hint}</Text> : null}
         </Section>
 
         <Section title="이렇게 대화해요">
           <View style={styles.notes}>
-            <Text style={styles.note}>
-              • {shortKoreanDate(anchorDate)} 이후의 일은 그때의 나가 알지
-              못해요.
-            </Text>
-            <Text style={styles.note}>
-              • 기록에 없는 내용은 모른다고 답해요.
-            </Text>
-            <Text style={styles.note}>
-              • 답마다 참고한 일기 날짜를 보여 줘요. 눌러서 원문을 볼 수 있어요.
-            </Text>
-            <Text style={styles.note}>
-              • AI가 기록으로 재구성한 모습이며, 실제 그때의 나와 다를 수
-              있어요.
-            </Text>
+            {[
+              `${shortKoreanDate(anchorDate)} 이후의 일은 그때의 나가 알지 못해요.`,
+              '기록에 없는 내용은 모른다고 답해요.',
+              '답마다 참고한 일기 날짜를 보여 줘요. 눌러서 원문을 볼 수 있어요.',
+              'AI가 기록으로 재구성한 모습이며, 실제 그때의 나와 다를 수 있어요.',
+            ].map((line) => (
+              <View key={line} style={styles.noteRow}>
+                <Text style={styles.bullet}>·</Text>
+                <Text style={styles.note}>{line}</Text>
+              </View>
+            ))}
           </View>
         </Section>
 
@@ -113,10 +107,29 @@ export default function ConfirmAnchor() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 22, fontWeight: '700', color: colors.text },
-  body: { fontSize: 15, lineHeight: 22, color: colors.text },
-  strong: { fontWeight: '700' },
-  notes: { gap: spacing.xs },
-  note: { fontSize: 14, lineHeight: 21, color: colors.textMuted },
+  title: { fontFamily: fonts.bold, fontSize: 20, color: warm.black },
+  body: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    lineHeight: 22,
+    color: warm.ink,
+  },
+  strong: { fontFamily: fonts.bold, color: warm.brown },
+  warn: { fontFamily: fonts.semibold, fontSize: 13, color: warm.clay },
+  notes: { gap: 6 },
+  noteRow: { flexDirection: 'row', gap: 6 },
+  bullet: {
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    lineHeight: 20,
+    color: warm.tan,
+  },
+  note: {
+    flex: 1,
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: warm.brown,
+  },
   error: { color: colors.danger, fontSize: 14 },
 });

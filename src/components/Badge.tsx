@@ -1,16 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing, warm } from '@/theme';
+import { fonts, radius, spacing, warm } from '@/theme';
 
 type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'warm';
 
 const TONES: Record<Tone, { bg: string; fg: string }> = {
-  neutral: { bg: colors.surfaceMuted, fg: colors.textMuted },
-  info: { bg: colors.primarySoft, fg: colors.primary },
-  success: { bg: colors.successSoft, fg: colors.success },
-  warning: { bg: colors.warningSoft, fg: colors.warning },
-  danger: { bg: colors.dangerSoft, fg: colors.danger },
+  // 웜톤: 연한 모래색 바탕 + 갈색 계열 글자
+  neutral: { bg: warm.soft, fg: warm.tan },
+  info: { bg: warm.soft, fg: warm.brown },
+  success: { bg: warm.soft, fg: warm.ink },
+  warning: { bg: 'rgba(201,138,98,0.16)', fg: warm.clay },
+  danger: { bg: 'rgba(198,90,78,0.14)', fg: warm.sunday },
   // 웜톤 화면용: 오늘 표시
   warm: { bg: warm.tan, fg: warm.field },
 };
@@ -43,5 +44,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: radius.pill,
   },
-  label: { fontSize: 12, fontWeight: '600' },
+  label: { fontFamily: fonts.semibold, fontSize: 12 },
 });

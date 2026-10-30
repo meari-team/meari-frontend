@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing } from '@/theme';
+import { fonts, warm } from '@/theme';
 
 type Props = {
   title?: string;
@@ -10,7 +10,7 @@ type Props = {
   children: ReactNode;
 };
 
-// 제목이 있는 카드 묶음
+// 제목이 있는 카드 묶음 (홈과 같은 종이 카드)
 export function Section({ title, hint, action, children }: Props) {
   return (
     <View style={styles.card}>
@@ -39,20 +39,23 @@ export function Section({ title, hint, action, children }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    gap: spacing.sm + 4,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    gap: 12,
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: warm.field,
+    shadowColor: warm.brown,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 3,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: spacing.sm,
+    gap: 8,
   },
-  header: { flex: 1, gap: 2 },
-  action: { fontSize: 14, fontWeight: '600', color: colors.primary },
-  title: { fontSize: 16, fontWeight: '700', color: colors.text },
-  hint: { fontSize: 13, color: colors.textMuted },
+  header: { flex: 1, gap: 6 },
+  action: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
+  title: { fontFamily: fonts.semibold, fontSize: 16, color: warm.black },
+  hint: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
 });

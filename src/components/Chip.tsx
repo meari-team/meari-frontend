@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing } from '@/theme';
+import { fonts, warm } from '@/theme';
 
 type Props = {
   label: string;
@@ -10,7 +10,7 @@ type Props = {
   testID?: string;
 };
 
-// 선택 가능한 칩 (체크리스트 항목, 질문 보기, 근거 날짜 등)
+// 선택 가능한 알약 (오늘 한 일 고르기와 같은 모양: 모래색 테두리, 고르면 모래색 채움)
 export function Chip({
   label,
   selected = false,
@@ -47,21 +47,17 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    minHeight: 36,
-    paddingHorizontal: spacing.md - 4,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    gap: 6,
+    minHeight: 32,
+    paddingHorizontal: 14,
+    borderRadius: 17,
+    borderWidth: 1.5,
+    borderColor: warm.sand,
   },
-  selected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
-  },
+  selected: { backgroundColor: warm.sand, borderColor: warm.brown },
   pressed: { opacity: 0.8 },
   disabled: { opacity: 0.5 },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  label: { fontSize: 14, color: colors.text },
-  selectedLabel: { color: colors.primary, fontWeight: '600' },
+  label: { fontFamily: fonts.regular, fontSize: 13, color: warm.black },
+  selectedLabel: { fontFamily: fonts.semibold, color: warm.ink },
 });
