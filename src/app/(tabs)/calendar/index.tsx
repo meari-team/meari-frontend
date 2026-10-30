@@ -1,7 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { useEffect, useState, type ComponentProps } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEntriesRange } from '@/api/entries';
 import { useSchedules, type ScheduleDto } from '@/api/schedules';
@@ -33,14 +41,31 @@ type Mode = 'month' | 'year' | 'list';
 const isMode = (v: unknown): v is Mode =>
   v === 'month' || v === 'year' || v === 'list';
 
+// 시안 아이콘 (Phosphor: CalendarBlank · Images · List)
 const MODES: {
   mode: Mode;
   label: string;
-  icon: ComponentProps<typeof Ionicons>['name'];
+  icon: ImageSourcePropType;
+  size: number;
 }[] = [
-  { mode: 'month', label: '월간', icon: 'calendar-clear-outline' },
-  { mode: 'year', label: '연간 사진', icon: 'images-outline' },
-  { mode: 'list', label: '전체 목록', icon: 'list-outline' },
+  {
+    mode: 'month',
+    label: '월간',
+    icon: require('../../../../assets/images/calendar/month.png'),
+    size: 24,
+  },
+  {
+    mode: 'year',
+    label: '연간 캘린더',
+    icon: require('../../../../assets/images/calendar/images.png'),
+    size: 27,
+  },
+  {
+    mode: 'list',
+    label: '전체 목록',
+    icon: require('../../../../assets/images/calendar/list.png'),
+    size: 24,
+  },
 ];
 
 // 아래 떠 있는 버튼(오늘·+)에 내용이 가리지 않게 남기는 여백
@@ -73,6 +98,8 @@ export default function CalendarScreen() {
   const [year, setYear] = useState(() => yearMonthOf(today).year);
   const [selected, setSelected] = useState<string>(today);
   const [picking, setPicking] = useState(false);
+  // 연간 캘린더는 오래된 달부터라, 올해를 열면 맨 아래(최근 달)로 내려 둔다
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   // 일정 시트: 열려 있으면 날짜, editing이 있으면 수정
   const [sheet, setSheet] = useState<{
     date: string;
@@ -89,6 +116,17 @@ export default function CalendarScreen() {
   const list = useEntriesRange(range.from, range.to);
   // 일정은 월간에서만 쓴다. 실패해도 캘린더는 그대로 보여 준다 (날짜 패널에서 다시 시도)
   const schedules = useSchedules(gridSpan.from, gridSpan.to);
+
+  const yearEntries = mode === 'year' ? list.data : undefined;
+  useEffect(() => {
+    if (!yearEntries || year !== yearMonthOf(today).year) return;
+    // 그려진 다음 맨 아래로
+    const id = setTimeout(
+      () => scrollRef.current?.scrollToEnd({ animated: false }),
+      50,
+    );
+    return () => clearTimeout(id);
+  }, [yearEntries, year, today]);
 
   const goMonth = (next: YearMonth, select?: string) => {
     if (!canGoNextMonth(next, today)) return;
@@ -118,9 +156,9 @@ export default function CalendarScreen() {
           style={styles.titleButton}
         >
           <Text style={styles.title}>
-            {month.year}. {month.month}
+            {month.year}.{month.month}
           </Text>
-          <Ionicons name="chevron-down" size={20} color={warm.ink} />
+          <Ionicons name="chevron-down" size={18} color={warm.black} />
         </Pressable>
       ) : mode === 'year' ? (
         <View style={styles.titleButton}>
@@ -130,7 +168,7 @@ export default function CalendarScreen() {
             hitSlop={12}
             onPress={() => setYear((y) => y - 1)}
           >
-            <Ionicons name="chevron-back" size={22} color={warm.ink} />
+            <Ionicons name="chevron-back" size={20} color={warm.black} />
           </Pressable>
           <Text style={styles.title}>{year}</Text>
           <Pressable
@@ -144,8 +182,8 @@ export default function CalendarScreen() {
           >
             <Ionicons
               name="chevron-forward"
-              size={22}
-              color={year >= yearMonthOf(today).year ? warm.sand : warm.ink}
+              size={20}
+              color={year >= yearMonthOf(today).year ? warm.sand : warm.black}
             />
           </Pressable>
         </View>
@@ -166,10 +204,9 @@ export default function CalendarScreen() {
             onPress={() => setMode(m.mode)}
             style={[styles.modeButton, mode === m.mode && styles.modeOn]}
           >
-            <Ionicons
-              name={m.icon}
-              size={22}
-              color={mode === m.mode ? warm.ink : warm.tan}
+            <Image
+              source={m.icon}
+              style={{ width: m.size, height: m.size, tintColor: warm.black }}
             />
           </Pressable>
         ))}
@@ -232,6 +269,7 @@ export default function CalendarScreen() {
   } else {
     body = (
       <YearView
+        year={year}
         entries={list.data}
         onPressEntry={(date) => router.push(`/entry/${date}`)}
       />
@@ -245,7 +283,11 @@ export default function CalendarScreen() {
 
   return (
     <View style={styles.flex}>
-      <Screen edges={['top']} backgroundColor={warm.background}>
+      <Screen
+        edges={['top']}
+        backgroundColor={warm.background}
+        scrollRef={scrollRef}
+      >
         {header}
         {body}
       </Screen>
@@ -305,17 +347,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: spacing.sm,
   },
-  titleButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  title: { fontFamily: fonts.bold, fontSize: 28, color: warm.black },
-  modes: { flexDirection: 'row', gap: spacing.xs },
+  titleButton: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  title: { fontFamily: fonts.bold, fontSize: 24, color: warm.black },
+  // 시안: 아이콘 셋, 고른 것만 모래색 동그라미(32) 바탕
+  modes: { flexDirection: 'row', gap: 6 },
   modeButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  modeOn: { backgroundColor: warm.soft },
+  modeOn: { backgroundColor: warm.sand },
   pressed: { opacity: 0.7 },
   todayWrap: {
     position: 'absolute',

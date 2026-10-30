@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentRef, ReactNode, Ref } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import {
   Platform,
@@ -33,6 +33,7 @@ export function Screen({
   footer,
   backgroundColor,
   footerStyle,
+  scrollRef,
 }: {
   children: ReactNode;
   edges?: Edge[];
@@ -43,6 +44,8 @@ export function Screen({
   backgroundColor?: string;
   // 아래 고정 영역 모양 바꾸기 (예: 웜톤 화면은 선·바탕 없이)
   footerStyle?: StyleProp<ViewStyle>;
+  // 화면 스크롤을 직접 움직여야 할 때 (예: 연간 캘린더를 최근 달로)
+  scrollRef?: Ref<ComponentRef<typeof ScrollView>>;
 }) {
   return (
     <SafeAreaView
@@ -51,6 +54,7 @@ export function Screen({
     >
       <KeyboardAvoider enabled={!IOS || !!footer}>
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={IOS ? 'interactive' : 'on-drag'}
