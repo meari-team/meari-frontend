@@ -50,9 +50,9 @@ import { isDateString } from '@/lib/dates';
 import { colors, fonts, warm } from '@/theme';
 
 const arrowUp = require('../../../../assets/images/chat/arrow-up.png');
-// 위 동심원 (과거의 나 첫 화면과 같은 그림)
+// 위 동심원: 시안 '대화 시작·진행' 위치(첫 화면보다 오른쪽 3·아래 1)로 따로 잘라 둔 그림
 const TOP_DECOR = {
-  source: require('../../../../assets/images/decor/past-top.png'),
+  source: require('../../../../assets/images/decor/chat-top.png'),
   aspectRatio: 402 / 473,
 };
 const bottomDecor = require('../../../../assets/images/decor/chat-bottom.png');
