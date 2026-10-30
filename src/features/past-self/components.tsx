@@ -341,7 +341,7 @@ export function DateSheet({
 
 // 대화 목록 줄들: "M월 D일까지의 나 · 언제" + 마지막 메시지 한 줄 (최근 대화·지난 대화 공용)
 export function SessionRows({ sessions }: { sessions: ChatSessionDto[] }) {
-  return sessions.map((s, i) => (
+  return sessions.map((s) => (
     <Pressable
       key={s.id}
       testID={`session-${s.id}`}
@@ -349,7 +349,7 @@ export function SessionRows({ sessions }: { sessions: ChatSessionDto[] }) {
       onPress={() => router.push(chatHref(s))}
       style={({ pressed }) => [
         styles.session,
-        i < sessions.length - 1 && styles.sessionDivider,
+        styles.sessionDivider,
         pressed && styles.pressed,
       ]}
     >
@@ -359,7 +359,7 @@ export function SessionRows({ sessions }: { sessions: ChatSessionDto[] }) {
           {relativeTime(s.lastMessageAt ?? s.createdAt)}
         </Text>
       </View>
-      <Text style={styles.sessionPreview} numberOfLines={1}>
+      <Text style={styles.sessionPreview} numberOfLines={3}>
         {s.lastMessagePreview ?? '아직 메시지가 없어요'}
       </Text>
     </Pressable>
@@ -509,22 +509,21 @@ const styles = StyleSheet.create({
   },
   arrowOff: { color: warm.sand },
 
-  session: { gap: 4, paddingVertical: 14 },
-  sessionDivider: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: warm.sand,
-  },
+  // 시안 "지난 대화": 제목 18 · 미리보기 3줄 · 모래색 굵은 구분선
+  session: { gap: 10, paddingTop: 18, paddingBottom: 16 },
+  sessionDivider: { borderBottomWidth: 1.5, borderBottomColor: warm.sand },
   sessionTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     gap: spacing.sm,
   },
-  sessionTitle: { fontFamily: fonts.semibold, fontSize: 15, color: warm.black },
-  sessionTime: { fontFamily: fonts.medium, fontSize: 12, color: warm.tan },
+  sessionTitle: { fontFamily: fonts.semibold, fontSize: 18, color: warm.black },
+  sessionTime: { fontFamily: fonts.medium, fontSize: 11, color: warm.tan },
   sessionPreview: {
-    fontFamily: fonts.regular,
-    fontSize: 14,
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    lineHeight: 18,
     color: warm.brown,
   },
 });

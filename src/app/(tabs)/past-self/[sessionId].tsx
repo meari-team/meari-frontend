@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import {
   router,
   Stack,
@@ -16,6 +15,7 @@ import {
 import {
   Animated,
   Easing,
+  Image,
   Keyboard,
   Platform,
   Pressable,
@@ -34,8 +34,9 @@ import {
   useSendMessage,
   type ChatMessageDto,
 } from '@/api/past-self';
-import { Button } from '@/components/Button';
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
+import { AuthButton } from '@/features/auth/AuthButton';
+import { TextButton } from '@/features/my/components';
 import { StateView } from '@/components/StateView';
 import {
   flattenPages,
@@ -45,7 +46,11 @@ import {
 import { useTypewriter } from '@/features/past-self/typewriter';
 import { shouldType } from '@/features/past-self/typewriter-logic';
 import { isDateString } from '@/lib/dates';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, warm } from '@/theme';
+
+const arrowUp = require('../../../../assets/images/chat/arrow-up.png');
+const topDecor = require('../../../../assets/images/decor/past-top.png');
+const bottomDecor = require('../../../../assets/images/decor/chat-bottom.png');
 
 const MAX_LENGTH = 500;
 
@@ -143,163 +148,168 @@ export default function ChatScreen() {
   return (
     <>
       {header}
-      <SafeAreaView style={styles.safe} edges={['bottom']}>
-        {/* 입력창이 키보드 바로 위에 붙는다 (헤더 높이는 KeyboardAvoider가 직접 잰다) */}
-        <KeyboardAvoider>
-          {/* 상시 고지 (prd.md §7-2 ⑩, AI 기본법) — 헤더 아래 얇은 한 줄, 스크롤해도 남는다 */}
-          <Text style={styles.notice} testID="chat-notice">
-            {anchorDate
-              ? `${shortKoreanDate(anchorDate)}까지의 기록으로 대화 중 · `
-              : ''}
-            AI가 기록으로 재구성한 모습이에요
-          </Text>
+      <View style={styles.screen}>
+        {/* 위·아래 동심원 장식 (시안). 화면에 고정 */}
+        <View style={styles.decorTop} pointerEvents="none">
+          <Image source={topDecor} style={styles.decorImage} />
+        </View>
+        <View style={styles.decorBottom} pointerEvents="none">
+          <Image source={bottomDecor} style={styles.decorImage} />
+        </View>
+        <SafeAreaView style={styles.safe} edges={['bottom']}>
+          {/* 입력창이 키보드 바로 위에 붙는다 (헤더 높이는 KeyboardAvoider가 직접 잰다) */}
+          <KeyboardAvoider>
+            {/* 상시 고지 (prd.md §7-2 ⑩, AI 기본법) — 헤더 아래 얇은 한 줄, 스크롤해도 남는다 */}
+            <Text style={styles.notice} testID="chat-notice">
+              {anchorDate
+                ? `${shortKoreanDate(anchorDate)}까지의 기록으로 대화중\n`
+                : ''}
+              AI가 기록으로 재구성한 모습이에요.
+            </Text>
 
-          <ScrollView
-            ref={scroll}
-            style={styles.flex}
-            contentContainerStyle={styles.messages}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode={
-              Platform.OS === 'ios' ? 'interactive' : 'on-drag'
-            }
-          >
-            {messages.hasNextPage ? (
-              <Button
-                title={
-                  messages.isFetchingNextPage
-                    ? '불러오는 중…'
-                    : '이전 메시지 보기'
-                }
-                variant="ghost"
-                disabled={messages.isFetchingNextPage}
-                onPress={() => {
-                  prependingRef.current = true;
-                  void messages.fetchNextPage();
-                }}
-              />
-            ) : null}
+            <ScrollView
+              ref={scroll}
+              style={styles.flex}
+              contentContainerStyle={styles.messages}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={
+                Platform.OS === 'ios' ? 'interactive' : 'on-drag'
+              }
+            >
+              {messages.hasNextPage ? (
+                <TextButton
+                  title={
+                    messages.isFetchingNextPage
+                      ? '불러오는 중…'
+                      : '이전 메시지 보기'
+                  }
+                  disabled={messages.isFetchingNextPage}
+                  onPress={() => {
+                    prependingRef.current = true;
+                    void messages.fetchNextPage();
+                  }}
+                />
+              ) : null}
 
-            {list.length === 0 && !send.isPending ? (
-              <View style={styles.emptyWrap}>
-                <Text style={styles.empty}>
-                  {anchorDate
-                    ? `${pastSelfTitle(anchorDate)}에게 말을 걸어 보세요.`
-                    : '그때의 나에게 말을 걸어 보세요.'}
-                </Text>
-                <View style={styles.suggestions}>
-                  {SUGGESTIONS.map((q) => (
-                    <Pressable
-                      key={q}
-                      accessibilityRole="button"
-                      testID="chat-suggestion"
-                      onPress={() => submit(q)}
-                      style={({ pressed }) => [
-                        styles.suggestion,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.suggestionText}>{q}</Text>
-                    </Pressable>
-                  ))}
+              {list.length === 0 && !send.isPending ? (
+                <View style={styles.emptyWrap}>
+                  <Text style={styles.empty}>
+                    {anchorDate
+                      ? `${pastSelfTitle(anchorDate)}에게 말을 걸어보세요.`
+                      : '그때의 나에게 말을 걸어보세요.'}
+                  </Text>
+                  <View style={styles.suggestions}>
+                    {SUGGESTIONS.map((q) => (
+                      <Pressable
+                        key={q}
+                        accessibilityRole="button"
+                        testID="chat-suggestion"
+                        onPress={() => submit(q)}
+                        style={({ pressed }) => [
+                          styles.suggestion,
+                          pressed && styles.pressed,
+                        ]}
+                      >
+                        <Text style={styles.suggestionText}>{q}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            ) : null}
+              ) : null}
 
-            {list.map((m, i) => (
-              <Bubble
-                key={m.id}
-                message={m}
-                typing={shouldType(m, i === list.length - 1, typeAfter)}
-                onTick={() => scroll.current?.scrollToEnd({ animated: false })}
-              />
-            ))}
-
-            {send.isPending && send.variables ? (
-              <>
+              {list.map((m, i) => (
                 <Bubble
-                  message={{
-                    id: 'pending',
-                    role: 'USER',
-                    content: send.variables,
-                    citations: [],
-                    flag: 'NONE',
-                    createdAt: '',
-                  }}
+                  key={m.id}
+                  message={m}
+                  typing={shouldType(m, i === list.length - 1, typeAfter)}
+                  onTick={() =>
+                    scroll.current?.scrollToEnd({ animated: false })
+                  }
                 />
-                <TypingDots />
-              </>
-            ) : null}
+              ))}
 
-            {send.isError && send.variables && !limitReached ? (
-              <View style={styles.failed}>
-                <Bubble
-                  message={{
-                    id: 'failed',
-                    role: 'USER',
-                    content: send.variables,
-                    citations: [],
-                    flag: 'NONE',
-                    createdAt: '',
-                  }}
-                />
-                <Text style={styles.failedText}>
-                  {errorMessage(send.error)}
-                </Text>
-                <Button
-                  title="다시 보내기"
-                  variant="ghost"
-                  testID="resend"
-                  onPress={() => submit(send.variables)}
+              {send.isPending && send.variables ? (
+                <>
+                  <Bubble
+                    message={{
+                      id: 'pending',
+                      role: 'USER',
+                      content: send.variables,
+                      citations: [],
+                      flag: 'NONE',
+                      createdAt: '',
+                    }}
+                  />
+                  <TypingDots />
+                </>
+              ) : null}
+
+              {send.isError && send.variables && !limitReached ? (
+                <View style={styles.failed}>
+                  <Bubble
+                    message={{
+                      id: 'failed',
+                      role: 'USER',
+                      content: send.variables,
+                      citations: [],
+                      flag: 'NONE',
+                      createdAt: '',
+                    }}
+                  />
+                  <Text style={styles.failedText}>
+                    {errorMessage(send.error)}
+                  </Text>
+                  <TextButton
+                    title="다시 보내기"
+                    testID="resend"
+                    onPress={() => submit(send.variables)}
+                  />
+                </View>
+              ) : null}
+            </ScrollView>
+
+            {limitReached ? (
+              <View style={styles.limit}>
+                <Text style={styles.limitText}>{errorMessage(send.error)}</Text>
+                <AuthButton
+                  title="오늘로 돌아오기"
+                  onPress={() => router.navigate('/today')}
                 />
               </View>
-            ) : null}
-          </ScrollView>
-
-          {limitReached ? (
-            <View style={styles.limit}>
-              <Text style={styles.limitText}>{errorMessage(send.error)}</Text>
-              <Button
-                title="오늘로 돌아오기"
-                onPress={() => router.navigate('/today')}
-              />
-            </View>
-          ) : (
-            <View style={styles.composer}>
-              <TextInput
-                value={draft}
-                onChangeText={setDraft}
-                placeholder="그때의 나에게 물어보기"
-                placeholderTextColor={colors.textMuted}
-                maxLength={MAX_LENGTH}
-                multiline
-                // 웹 textarea는 기본 2줄이라 한 줄에서 시작하게
-                numberOfLines={Platform.OS === 'web' ? 1 : undefined}
-                style={styles.input}
-                editable={!send.isPending}
-                testID="chat-input"
-              />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="보내기"
-                testID="chat-send"
-                disabled={!draft.trim() || send.isPending}
-                onPress={() => submit()}
-                style={({ pressed }) => [
-                  styles.send,
-                  (!draft.trim() || send.isPending) && styles.sendDisabled,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Ionicons
-                  name="arrow-up"
-                  size={19}
-                  color={colors.primaryText}
+            ) : (
+              <View style={styles.composer}>
+                <TextInput
+                  value={draft}
+                  onChangeText={setDraft}
+                  placeholder="그 때의 나에게 물어보기"
+                  placeholderTextColor={warm.placeholder}
+                  maxLength={MAX_LENGTH}
+                  multiline
+                  // 웹 textarea는 기본 2줄이라 한 줄에서 시작하게
+                  numberOfLines={Platform.OS === 'web' ? 1 : undefined}
+                  style={styles.input}
+                  editable={!send.isPending}
+                  testID="chat-input"
                 />
-              </Pressable>
-            </View>
-          )}
-        </KeyboardAvoider>
-      </SafeAreaView>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="보내기"
+                  testID="chat-send"
+                  disabled={!draft.trim() || send.isPending}
+                  onPress={() => submit()}
+                  style={({ pressed }) => [
+                    styles.send,
+                    (!draft.trim() || send.isPending) && styles.sendDisabled,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Image source={arrowUp} style={styles.sendIcon} />
+                </Pressable>
+              </View>
+            )}
+          </KeyboardAvoider>
+        </SafeAreaView>
+      </View>
     </>
   );
 }
@@ -391,12 +401,7 @@ function Bubble({
                 })
               }
             >
-              <Text style={styles.citationLabel}>
-                ·{' '}
-                <Text style={styles.citationDate}>
-                  {shortKoreanDate(c.date)}
-                </Text>
-              </Text>
+              <Text style={styles.citationDate}>{shortKoreanDate(c.date)}</Text>
             </Pressable>
           ))}
         </View>
@@ -413,118 +418,159 @@ function Bubble({
 const BUBBLE_RADIUS = 20;
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1, backgroundColor: warm.background },
+  // 웹은 Image의 aspectRatio를 무시해서 크기는 감싼 View가 정한다
+  decorTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    aspectRatio: 402 / 473,
+  },
+  decorBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    aspectRatio: 402 / 466,
+  },
+  decorImage: { width: '100%', height: '100%' },
+  safe: { flex: 1, backgroundColor: 'transparent' },
   flex: { flex: 1 },
   notice: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
-    fontSize: 12,
-    color: colors.textMuted,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
+    fontFamily: fonts.bold,
+    fontSize: 11,
+    lineHeight: 16,
+    color: warm.tan,
     textAlign: 'center',
   },
   messages: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
-    gap: spacing.md,
+    paddingHorizontal: 28,
+    paddingTop: 12,
+    paddingBottom: 16,
+    gap: 20,
   },
-  emptyWrap: { alignItems: 'center', gap: spacing.md, marginTop: spacing.xl },
-  empty: { textAlign: 'center', fontSize: 15, color: colors.textMuted },
-  suggestions: { alignItems: 'center', gap: spacing.sm },
+  emptyWrap: { alignItems: 'center', gap: 18, marginTop: 30 },
+  empty: {
+    textAlign: 'center',
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    color: warm.brown,
+  },
+  suggestions: { alignItems: 'center', gap: 10 },
   suggestion: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    height: 35,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: warm.tan,
+    backgroundColor: warm.field,
   },
-  suggestionText: { fontSize: 14, color: colors.text },
-  bubbleWrap: { gap: 6, maxWidth: '82%' },
+  suggestionText: { fontFamily: fonts.medium, fontSize: 13, color: warm.brown },
+  bubbleWrap: { gap: 6, maxWidth: '72%' },
   left: { alignSelf: 'flex-start' },
   right: { alignSelf: 'flex-end', alignItems: 'flex-end' },
-  bubble: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 3,
-    borderRadius: BUBBLE_RADIUS,
-  },
+  bubble: { borderRadius: BUBBLE_RADIUS },
   // 말한 쪽 아래 모서리만 작게 (꼬리 느낌)
-  mine: { backgroundColor: colors.primary, borderBottomRightRadius: 6 },
-  assistant: { backgroundColor: colors.surface, borderBottomLeftRadius: 6 },
-  bubbleText: { fontSize: 15, lineHeight: 23, color: colors.text },
-  mineText: { color: colors.primaryText },
+  mine: {
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    backgroundColor: warm.tan,
+    borderBottomRightRadius: 7,
+  },
+  assistant: {
+    paddingHorizontal: 22,
+    paddingVertical: 16,
+    backgroundColor: warm.field,
+    borderWidth: 1.5,
+    borderColor: warm.tan,
+    borderBottomLeftRadius: 7,
+  },
+  bubbleText: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    color: warm.black,
+  },
+  mineText: { fontFamily: fonts.medium, color: warm.field },
   citations: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    columnGap: 4,
-    paddingHorizontal: 4,
+    columnGap: 8,
+    paddingHorizontal: 3,
   },
-  citationLabel: { fontSize: 12, color: colors.textMuted },
+  citationLabel: { fontFamily: fonts.semibold, fontSize: 11, color: warm.tan },
   citationDate: {
-    fontSize: 12,
-    color: colors.primary,
+    fontFamily: fonts.semibold,
+    fontSize: 11,
+    color: warm.brown,
     textDecorationLine: 'underline',
   },
-  noEvidence: { fontSize: 12, color: colors.textMuted, paddingHorizontal: 4 },
+  noEvidence: {
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    color: warm.tan,
+    paddingHorizontal: 3,
+  },
   dots: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 5,
-    paddingVertical: spacing.md,
+    paddingVertical: 18,
   },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: colors.textMuted,
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: warm.tan },
+  failed: { alignItems: 'flex-end', gap: 4 },
+  failedText: { fontFamily: fonts.medium, fontSize: 12, color: colors.danger },
+  limit: { gap: 10, paddingHorizontal: 25, paddingVertical: 14 },
+  limitText: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: warm.ink,
+    textAlign: 'center',
   },
-  failed: { alignItems: 'flex-end', gap: spacing.xs },
-  failedText: { fontSize: 13, color: colors.danger },
-  limit: {
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  limitText: { fontSize: 14, color: colors.text, textAlign: 'center' },
+  // 시안: 알약 입력칸 + 진갈색 동그라미 보내기
   composer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md - 4,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    backgroundColor: colors.background,
+    gap: 13,
+    paddingHorizontal: 25,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   input: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 40,
     // 다섯 줄까지 늘어나고 그 뒤로는 입력창 안에서 스크롤
-    maxHeight: 23 * 5 + 22,
-    paddingHorizontal: spacing.md,
-    paddingTop: 11,
-    paddingBottom: 11,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    fontSize: 15,
-    lineHeight: 21,
-    color: colors.text,
+    maxHeight: 20 * 5 + 20,
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: warm.tan,
+    backgroundColor: warm.field,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    lineHeight: 18,
+    color: warm.ink,
     // 웹에서 포커스 때 생기는 파란 테두리 제거
     outlineWidth: 0,
   },
   send: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: warm.brown,
   },
-  sendDisabled: { backgroundColor: colors.disabled },
+  sendIcon: { width: 24, height: 24, tintColor: warm.field },
+  sendDisabled: { opacity: 0.4 },
   pressed: { opacity: 0.75 },
 });

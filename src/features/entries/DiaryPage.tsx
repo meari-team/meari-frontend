@@ -12,10 +12,13 @@ export function DiaryPage({
   date,
   entry,
   categories,
+  showDate = true,
 }: {
   date: string;
   entry: EntryDto;
   categories: ChecklistCategoryDto[];
+  // 오늘의 일기처럼 위에 날짜가 이미 있으면 끈다
+  showDate?: boolean;
 }) {
   const note = entry.note?.trim();
   const checked = checkedLabels(categories, entry.checkedItemIds);
@@ -23,7 +26,9 @@ export function DiaryPage({
 
   return (
     <View style={styles.page} testID="diary-page">
-      <Text style={styles.date}>{longKoreanDate(date)}</Text>
+      {showDate ? (
+        <Text style={styles.date}>{longKoreanDate(date)}</Text>
+      ) : null}
       {note ? <Text style={styles.note}>{note}</Text> : null}
 
       {entry.photos.length > 0 ? <Photos photos={entry.photos} /> : null}
@@ -123,10 +128,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   date: { fontFamily: fonts.medium, fontSize: 13, color: warm.tan },
+  // 시안 "일기내용 저장후": 한 줄 제목 16, 본문 13
   note: {
-    fontFamily: fonts.bold,
-    fontSize: 20,
-    lineHeight: 28,
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    lineHeight: 22,
     color: warm.black,
     marginTop: -spacing.xs,
   },
@@ -148,10 +154,11 @@ const styles = StyleSheet.create({
   thumb: { width: 56, height: 56, borderRadius: 7 },
   body: {
     fontFamily: fonts.regular,
-    fontSize: 16,
-    lineHeight: 28,
+    fontSize: 13,
+    lineHeight: 20,
     color: warm.black,
   },
+
   // 체크한 항목: 모래색 테두리의 작은 알약 (아이콘 없이 글자만)
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {

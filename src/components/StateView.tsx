@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { fonts, warm } from '@/theme';
-import { EchoLoader } from './EchoLoader';
+import { ArcLoader } from './ArcLoader';
 
 type Props =
   | { status: 'loading'; message?: string }
@@ -13,13 +13,13 @@ type Props =
     };
 
 // 화면 전체의 로딩·에러·빈 상태. 모든 화면은 이 세 상태를 그린다 (prd.md §8)
-// 웜톤: 로딩은 메아리 고리, 다시 시도는 테두리 알약, 빈 상태 동작은 황갈색 알약
+// 웜톤: 로딩은 시안의 메아리 아이콘(고리 세 개), 다시 시도는 테두리 알약, 빈 상태 동작은 황갈색 알약
 export function StateView(props: Props) {
   return (
     <View style={styles.wrap} accessibilityLiveRegion="polite">
       {props.status === 'loading' ? (
         <>
-          <EchoLoader />
+          <ArcLoader />
           {props.message ? (
             <Text style={styles.message}>{props.message}</Text>
           ) : null}
@@ -65,14 +65,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 18,
+    gap: 16,
     padding: 24,
     backgroundColor: warm.background,
   },
   message: {
-    fontFamily: fonts.medium,
-    fontSize: 14,
-    lineHeight: 22,
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    lineHeight: 20,
     color: warm.brown,
     textAlign: 'center',
   },
