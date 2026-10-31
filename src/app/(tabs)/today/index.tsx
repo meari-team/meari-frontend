@@ -79,11 +79,15 @@ export default function TodayScreen() {
         onCancel={close}
       />
     );
-  } else if (data && mode === 'write' && stage === 'ready') {
+  } else if (
+    mode === 'write' &&
+    (stage === 'input' || stage === 'questions' || stage === 'ready')
+  ) {
+    // AI 없이 직접 쓰기: 입력·질문·준비 어느 단계에서든 (일기가 아직 없어도) 바로 쓴다
     body = (
       <DraftEditor
         date={date}
-        entry={data}
+        entry={data ?? null}
         mode="write"
         onDone={close}
         onCancel={close}
@@ -95,6 +99,7 @@ export default function TodayScreen() {
         key={data.updatedAt}
         date={date}
         questions={data.questions}
+        onWriteMyself={() => setManual({ date, mode: 'write' })}
       />
     );
   } else if (stage === 'ready') {
@@ -135,6 +140,7 @@ export default function TodayScreen() {
         date={date}
         entry={data}
         categories={checklist.data}
+        onWriteMyself={() => setManual({ date, mode: 'write' })}
       />
     );
   }

@@ -23,6 +23,7 @@ import { Screen } from '@/components/Screen';
 import { todayKst } from '@/lib/dates';
 import { compressForUpload, MAX_PHOTOS } from '@/lib/image';
 import { AuthButton } from '@/features/auth/AuthButton';
+import { TextButton } from '@/features/my/components';
 import { colors, fonts, warm } from '@/theme';
 import { ANALYZE_MESSAGES, BusyView } from './BusyView';
 import { inputFooterOf, remainingSlots, type InputStep } from './stage';
@@ -34,6 +35,8 @@ type Props = {
   date: string;
   entry: EntryDto | null;
   categories: ChecklistCategoryDto[];
+  // AI 없이 바로 직접 쓰기로
+  onWriteMyself: () => void;
 };
 
 const NOTE_MAX = 200;
@@ -42,7 +45,7 @@ const NOTE_MAX = 200;
 //   1/2 사진(1~3장) + 한 줄 → [다음]
 //   2/2 오늘 한 일 체크(선택) → [AI로 일기 만들기] → 분석
 // 단계를 오가도 입력은 이 컴포넌트 상태에 남는다
-export function InputStage({ date, entry, categories }: Props) {
+export function InputStage({ date, entry, categories, onWriteMyself }: Props) {
   const [step, setStep] = useState<InputStep>(1);
   const [note, setNote] = useState(entry?.note ?? '');
   const [checked, setChecked] = useState<Set<string>>(
@@ -215,6 +218,16 @@ export function InputStage({ date, entry, categories }: Props) {
         disabled={!footerState.enabled}
         loading={step === 2 && save.isPending && !analyze.isPending}
         testID={step === 1 ? 'today-next' : 'today-analyze'}
+      />
+      {/* 사진·AI 없이 바로 쓰고 싶을 때. 적어 둔 한 줄은 먼저 저장한다 */}
+      <TextButton
+        title="AI 없이 직접 쓸게요"
+        testID="today-write-myself"
+        onPress={() => {
+          Keyboard.dismiss();
+          saveNote();
+          onWriteMyself();
+        }}
       />
     </>
   );
