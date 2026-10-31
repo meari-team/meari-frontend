@@ -10,18 +10,13 @@ import { colors, fonts, warm } from '@/theme';
 import { BusyView, GENERATE_MESSAGES } from './BusyView';
 import { answersPayload } from './stage';
 
-type Props = {
-  date: string;
-  questions: QuestionDto[];
-  // AI 없이 바로 직접 쓰기로
-  onWriteMyself: () => void;
-};
+type Props = { date: string; questions: QuestionDto[] };
 
 const ANSWER_MAX = 2000;
 
 // 2단계: AI가 사진만으로 모르는 것(누구와·왜 등)을 묻는다. 최대 2개
 // 답한 것만 보내고, 나머지는 건너뛴 것으로 바로 일기를 만든다
-export function QuestionsStage({ date, questions, onWriteMyself }: Props) {
+export function QuestionsStage({ date, questions }: Props) {
   const [drafts, setDrafts] = useState<Record<string, string>>(() =>
     Object.fromEntries(questions.map((q) => [q.id, q.answer ?? ''])),
   );
@@ -98,11 +93,6 @@ export function QuestionsStage({ date, questions, onWriteMyself }: Props) {
           title="건너뛰고 그냥 만들기"
           variant="secondary"
           onPress={() => submit(false)}
-        />
-        <Button
-          title="AI 없이 직접 쓸게요"
-          variant="ghost"
-          onPress={onWriteMyself}
         />
       </View>
     </View>
