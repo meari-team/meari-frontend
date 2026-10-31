@@ -219,16 +219,18 @@ export function InputStage({ date, entry, categories, onWriteMyself }: Props) {
         loading={step === 2 && save.isPending && !analyze.isPending}
         testID={step === 1 ? 'today-next' : 'today-analyze'}
       />
-      {/* 사진·AI 없이 바로 쓰고 싶을 때. 적어 둔 한 줄은 먼저 저장한다 */}
-      <TextButton
-        title="AI 없이 직접 쓸게요"
-        testID="today-write-myself"
-        onPress={() => {
-          Keyboard.dismiss();
-          saveNote();
-          onWriteMyself();
-        }}
-      />
+      {/* 첫 화면에서만: 사진·AI 없이 바로 쓰고 싶을 때. 적어 둔 한 줄은 먼저 저장한다 */}
+      {step === 1 ? (
+        <TextButton
+          title="AI 없이 직접 쓸게요"
+          testID="today-write-myself"
+          onPress={() => {
+            Keyboard.dismiss();
+            saveNote();
+            onWriteMyself();
+          }}
+        />
+      ) : null}
     </>
   );
 

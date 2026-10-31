@@ -99,7 +99,6 @@ export default function TodayScreen() {
         key={data.updatedAt}
         date={date}
         questions={data.questions}
-        onWriteMyself={() => setManual({ date, mode: 'write' })}
       />
     );
   } else if (stage === 'ready') {
