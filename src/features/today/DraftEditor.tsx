@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useConfirm, useGenerate, type EntryDto } from '@/api/entries';
+import {
+  useConfirm,
+  useGenerate,
+  useSaveEntryInput,
+  type EntryDto,
+} from '@/api/entries';
 import { errorMessage } from '@/api/errors';
 import { AuthButton } from '@/features/auth/AuthButton';
 import { OutlineButton, TextButton } from '@/features/my/components';
@@ -11,8 +16,9 @@ const CONTENT_MAX = 10_000;
 
 type Props = {
   date: string;
-  entry: EntryDto;
-  // AI 초안(GENERATED) · 직접 쓰기(READY) · 확정본 수정(CONFIRMED)
+  // 직접 쓰기(write)는 아직 일기가 없을 수 있다 (null)
+  entry: EntryDto | null;
+  // AI 초안(GENERATED) · 직접 쓰기(AI 없이, 입력·질문·준비 단계) · 확정본 수정(CONFIRMED)
   mode: 'draft' | 'write' | 'edit';
   onDone?: () => void;
   onCancel?: () => void;
@@ -22,23 +28,30 @@ type Props = {
 export function DraftEditor({ date, entry, mode, onDone, onCancel }: Props) {
   const initial =
     mode === 'edit'
-      ? (entry.finalContent ?? '')
+      ? (entry?.finalContent ?? '')
       : mode === 'draft'
-        ? (entry.aiDraft ?? '')
+        ? (entry?.aiDraft ?? '')
         : '';
   const [text, setText] = useState(initial);
   const confirm = useConfirm(date);
+  // 직접 쓰기인데 일기가 아직 없으면 먼저 빈 일기(DRAFT)를 만든다
+  const create = useSaveEntryInput(date);
   const regenerate = useGenerate(date);
 
   if (regenerate.isPending) return <BusyView messages={GENERATE_MESSAGES} />;
 
-  const save = () =>
-    confirm.mutate(text.trim(), {
-      onSuccess: () => onDone?.(),
-    });
+  const save = async () => {
+    try {
+      if (!entry) await create.mutateAsync({});
+      await confirm.mutateAsync(text.trim());
+      onDone?.();
+    } catch {
+      // 아래 error로 보여 준다. 쓴 내용은 그대로 둔다
+    }
+  };
 
   const askRegenerate = () => {
-    if (text.trim() === (entry.aiDraft ?? '').trim()) {
+    if (text.trim() === (entry?.aiDraft ?? '').trim()) {
       regenerate.mutate({}, { onSuccess: (r) => setText(r.aiDraft) });
       return;
     }
@@ -57,8 +70,8 @@ export function DraftEditor({ date, entry, mode, onDone, onCancel }: Props) {
     );
   };
 
-  const uncertain = mode === 'draft' ? entry.aiUncertain : [];
-  const error = confirm.error ?? regenerate.error;
+  const uncertain = mode === 'draft' ? (entry?.aiUncertain ?? []) : [];
+  const error = create.error ?? confirm.error ?? regenerate.error;
 
   return (
     <View style={styles.wrap}>
@@ -68,6 +81,15 @@ export function DraftEditor({ date, entry, mode, onDone, onCancel }: Props) {
           <Text style={styles.aiChip}>AI가 쓴 초안</Text>
           <Text style={styles.aiNoteText}>
             사실과 다른 부분이 있으면 고쳐주세요. 저장한 내용만 기억이 돼요.
+          </Text>
+        </View>
+      ) : null}
+
+      {mode === 'write' ? (
+        <View style={styles.aiNote}>
+          <Text style={styles.aiChip}>직접 쓰기</Text>
+          <Text style={styles.aiNoteText}>
+            AI 없이 내가 쓴 그대로 저장돼요. 사진이 없어도 괜찮아요.
           </Text>
         </View>
       ) : null}
@@ -110,7 +132,7 @@ export function DraftEditor({ date, entry, mode, onDone, onCancel }: Props) {
           title={mode === 'edit' ? '수정 저장' : '이대로 저장'}
           onPress={save}
           disabled={text.trim().length === 0}
-          loading={confirm.isPending}
+          loading={create.isPending || confirm.isPending}
         />
         {mode === 'draft' ? (
           <OutlineButton title="다시 만들기" onPress={askRegenerate} />
