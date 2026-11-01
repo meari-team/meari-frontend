@@ -132,7 +132,8 @@ export default function EchoSettingsScreen() {
   };
 
   return (
-    <Screen backgroundColor={warm.background}>
+    // 헤더 아래 화면이라 위쪽 안전 영역은 헤더에 맡긴다 (다른 마이페이지 하위 화면과 같게)
+    <Screen edges={[]} backgroundColor={warm.background}>
       <Text style={styles.lead}>
         기억하고 싶은 날로 표시한 일기 중 하루가, 정한 주기마다 그날의 나에게서
         온 메시지로 찾아와요. 알림을 열면 바로 답장할 수 있어요.
