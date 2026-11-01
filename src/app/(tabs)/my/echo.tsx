@@ -37,9 +37,11 @@ import {
   echoSender,
   nextRunLabel,
   scheduleSummary,
+  hourLabel,
+  minuteLabel,
+  shiftMinuteInHour,
   shiftMonthDay,
   shiftTime,
-  timeLabel,
 } from '@/lib/echo';
 import { colors, fonts, warm } from '@/theme';
 
@@ -210,11 +212,25 @@ export default function EchoSettingsScreen() {
                   </Text>
                 </View>
               )}
-              <Stepper
-                label={timeLabel(s.time)}
-                onPrev={() => save({ time: shiftTime(s.time, -30) })}
-                onNext={() => save({ time: shiftTime(s.time, 30) })}
-              />
+              {/* 시와 분을 따로: 분 단위로 맞출 수 있다 */}
+              <View style={styles.timeRow}>
+                <View style={styles.flex}>
+                  <Stepper
+                    label={hourLabel(s.time)}
+                    onPrev={() => save({ time: shiftTime(s.time, -60) })}
+                    onNext={() => save({ time: shiftTime(s.time, 60) })}
+                    testID="echo-hour"
+                  />
+                </View>
+                <View style={styles.flex}>
+                  <Stepper
+                    label={minuteLabel(s.time)}
+                    onPrev={() => save({ time: shiftMinuteInHour(s.time, -1) })}
+                    onNext={() => save({ time: shiftMinuteInHour(s.time, 1) })}
+                    testID="echo-minute"
+                  />
+                </View>
+              </View>
             </View>
           </SettingsGroup>
 
@@ -261,8 +277,9 @@ export default function EchoSettingsScreen() {
           ) : PUSH_SUPPORTED && !s.pushRegistered ? (
             <View style={styles.notice}>
               <Text style={styles.noticeText}>
-                이 앱 버전은 아직 푸시 알림을 받을 수 없어요. 도착한 메아리는
-                과거의 나 탭에서 확인할 수 있어요.
+                이 앱 버전은 서버 푸시를 받을 수 없어서, 이 기기에서 정한 시간
+                1분 뒤에 알림을 띄워요. 도착한 메아리는 과거의 나 탭에서도 볼 수
+                있어요.
               </Text>
             </View>
           ) : !PUSH_SUPPORTED ? (
@@ -308,13 +325,15 @@ function Stepper({
   label,
   onPrev,
   onNext,
+  testID,
 }: {
   label: string;
   onPrev: () => void;
   onNext: () => void;
+  testID?: string;
 }) {
   return (
-    <View style={styles.stepper}>
+    <View style={styles.stepper} testID={testID}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="이전"
@@ -354,6 +373,8 @@ const styles = StyleSheet.create({
   },
   block: { gap: 14, padding: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  flex: { flex: 1 },
+  timeRow: { flexDirection: 'row', gap: 10 },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',

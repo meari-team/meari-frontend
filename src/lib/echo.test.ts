@@ -5,6 +5,9 @@ import {
   echoSender,
   nextRunLabel,
   scheduleSummary,
+  hourLabel,
+  minuteLabel,
+  shiftMinuteInHour,
   shiftMonthDay,
   shiftTime,
   timeLabel,
@@ -25,6 +28,16 @@ describe('echo 문구', () => {
     assert.equal(timeLabel('12:00'), '오후 12:00');
     assert.equal(shiftTime('23:30', 30), '00:00');
     assert.equal(shiftTime('00:00', -30), '23:30');
+  });
+
+  it('분 단위로 맞추기 (분은 그 시 안에서 돈다)', () => {
+    assert.equal(shiftMinuteInHour('21:00', 1), '21:01');
+    assert.equal(shiftMinuteInHour('21:59', 1), '21:00');
+    assert.equal(shiftMinuteInHour('21:00', -1), '21:59');
+    assert.equal(shiftTime('21:05', 60), '22:05');
+    assert.equal(hourLabel('21:05'), '오후 9시');
+    assert.equal(hourLabel('00:05'), '오전 12시');
+    assert.equal(minuteLabel('21:05'), '05분');
   });
 
   it('월 날짜는 1~31 사이로 돈다', () => {

@@ -32,6 +32,20 @@ export function shiftTime(time: string, minutes: number): string {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
+// 시·분을 따로 맞춘다. 분은 그 시 안에서 돈다 (59분 → 00분)
+export function shiftMinuteInHour(time: string, delta: number): string {
+  const [h, m] = time.split(':').map(Number);
+  const next = (((m + delta) % 60) + 60) % 60;
+  return `${String(h).padStart(2, '0')}:${String(next).padStart(2, '0')}`;
+}
+
+// "21:05" → "오후 9시", "05분"
+export function hourLabel(time: string): string {
+  const h = Number(time.slice(0, 2));
+  return `${h < 12 ? '오전' : '오후'} ${h % 12 === 0 ? 12 : h % 12}시`;
+}
+export const minuteLabel = (time: string) => `${time.slice(3, 5)}분`;
+
 // 1~31 사이로 돌아가며
 export const shiftMonthDay = (day: number, delta: number) =>
   ((((day - 1 + delta) % 31) + 31) % 31) + 1;
