@@ -1,7 +1,15 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { useMe } from '@/api/auth';
 import { useChecklist, useEntriesRange } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
@@ -27,8 +35,10 @@ import {
   type DiaryStyle,
 } from '@/features/my/logic';
 import { WithdrawDialog } from '@/features/my/WithdrawDialog';
+import { REMINDER_SUPPORTED } from '@/features/reminder/notifications';
 import { todayKst } from '@/lib/dates';
 import { useAuth } from '@/stores/auth';
+import { useReminder } from '@/stores/reminder';
 import { colors, fonts, spacing, warm } from '@/theme';
 
 const VERSION = Constants.expoConfig?.version ?? '0.1.0';
@@ -51,6 +61,9 @@ export default function MyScreen() {
   const range = useEntriesRange(shiftDate(today, { days: -365 }), today);
   const update = useUpdateMe();
   const signOut = useAuth((s) => s.signOut);
+  const reminderOn = useReminder((s) => s.enabled === true);
+  const reminderBlocked = useReminder((s) => s.blocked);
+  const setReminder = useReminder((s) => s.setEnabled);
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState('');
   const [open, setOpen] = useState<Open>(null);
@@ -191,6 +204,41 @@ export default function MyScreen() {
             last
           />
         </SettingsGroup>
+
+        {/* 알림: 앱에서만 (웹은 예약 알림이 없다) */}
+        {REMINDER_SUPPORTED ? (
+          <SettingsGroup title="알림">
+            <SettingsRow
+              title="일기 알림"
+              description={
+                reminderOn && reminderBlocked
+                  ? '폰 설정에서 메아리 알림을 허용해 주세요'
+                  : '매일 오후 9시 · 그날 일기를 쓰면 쉬어요'
+              }
+              onPress={
+                reminderOn && reminderBlocked
+                  ? () => void Linking.openSettings()
+                  : undefined
+              }
+              accessory={
+                <Switch
+                  value={reminderOn && !reminderBlocked}
+                  onValueChange={(on) => {
+                    void setReminder(on);
+                    if (on && reminderBlocked) void Linking.openSettings();
+                  }}
+                  trackColor={{ false: warm.sand, true: warm.tan }}
+                  thumbColor={warm.field}
+                  ios_backgroundColor={warm.sand}
+                  accessibilityLabel="매일 오후 9시 일기 알림"
+                  testID="reminder-switch"
+                />
+              }
+              last
+              testID="reminder-row"
+            />
+          </SettingsGroup>
+        ) : null}
 
         {/* AI 설정 */}
         <SettingsGroup title="AI 설정">
