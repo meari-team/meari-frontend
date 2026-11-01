@@ -22,6 +22,7 @@ export default function Layout() {
       <Stack.Screen name="category" options={{ title: '카테고리' }} />
       <Stack.Screen name="password" options={{ title: '비밀번호 변경' }} />
       <Stack.Screen name="privacy" options={{ title: '개인정보 처리방침' }} />
+      <Stack.Screen name="echo" options={{ title: '메아리' }} />
     </Stack>
   );
 }

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useMe } from '@/api/auth';
+import { useEchoSettings } from '@/api/echo';
 import { useChecklist, useEntriesRange } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
 import { useUpdateMe } from '@/api/profile';
@@ -34,6 +35,7 @@ import {
   nicknameError,
   type DiaryStyle,
 } from '@/features/my/logic';
+import { forgetPushToken } from '@/features/echo/push';
 import { WithdrawDialog } from '@/features/my/WithdrawDialog';
 import { REMINDER_SUPPORTED } from '@/features/reminder/notifications';
 import { todayKst } from '@/lib/dates';
@@ -61,6 +63,7 @@ export default function MyScreen() {
   const range = useEntriesRange(shiftDate(today, { days: -365 }), today);
   const update = useUpdateMe();
   const signOut = useAuth((s) => s.signOut);
+  const echoSettings = useEchoSettings();
   const reminderOn = useReminder((s) => s.enabled === true);
   const reminderBlocked = useReminder((s) => s.blocked);
   const setReminder = useReminder((s) => s.setEnabled);
@@ -240,6 +243,24 @@ export default function MyScreen() {
           </SettingsGroup>
         ) : null}
 
+        {/* 메아리: 기억하고 싶은 날에서 먼저 오는 연락 */}
+        <SettingsGroup title="메아리">
+          <SettingsRow
+            title="메아리 알림"
+            description="기억하고 싶은 날의 나에게서 오는 메시지"
+            value={
+              echoSettings.data
+                ? echoSettings.data.enabled
+                  ? '켜짐'
+                  : '꺼짐'
+                : undefined
+            }
+            onPress={() => router.push('/my/echo')}
+            last
+            testID="open-echo"
+          />
+        </SettingsGroup>
+
         {/* AI 설정 */}
         <SettingsGroup title="AI 설정">
           <SettingsRow
@@ -344,7 +365,10 @@ export default function MyScreen() {
                 <View style={styles.half}>
                   <AuthButton
                     title="로그아웃"
-                    onPress={signOut}
+                    onPress={() => {
+                      // 이 기기로 메아리 알림이 더 오지 않게 토큰을 먼저 지운다
+                      void forgetPushToken().finally(signOut);
+                    }}
                     testID="logout-confirm"
                   />
                 </View>

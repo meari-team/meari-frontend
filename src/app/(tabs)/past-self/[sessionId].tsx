@@ -29,6 +29,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useEcho, useMarkEchoRead } from '@/api/echo';
 import { ApiError, errorMessage } from '@/api/errors';
 import {
   useChatMessages,
@@ -39,6 +40,7 @@ import {
 import { KeyboardAvoider } from '@/components/KeyboardAvoider';
 import { ScreenTopDecor } from '@/components/TopDecor';
 import { AuthButton } from '@/features/auth/AuthButton';
+import { EchoIntro } from '@/features/echo/EchoIntro';
 import { TextButton } from '@/features/my/components';
 import { StateView } from '@/components/StateView';
 import {
@@ -73,12 +75,23 @@ export default function ChatScreen() {
   const params = useLocalSearchParams<{
     sessionId: string;
     anchorDate?: string;
+    echoId?: string;
   }>();
   const sessionId = params.sessionId;
   const sessions = useChatSessions();
+  const session = sessions.data?.find((s) => s.id === sessionId);
   const anchorDate = isDateString(params.anchorDate)
     ? params.anchorDate
-    : sessions.data?.find((s) => s.id === sessionId)?.anchorDate;
+    : session?.anchorDate;
+  // 메아리로 시작된 대화면 맨 위에 그날 사진·일기를 함께 보여 주고 읽음으로 표시한다
+  const echoId = params.echoId || session?.echoId || undefined;
+  const echo = useEcho(echoId);
+  const markRead = useMarkEchoRead();
+  const unreadEchoId = echo.data && !echo.data.readAt ? echo.data.id : null;
+  const { mutate: markEchoRead } = markRead;
+  useEffect(() => {
+    if (unreadEchoId) markEchoRead(unreadEchoId);
+  }, [unreadEchoId, markEchoRead]);
 
   // 대화 중에는 하단 탭바를 숨긴다 (채팅 앱처럼 입력창이 화면 맨 아래에 붙게).
   // 탭 안 화면이라 탭바가 이미 아래 안전 영역을 차지해서, 그대로 두면 입력창 아래가 한 번 더 뜬다
@@ -210,7 +223,9 @@ export default function ChatScreen() {
                 />
               ) : null}
 
-              {list.length === 0 && !send.isPending ? (
+              {echo.data ? <EchoIntro echo={echo.data} /> : null}
+
+              {list.length === 0 && !send.isPending && !echoId ? (
                 <View style={styles.emptyWrap}>
                   <Text style={styles.empty}>
                     {anchorDate
