@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError } from '@/api/errors';
+import { cancelReminders } from '@/features/reminder/notifications';
 import { StartScreen } from '@/features/splash/StartScreen';
 import { SPLASH_AD } from '@/lib/env';
 import { useAuth } from '@/stores/auth';
@@ -46,8 +47,11 @@ export default function RootLayout() {
     // 시작 화면이 있으면 바로 기본 스플래시를 걷고 시작 화면이 토큰 확인을 기다린다
     if (fontsReady && (starting || status !== 'loading'))
       SplashScreen.hideAsync();
-    // 로그아웃(401 포함)되면 이전 사용자의 캐시를 지운다
-    if (status === 'signedOut') queryClient.clear();
+    // 로그아웃(401 포함)되면 이전 사용자의 캐시와 일기 알림을 지운다
+    if (status === 'signedOut') {
+      queryClient.clear();
+      void cancelReminders().catch(() => {});
+    }
   }, [status, starting, fontsReady]);
 
   if (!fontsReady) return null;

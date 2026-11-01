@@ -6,6 +6,7 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDiaryReminder } from '@/features/reminder/useDiaryReminder';
 import { fonts, warm } from '@/theme';
 
 type IconProps = { color: ColorValue };
@@ -32,6 +33,8 @@ const icon = (source: ImageSourcePropType) => {
 // 하단 탭 5개: 홈 / 오늘의 일기 / 캘린더 / 과거의 나 / 마이페이지 (홈은 기획안 이후 추가)
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  // 매일 오후 9시 일기 알림 (로그인한 동안만)
+  useDiaryReminder();
   const bottomGap = Math.max(insets.bottom - 14, 6);
   return (
     <Tabs

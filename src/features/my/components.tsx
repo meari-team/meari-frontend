@@ -29,6 +29,7 @@ export function SettingsGroup({
 }
 
 // 설정 한 줄: 제목(설명) · 현재값 · ›. onPress가 없으면 정보만 보여 준다
+// accessory: 오른쪽에 스위치 등을 직접 둘 때
 export function SettingsRow({
   title,
   description,
@@ -37,6 +38,7 @@ export function SettingsRow({
   last = false,
   danger = false,
   expanded,
+  accessory,
   testID,
 }: {
   title: string;
@@ -47,6 +49,7 @@ export function SettingsRow({
   danger?: boolean;
   // 펼침 행이면 › 대신 ⌄ (펼치면 반 바퀴 돈다)
   expanded?: boolean;
+  accessory?: ReactNode;
   testID?: string;
 }) {
   const body = (
@@ -64,6 +67,7 @@ export function SettingsRow({
           {value}
         </Text>
       ) : null}
+      {accessory}
       {onPress && expanded !== undefined ? (
         <TurningChevron open={expanded} />
       ) : onPress ? (
