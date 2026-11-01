@@ -434,6 +434,136 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/entries/{date}/bookmark': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * 기억하고 싶은 날 (북마크) 켜기/끄기
+     * @description 확정 일기만. 북마크한 확정·기억 포함 일기가 메아리 후보가 된다. 해제해도 이미 도착한 메아리·대화는 남는다.
+     */
+    put: operations['EchoController_bookmark'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/echo-settings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 메아리 설정 — 수신 동의·주기·시간·미리보기·다음 예정 */
+    get: operations['EchoController_settings'];
+    /**
+     * 메아리 설정 변경 — 보낸 필드만
+     * @description 동의 중이면 다음 회차를 지금 이후로 다시 계산한다(미동의 기간 회차는 몰아서 보내지 않는다). 미동의면 예약만 지우고 주기 값은 보존한다.
+     */
+    put: operations['EchoController_updateSettings'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/push-tokens': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 기기 푸시 토큰 등록 (Expo push token) */
+    post: operations['EchoController_registerToken'];
+    /** 기기 푸시 토큰 해제 (로그아웃할 때) */
+    delete: operations['EchoController_removeToken'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/echoes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 도착한 메아리 목록 (최근 것부터) + 안 읽은 수 */
+    get: operations['EchoController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/echoes/demo': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 시연: 지금 메아리 한 번 받기 (ECHO_DEMO=true일 때만)
+     * @description 예약을 기다리지 않고 한 회차를 만든다. 동의·후보 조건은 실제 회차와 같다.
+     */
+    post: operations['EchoController_demo'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/echoes/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 메아리 상세 — 그날 사진·확정 일기·첫 메시지·대화 가능 여부 */
+    get: operations['EchoController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/echoes/{id}/read': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 메아리 읽음 표시 */
+    post: operations['EchoController_read'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -606,6 +736,8 @@ export interface components {
       finalContent: string | null;
       summary: string | null;
       excludedFromMemory: boolean;
+      /** @description 기억하고 싶은 날 (메아리 후보) */
+      bookmarked: boolean;
       aiIndexStatus: components['schemas']['AiIndexStatus'];
       /** Format: date-time */
       confirmedAt: string | null;
@@ -749,6 +881,11 @@ export interface components {
       /** Format: date-time */
       lastMessageAt: string | null;
       lastMessagePreview: string | null;
+      /**
+       * Format: uuid
+       * @description 메아리로 시작된 대화면 그 메아리 id
+       */
+      echoId: string | null;
     };
     ChatSessionListDto: {
       items: components['schemas']['ChatSessionDto'][];
@@ -787,6 +924,124 @@ export interface components {
       userMessage: components['schemas']['ChatMessageDto'];
       assistantMessage: components['schemas']['ChatMessageDto'];
     };
+    BookmarkDto: {
+      /** @description 기억하고 싶은 날로 표시 */
+      bookmarked: boolean;
+    };
+    /** @enum {string} */
+    EchoFrequency: 'WEEKLY' | 'MONTHLY';
+    EchoSettingsDto: {
+      /** @description 메아리 알림 받기 (앱 안 수신 동의). 기본 false */
+      enabled: boolean;
+      frequency: components['schemas']['EchoFrequency'];
+      /** @description 주 1회: 0=일 … 6=토 */
+      weekday: number;
+      /** @description 월 1회: 그달에 없는 날짜면 마지막 날 */
+      monthDay: number;
+      /**
+       * @description HH:mm (사용자 시간대)
+       * @example 21:00
+       */
+      time: string;
+      /** @example Asia/Seoul */
+      timezone: string;
+      /** @description 알림에 메시지 내용 미리보기 (기본 false) */
+      showPreview: boolean;
+      /**
+       * Format: date-time
+       * @description 다음 수신 예정. 미동의면 null
+       */
+      nextRunAt: string | null;
+      /** @description 메아리 후보 = 북마크한 확정·기억 포함 일기 수 */
+      candidateCount: number;
+      /** @description 이 기기·계정에 등록된 푸시 토큰이 있는지 */
+      pushRegistered: boolean;
+      /** @description 시연용 즉시 받기를 쓸 수 있는지 (ECHO_DEMO) */
+      demoAvailable: boolean;
+    };
+    UpdateEchoSettingsDto: {
+      enabled?: boolean;
+      frequency?: components['schemas']['EchoFrequency'];
+      weekday?: number;
+      monthDay?: number;
+      /** @example 21:00 */
+      time?: string;
+      /**
+       * @description IANA 시간대
+       * @example Asia/Seoul
+       */
+      timezone?: string;
+      showPreview?: boolean;
+    };
+    PushTokenDto: {
+      /** @example ExponentPushToken[xxxxxxxx] */
+      token: string;
+      /** @enum {string} */
+      platform: 'ios' | 'android';
+    };
+    RemovePushTokenDto: {
+      token: string;
+    };
+    EchoSummaryDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: date
+       * @description 메아리를 보낸 날 (= 대화 기준일)
+       */
+      entryDate: string;
+      /** Format: uuid */
+      sessionId: string | null;
+      /** @description 첫 메시지 미리보기 */
+      preview: string;
+      /** Format: date-time */
+      readAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    EchoListDto: {
+      /** @description 최근 것부터, 최대 50개 */
+      items: components['schemas']['EchoSummaryDto'][];
+      unreadCount: number;
+    };
+    /** @enum {string} */
+    EchoMessageSource: 'AI' | 'FALLBACK';
+    EchoChatDto: {
+      /** @description 이 기준일로 과거의 나와 대화할 수 있는지 */
+      available: boolean;
+      recordCount: number;
+      /** @example 7 */
+      requiredCount: number;
+    };
+    EchoDto: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: date
+       * @description 메아리를 보낸 날 (= 대화 기준일)
+       */
+      entryDate: string;
+      /** Format: uuid */
+      sessionId: string | null;
+      /** @description 첫 메시지 미리보기 */
+      preview: string;
+      /** Format: date-time */
+      readAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** @description 과거의 나가 먼저 보낸 메시지 */
+      message: string;
+      source: components['schemas']['EchoMessageSource'];
+      /** @description 메시지 근거 일기 */
+      citations: components['schemas']['CitationDto'][];
+      /** @description 그날 사진 (저장된 원본) */
+      photos: components['schemas']['PhotoDto'][];
+      /** @description 그날 확정 일기 */
+      finalContent: string | null;
+      /** @description 메시지를 만든 뒤 일기가 수정됐는지 */
+      entryEdited: boolean;
+      chat: components['schemas']['EchoChatDto'];
+    };
     /** @enum {string} */
     ErrorCode:
       | 'VALIDATION_FAILED'
@@ -798,6 +1053,7 @@ export interface components {
       | 'SESSION_NOT_FOUND'
       | 'CATEGORY_NOT_FOUND'
       | 'SCHEDULE_NOT_FOUND'
+      | 'ECHO_NOT_FOUND'
       | 'EMAIL_TAKEN'
       | 'WRONG_PASSWORD'
       | 'SAME_PASSWORD'
@@ -810,6 +1066,8 @@ export interface components {
       | 'NOT_ENOUGH_RECORDS'
       | 'SESSION_MESSAGE_LIMIT'
       | 'SCHEDULE_LIMIT_EXCEEDED'
+      | 'ECHO_DISABLED'
+      | 'NO_ECHO_CANDIDATES'
       | 'TOO_MANY_REQUESTS'
       | 'AI_UPSTREAM_ERROR'
       | 'AI_INDEX_UNAVAILABLE'
@@ -2412,6 +2670,391 @@ export interface operations {
       };
       /** @description AI_TIMEOUT */
       504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EchoController_bookmark: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        date: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BookmarkDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EntryDto'];
+        };
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description ENTRY_NOT_FOUND */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description INVALID_ENTRY_STATE */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description DATE_IN_FUTURE */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EchoController_settings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EchoSettingsDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EchoController_updateSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateEchoSettingsDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EchoSettingsDto'];
+        };
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EchoController_registerToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PushTokenDto'];
+      };
+    };
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EchoController_removeToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RemovePushTokenDto'];
+      };
+    };
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EchoController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EchoListDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EchoController_demo: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EchoDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description NOT_FOUND */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description ECHO_DISABLED */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description NO_ECHO_CANDIDATES */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EchoController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EchoDto'];
+        };
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description ECHO_NOT_FOUND */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+    };
+  };
+  EchoController_read: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description VALIDATION_FAILED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description UNAUTHORIZED */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponseDto'];
+        };
+      };
+      /** @description ECHO_NOT_FOUND */
+      404: {
         headers: {
           [name: string]: unknown;
         };

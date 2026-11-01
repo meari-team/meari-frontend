@@ -1,6 +1,7 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEchoes } from '@/api/echo';
 import { useEntriesRange } from '@/api/entries';
 import { errorMessage } from '@/api/errors';
 import { usePresets } from '@/api/past-self';
@@ -15,6 +16,7 @@ import {
 } from '@/features/past-self/components';
 import { defaultAnchor } from '@/features/past-self/logic';
 import { isDateString, todayKst } from '@/lib/dates';
+import { echoSender } from '@/lib/echo';
 import { fonts, warm } from '@/theme';
 
 const topDecor = require('../../../../assets/images/decor/past-top.png');
@@ -30,6 +32,8 @@ export default function PastSelfHome() {
   const entries = useEntriesRange(shiftDate(today, { days: -365 }), today);
   const [picked, setPicked] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const echoes = useEchoes();
+  const latestEcho = echoes.data?.items[0];
 
   // 일기 상세 등에서 날짜를 들고 오면 바로 시점 확인으로
   if (isDateString(params.anchorDate)) {
@@ -88,6 +92,49 @@ export default function PastSelfHome() {
           </Text>
         </View>
 
+        {/* 기억하고 싶은 날에서 먼저 온 연락 (도착한 게 있을 때만) */}
+        {latestEcho ? (
+          <View style={styles.echoCard}>
+            <Pressable
+              accessibilityRole="button"
+              testID="echo-card"
+              onPress={() =>
+                router.push({
+                  pathname: '/past-self/echo/[echoId]',
+                  params: { echoId: latestEcho.id },
+                })
+              }
+              style={({ pressed }) => [
+                styles.echoMain,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.echoHead}>
+                {!latestEcho.readAt ? <View style={styles.echoDot} /> : null}
+                <Text style={styles.echoTitle}>
+                  {echoSender(latestEcho.entryDate)}에게서 메아리가 왔어요
+                </Text>
+              </View>
+              <Text style={styles.echoPreview} numberOfLines={2}>
+                {latestEcho.preview}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => router.push('/past-self/echoes')}
+              testID="echo-all"
+            >
+              <Text style={styles.echoAll}>
+                받은 메아리 모두 보기
+                {echoes.data && echoes.data.unreadCount > 0
+                  ? ` · 안 읽음 ${echoes.data.unreadCount}`
+                  : ''}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         <PresetTabs presets={presets.data} anchor={anchor} onPick={setPicked} />
         <Timeline
           entries={entries.data}
@@ -135,4 +182,33 @@ const styles = StyleSheet.create({
   chats: { width: 30, height: 30, tintColor: warm.ink },
   lead: { fontFamily: fonts.semibold, fontSize: 14, color: warm.brown },
   pressed: { opacity: 0.6 },
+  echoCard: {
+    gap: 8,
+    padding: 18,
+    borderRadius: 10,
+    backgroundColor: warm.field,
+    borderWidth: 1.5,
+    borderColor: warm.tan,
+  },
+  echoMain: { gap: 8 },
+  echoHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  echoDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: warm.clay },
+  echoTitle: {
+    flex: 1,
+    fontFamily: fonts.bold,
+    fontSize: 15,
+    color: warm.black,
+  },
+  echoPreview: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    lineHeight: 19,
+    color: warm.brown,
+  },
+  echoAll: {
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    color: warm.tan,
+    textDecorationLine: 'underline',
+  },
 });

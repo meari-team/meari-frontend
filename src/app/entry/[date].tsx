@@ -1,6 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { useBookmark } from '@/api/echo';
 import { useChecklist, useEntry, useUpdateMemory } from '@/api/entries';
 import { ApiError, errorMessage } from '@/api/errors';
 import { Screen } from '@/components/Screen';
@@ -24,6 +25,7 @@ export default function EntryDetailScreen() {
   const entry = useEntry(date, { pollWhilePending: true });
   const checklist = useChecklist();
   const memory = useUpdateMemory(date);
+  const bookmark = useBookmark(date);
 
   // 머리줄은 뒤로 가기만. 날짜는 일기 맨 위에 이미 있어서 제목은 비운다 (웜톤 바탕, 그림자 줄 없이)
   const header = (
@@ -84,7 +86,35 @@ export default function EntryDetailScreen() {
       {header}
       <Screen edges={['bottom']} backgroundColor={warm.background}>
         {confirmed ? (
-          <DiaryPage date={date} entry={data} categories={checklist.data} />
+          <>
+            <DiaryPage date={date} entry={data} categories={checklist.data} />
+            {/* 기억하고 싶은 날: 북마크한 확정 일기 중 하루가 메아리로 찾아온다 */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: data.bookmarked }}
+              aria-selected={data.bookmarked}
+              disabled={bookmark.isPending}
+              onPress={() => bookmark.mutate(!data.bookmarked)}
+              testID="bookmark-entry"
+              style={({ pressed }) => [
+                styles.bookmark,
+                data.bookmarked && styles.bookmarked,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.bookmarkText,
+                  data.bookmarked && styles.bookmarkedText,
+                ]}
+              >
+                기억하고 싶은 날 {data.bookmarked ? '★' : '☆'}
+              </Text>
+            </Pressable>
+            {bookmark.isError ? (
+              <Text style={styles.error}>{errorMessage(bookmark.error)}</Text>
+            ) : null}
+          </>
         ) : (
           <View style={styles.draft}>
             <Text style={styles.draftTitle}>아직 확정하지 않은 일기예요</Text>
@@ -219,4 +249,17 @@ const styles = StyleSheet.create({
     color: warm.tan,
   },
   error: { color: colors.danger, fontSize: 14 },
+  bookmark: {
+    alignSelf: 'flex-start',
+    height: 34,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: warm.tan,
+    backgroundColor: warm.field,
+  },
+  bookmarked: { backgroundColor: warm.tan },
+  bookmarkText: { fontFamily: fonts.semibold, fontSize: 13, color: warm.brown },
+  bookmarkedText: { color: warm.field },
 });

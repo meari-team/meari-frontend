@@ -6,6 +6,8 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEchoes } from '@/api/echo';
+import { useEchoNotifications } from '@/features/echo/useEchoNotifications';
 import { useDiaryReminder } from '@/features/reminder/useDiaryReminder';
 import { fonts, warm } from '@/theme';
 
@@ -35,6 +37,9 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   // 매일 오후 9시 일기 알림 (로그인한 동안만)
   useDiaryReminder();
+  // 메아리: 푸시 토큰 등록·알림을 누르면 대화방으로. 안 읽은 메아리는 과거의 나 탭에 숫자로
+  useEchoNotifications();
+  const unreadEchoes = useEchoes().data?.unreadCount ?? 0;
   const bottomGap = Math.max(insets.bottom - 14, 6);
   return (
     <Tabs
@@ -79,7 +84,16 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="past-self"
-        options={{ title: '과거의 나', tabBarIcon: icon(ICONS.pastSelf) }}
+        options={{
+          title: '과거의 나',
+          tabBarIcon: icon(ICONS.pastSelf),
+          tabBarBadge: unreadEchoes > 0 ? unreadEchoes : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: warm.clay,
+            fontFamily: fonts.semibold,
+            fontSize: 10,
+          },
+        }}
       />
       <Tabs.Screen
         name="my"
