@@ -52,4 +52,4 @@ OPENAPI_SPEC=/다른/경로/openapi.json npm run api:types
 
 ## 브랜치
 
-`develop`(기본) ← `feat/MEA-N-*` PR (squash) · `main` ← `develop` 릴리스 PR (merge commit). 자세한 규칙은 meari-docs의 `dev-flow.md` §4.
+`develop`(기본) ← `feat/MEA-N-*` PR (squash) · `main` ← `develop` 릴리스 PR (merge commit). 자세한 규칙은 meari-docs의 `process/dev-flow.md` §4.
